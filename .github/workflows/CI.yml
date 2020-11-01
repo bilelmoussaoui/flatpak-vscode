@@ -20,18 +20,18 @@ jobs:
           extensions: 'js, ts'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  tests:
-    name: Tests
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 14.x]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: yarn install
-      - run: yarn run pretest
-      - run: yarn run test
+  #tests:
+  #  name: Tests
+  #  runs-on: ubuntu-latest
+  #  strategy:
+  #    matrix:
+  #      node-version: [10.x, 12.x, 14.x]
+  #  steps:
+  #    - uses: actions/checkout@v2
+  #    - name: Use Node.js ${{ matrix.node-version }}
+  #      uses: actions/setup-node@v1
+  #      with:
+  #        node-version: ${{ matrix.node-version }}
+  #    - run: yarn install
+  #    - run: yarn run pretest
+  #    - run: yarn run test

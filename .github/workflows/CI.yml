@@ -15,7 +15,7 @@ jobs:
           node-version: '14'
       - run: yarn install
       - run: yarn add eslint
-      - run: ./node_modules/.bin/eslint -c ./.eslintrc.js ./src
+      - run: ./node_modules/.bin/eslint -c ./.eslintrc.js --ignore-path .gitignore ./src
 
   #tests:
   #  name: Tests

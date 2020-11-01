@@ -2,7 +2,7 @@
   "name": "flatpakvscode",
   "displayName": "Flatpak integration",
   "description": "Flatpak integration",
-  "publisher": "Bilal Elmoussaoui",
+  "publisher": "bilelmoussaoui",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.50.0"

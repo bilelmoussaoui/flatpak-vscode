@@ -34,7 +34,6 @@ export const parseManifest = async (
       )
       break
   }
-
   if (isFlatpak(manifest)) {
     return manifest
   }
@@ -88,7 +87,7 @@ export const execTask = async (
   message: string | null
 ): Promise<void> => {
   if (message) {
-    await vscode.window.showInformationMessage(message)
+    await Promise.resolve(vscode.window.showInformationMessage(message))
   }
   const task = await getTask(mode)
   await vscode.tasks.executeTask(task)

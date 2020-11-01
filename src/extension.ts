@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
 import { execTask, findManifest, parseManifest } from './utils'
-import { TaskMode, getFlatpakTasks } from './tasks'
+import { TaskMode, getTasks } from './tasks'
 import { promises as fs } from 'fs'
 
 const EXT_ID = 'flatpakvscode'
@@ -11,20 +11,24 @@ export async function activate(
 ): Promise<void> {
   // Look for a flatpak manifest
   const manifestUri = await findManifest()
-
   if (manifestUri) {
-    await vscode.window
+    vscode.window
       .showInformationMessage(
         'A Flatpak manifest was found, do you want to configure it?',
         ...['No', 'Yes']
       )
-      .then(async (response: string | undefined) => {
-        if (response === 'Yes') {
-          await vscode.commands.executeCommand(
-            `${EXT_ID}.${TaskMode.buildInit}`
-          )
+      .then(
+        async (response) => {
+          if (response === 'Yes') {
+            await vscode.commands.executeCommand(
+              `${EXT_ID}.${TaskMode.buildInit}`
+            )
+          }
+        },
+        () => {
+          // Do nothing
         }
-      })
+      )
 
     vscode.tasks.onDidEndTask(async (e) => {
       switch (e.execution.task.definition.mode) {
@@ -46,14 +50,15 @@ export async function activate(
 
     context.subscriptions.push(
       vscode.tasks.registerTaskProvider('flatpak', {
-        async provideTasks() {
+        async provideTasks(): Promise<vscode.Task[] | null> {
           const manifest = await parseManifest(manifestUri)
           if (manifest) {
-            return getFlatpakTasks(manifest, manifestUri)
+            const tasks = getTasks(manifest, manifestUri)
+            return tasks
           }
           return null
         },
-        resolveTask(): vscode.ProviderResult<vscode.Task> {
+        resolveTask(task, token): vscode.ProviderResult<vscode.Task> {
           return undefined
         },
       })
@@ -61,7 +66,7 @@ export async function activate(
 
     context.subscriptions.push(
       vscode.commands.registerCommand(
-        `${EXT_ID}.build-init`,
+        `${EXT_ID}.${TaskMode.buildInit}`,
         async () =>
           await execTask(TaskMode.buildInit, 'Configuring the build...')
       )
@@ -69,7 +74,7 @@ export async function activate(
 
     context.subscriptions.push(
       vscode.commands.registerCommand(
-        `${EXT_ID}.update-deps`,
+        `${EXT_ID}.${TaskMode.updateDeps}`,
         async () =>
           await execTask(TaskMode.updateDeps, 'Updating the dependencies...')
       )
@@ -90,7 +95,7 @@ export async function activate(
     )
     context.subscriptions.push(
       vscode.commands.registerCommand(
-        `${EXT_ID}.rebuild`,
+        `${EXT_ID}.${TaskMode.rebuild}`,
         async () =>
           await execTask(TaskMode.rebuild, 'Rebuilding the application...')
       )

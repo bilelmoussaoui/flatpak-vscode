@@ -1,4 +1,5 @@
-# VSCode + Flatpak integration 
+# VSCode + Flatpak integration
+
 ![CI](https://github.com/bilelmoussaoui/flatpak-vscode/workflows/CI/badge.svg)
 
 A very simple VSCode extension that detects a Flatpak manifest and offers various commands to build, run & export a bundle.

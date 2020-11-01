@@ -14,7 +14,7 @@ export enum TaskMode {
   clean = 'clean',
 }
 
-export const getFlatpakTasks = (
+export const getTasks = (
   manifest: FlatpakManifest,
   uri: vscode.Uri
 ): vscode.Task[] => {

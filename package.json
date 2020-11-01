@@ -1,5 +1,5 @@
 {
-  "name": "flatpakvscode",
+  "name": "flatpak-vscode",
   "displayName": "Flatpak",
   "description": "Provides Flatpak manifest integration for building & running your application",
   "keywords": ["flatpak", "flatpak-builder"],
@@ -23,39 +23,39 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:flatpakvscode.build-init",
-    "onCommand:flatpakvscode.run",
+    "onCommand:flatpak-vscode.build-init",
+    "onCommand:flatpak-vscode.run",
     "workspaceContains:**/*.{json,yaml,yml}"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "flatpakvscode.update-deps",
+        "command": "flatpak-vscode.update-deps",
         "title": "Flatpak: Update dependencies"
       },
       {
-        "command": "flatpakvscode.build-deps",
+        "command": "flatpak-vscode.build-deps",
         "title": "Flatpak: Build the dependencies"
       },
       {
-        "command": "flatpakvscode.build-app",
+        "command": "flatpak-vscode.build-app",
         "title": "Flatpak: Build the application"
       },
       {
-        "command": "flatpakvscode.run",
+        "command": "flatpak-vscode.run",
         "title": "Flatpak: Run"
       },
       {
-        "command": "flatpakvscode.rebuild",
+        "command": "flatpak-vscode.rebuild",
         "title": "Flatpak: Rebuild the application"
       },
       {
-        "command": "flatpakvscode.clean",
+        "command": "flatpak-vscode.clean",
         "title": "Flatpak: Clean up the build directories"
       },
       {
-        "command": "flatpakvscode.build-init",
+        "command": "flatpak-vscode.build-init",
         "title": "Flatpak: Init the build"
       }
     ]

@@ -4,7 +4,7 @@ import { execTask, findManifest, parseManifest } from './utils'
 import { TaskMode, getTasks } from './tasks'
 import { promises as fs } from 'fs'
 
-const EXT_ID = 'flatpakvscode'
+const EXT_ID = 'flatpak-vscode'
 
 export async function activate(
   context: vscode.ExtensionContext
@@ -14,7 +14,7 @@ export async function activate(
   if (manifestUri) {
     vscode.window
       .showInformationMessage(
-        'A Flatpak manifest was found, do you want to configure it?',
+        'Flatpak manifest detected, would you like VS Code to init a build ?',
         ...['No', 'Yes']
       )
       .then(

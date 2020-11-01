@@ -23,7 +23,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:flatpakvscode.build",
+    "onCommand:flatpakvscode.build-init",
     "onCommand:flatpakvscode.run",
     "workspaceContains:**/*.{json,yaml,yml}"
   ],

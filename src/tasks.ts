@@ -180,13 +180,18 @@ export const getTasks = (
   )
   rebuildApp.group = vscode.TaskGroup.Build
 
-  const finishArgs = manifest['finish-args'].map((arg) => {
-    if (arg.endsWith('*')) {
-      const [key, value] = arg.split('=')
-      return `${key}='${value}'`
-    }
-    return arg
-  })
+  const finishArgs = manifest['finish-args']
+    .filter((arg) => {
+      // --metadata causes a weird issue
+      return arg.split('=')[0] !== '--metadata'
+    })
+    .map((arg) => {
+      if (arg.endsWith('*')) {
+        const [key, value] = arg.split('=')
+        return `${key}='${value}'`
+      }
+      return arg
+    })
   const run = createTask(
     TaskMode.run,
     'Run',

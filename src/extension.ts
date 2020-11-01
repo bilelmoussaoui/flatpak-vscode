@@ -58,7 +58,7 @@ export async function activate(
           }
           return null
         },
-        resolveTask(task, token): vscode.ProviderResult<vscode.Task> {
+        resolveTask(): vscode.ProviderResult<vscode.Task> {
           return undefined
         },
       })

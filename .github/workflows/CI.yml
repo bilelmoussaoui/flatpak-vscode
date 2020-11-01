@@ -1,0 +1,37 @@
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+name: CI
+jobs:
+  eslint:
+    name: Eslint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+      - run: yarn install
+      - uses: sibiraj-s/action-eslint@v1
+        with:
+          eslintArgs: '--ignore-path .gitignore --quite'
+          extensions: 'js, ts'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn install
+      - run: yarn run pretest
+      - run: yarn run test

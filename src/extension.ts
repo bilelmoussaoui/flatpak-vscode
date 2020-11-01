@@ -4,9 +4,12 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 import { getFlatpakTasks, getTask } from "./tasks";
 
+const EXT_ID = "flatpakvscode";
+
 interface BuildOptions {
   "append-path"?: string;
   "build-args": string[];
+  env: Object;
 }
 
 interface Source {
@@ -76,11 +79,10 @@ const findManifest = async (): Promise<vscode.Uri | null> => {
   console.log("Trying to find a Flatpak manifest...");
   const uris: vscode.Uri[] = await vscode.workspace.findFiles(
     "**/*.{json,yaml,yml}",
-    "**/{target,.vscode,.flatpak-builder,flatpak_app}/*",
+    "**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak}/*",
     1000
   );
 
-  console.log(vscode.workspace.workspaceFolders);
   for (let uri of uris) {
     try {
       const manifest = await parseManifest(uri);
@@ -94,13 +96,17 @@ const findManifest = async (): Promise<vscode.Uri | null> => {
   return null;
 };
 
+const execTask = async (mode: string, message: string | null) => {
+  if (message) vscode.window.showInformationMessage(message);
+  const task = await getTask(mode);
+  await vscode.tasks.executeTask(task);
+};
+
 export async function activate(context: vscode.ExtensionContext) {
   console.log("The Flatpak vscode extension is now active");
   const manifestUri = await findManifest();
+
   if (manifestUri) {
-    const buildDir = vscode.workspace.asRelativePath("flatpak_app");
-    console.log(buildDir);
-    console.log(manifestUri);
     vscode.window
       .showInformationMessage(
         "A Flatpak manifest was found, do you want to configure it?",
@@ -108,9 +114,23 @@ export async function activate(context: vscode.ExtensionContext) {
       )
       .then((response: string | undefined) => {
         if (response === "Yes") {
-          vscode.commands.executeCommand("flatpakvscode.build");
+          vscode.commands.executeCommand(`${EXT_ID}.build-init`);
         }
       });
+
+    vscode.tasks.onDidEndTask(async (e) => {
+      switch (e.execution.task.definition.mode) {
+        case "build-init":
+          vscode.commands.executeCommand(`${EXT_ID}.update-deps`);
+          break;
+        case "update-deps":
+          vscode.commands.executeCommand(`${EXT_ID}.build-deps`);
+          break;
+        case "rebuild":
+          vscode.commands.executeCommand(`${EXT_ID}.run`);
+          break;
+      }
+    });
 
     context.subscriptions.push(
       vscode.tasks.registerTaskProvider("flatpak", {
@@ -125,35 +145,55 @@ export async function activate(context: vscode.ExtensionContext) {
       })
     );
 
-    const buildCommandHandler = async () => {
-      vscode.window.showInformationMessage("Starting a build...");
-      try {
-        if (!(await fs.promises.stat(buildDir))) {
-          await vscode.tasks.executeTask(await getTask("build-init"));
-        }
-      } catch (error) {
-        console.log("Build directory already initialized, skipping...");
-      }
-      await vscode.tasks.executeTask(await getTask("update-deps"));
-      await vscode.tasks.executeTask(await getTask("build"));
-    };
-
     context.subscriptions.push(
       vscode.commands.registerCommand(
-        "flatpakvscode.build",
-        buildCommandHandler
+        `${EXT_ID}.build-init`,
+        async () => await execTask("build-init", "Configuring the build...")
       )
     );
 
-    const runCommandHandler = () => {
-      vscode.window.showInformationMessage("Rebuild the application...");
-      getTask("rebuild").then((task) => vscode.tasks.executeTask(task))
-        .then(() => getTask("run")).then((task) => vscode.tasks.executeTask(task))
-        .catch((erro) => console.error(erro))
-    };
-
     context.subscriptions.push(
-      vscode.commands.registerCommand("flatpakvscode.run", runCommandHandler)
+      vscode.commands.registerCommand(
+        `${EXT_ID}.update-deps`,
+        async () =>
+          await execTask("update-deps", "Updating the dependencies...")
+      )
+    );
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        `${EXT_ID}.build-deps`,
+        async () => await execTask("build-deps", "Building the dependencies...")
+      )
+    );
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        `${EXT_ID}.build-app`,
+        async () => await execTask("build-app", "Building the application...")
+      )
+    );
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        `${EXT_ID}.rebuild`,
+        async () => await execTask("rebuild", "Rebuilding the application...")
+      )
+    );
+    context.subscriptions.push(
+      vscode.commands.registerCommand(`${EXT_ID}.clean`, async () => {
+        const workspace = vscode.workspace.getWorkspaceFolder(manifestUri)?.uri
+          .fsPath;
+        if (workspace) {
+          await fs.promises.rmdir(path.join(workspace, ".flatpak"), {
+            recursive: true,
+          });
+          vscode.commands.executeCommand(`${EXT_ID}.build-init`);
+        }
+      })
+    );
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        `${EXT_ID}.run`,
+        async () => await execTask("run", "Running the application...")
+      )
     );
   }
 }

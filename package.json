@@ -19,12 +19,32 @@
   "contributes": {
     "commands": [
       {
+        "command": "flatpakvscode.update-deps",
+        "title": "Flatpak: Update dependencies"
+      },
+      {
+        "command": "flatpakvscode.build-deps",
+        "title": "Flatpak: Build the dependencies"
+      },
+      {
+        "command": "flatpakvscode.build-app",
+        "title": "Flatpak: Build the application"
+      },
+      {
         "command": "flatpakvscode.run",
         "title": "Flatpak: Run"
       },
       {
-        "command": "flatpakvscode.build",
-        "title": "Flatpak: Build"
+        "command": "flatpakvscode.rebuild",
+        "title": "Flatpak: Rebuild the application"
+      },
+      {
+        "command": "flatpakvscode.clean",
+        "title": "Flatpak: Clean up the build directories"
+      },
+      {
+        "command": "flatpakvscode.build-init",
+        "title": "Flatpak: Init the build"
       }
     ]
   },

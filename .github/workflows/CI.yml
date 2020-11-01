@@ -17,6 +17,14 @@ jobs:
       - run: yarn add eslint
       - run: ./node_modules/.bin/eslint -c ./.eslintrc.json --ignore-path .gitignore ./src
 
+  codespell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: codespell-project/actions-codespell@master
+        with:
+          check_filenames: true
+
   tests:
     name: Tests
     runs-on: ubuntu-latest

@@ -1,8 +1,20 @@
 {
   "name": "flatpakvscode",
-  "displayName": "Flatpak integration",
-  "description": "Flatpak integration",
+  "displayName": "Flatpak",
+  "description": "Provides Flatpak manifest integration for building & running your application",
+  "keywords": ["flatpak", "flatpak-builder"],
   "publisher": "bilelmoussaoui",
+  "preview": true,
+  "license": "MIT",
+  "markdown": "github",
+  "icon": "flatpak.png",
+  "repository": {
+    "url": "https://github.com/bilelmoussaoui/flatpak-vscode.git",
+    "type": "git"
+  },
+  "bugs": {
+    "url": "https://github.com/bilelmoussaoui/flatpak-vscode/issues"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.50.0"

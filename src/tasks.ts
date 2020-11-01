@@ -1,6 +1,6 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
-import { FlatpakManifest } from './flatpak.types'
+import { FlatpakManifest, Module } from './flatpak.types'
 import { createTask } from './utils'
 
 export enum TaskMode {
@@ -14,42 +14,17 @@ export enum TaskMode {
   clean = 'clean',
 }
 
-export const getTasks = (
-  manifest: FlatpakManifest,
-  uri: vscode.Uri
-): vscode.Task[] => {
-  const appId = manifest.id || manifest['app-id'] || 'org.flatpak.Test'
-  const branch = manifest.branch || 'master'
-  const lastModule = manifest.modules.slice(-1)[0]
-  const moduleName = lastModule.name
-  const uid = 1000
-  const workspace = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath || '/'
-  const buildDir = path.join(workspace, '.flatpak', 'repo')
-  const stateDir = path.join(workspace, '.flatpak', 'flatpak-builder')
-  const cmdEnv = {
-    cwd: workspace,
-  }
+export const getBuildAppCommand = (
+  module: Module,
+  workspace: string,
+  buildDir: string,
+  buildArgs: string[]
+): [string[][], string[][]] => {
   let buildAppCommand: string[][] = []
   let rebuildAppCommand: string[][] = []
-  const configOpts = (lastModule['config-opts'] || []).join(' ')
+  const configOpts = (module['config-opts'] || []).join(' ')
 
-  const buildEnv = manifest['build-options']?.env || {}
-  const buildArgs = [
-    '--share=network',
-    '--nofilesystem=host',
-    `--filesystem=${workspace}`,
-    `--filesystem=${buildDir}`,
-  ]
-  const sdkPath = manifest['build-options']?.['append-path']
-  if (sdkPath) {
-    buildArgs.push(`--env=PATH=$PATH:${sdkPath}`)
-  }
-
-  for (const [key, value] of Object.entries(buildEnv)) {
-    buildArgs.push(`--env=${key}=${value}`)
-  }
-
-  switch (lastModule.buildsystem) {
+  switch (module.buildsystem) {
     case 'meson':
       {
         const mesonBuildDir = '_build'
@@ -81,7 +56,57 @@ export const getTasks = (
         ]
       }
       break
+    case 'simple':
+      {
+        const buildCommands = module['build-commands'].map((command) => {
+          return ['build', ...buildArgs, buildDir, command]
+        })
+        rebuildAppCommand = buildCommands
+        buildAppCommand = buildCommands
+      }
+      break
   }
+  return [buildAppCommand, rebuildAppCommand]
+}
+
+export const getTasks = (
+  manifest: FlatpakManifest,
+  uri: vscode.Uri
+): vscode.Task[] => {
+  const appId = manifest.id || manifest['app-id'] || 'org.flatpak.Test'
+  const branch = manifest.branch || 'master'
+  const lastModule = manifest.modules.slice(-1)[0]
+  const moduleName = lastModule.name
+  const uid = 1000
+  const workspace = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath || '/'
+  const buildDir = path.join(workspace, '.flatpak', 'repo')
+  const stateDir = path.join(workspace, '.flatpak', 'flatpak-builder')
+  const cmdEnv = {
+    cwd: workspace,
+  }
+
+  const buildEnv = manifest['build-options']?.env || {}
+  const buildArgs = [
+    '--share=network',
+    '--nofilesystem=host',
+    `--filesystem=${workspace}`,
+    `--filesystem=${buildDir}`,
+  ]
+  const sdkPath = manifest['build-options']?.['append-path']
+  if (sdkPath) {
+    buildArgs.push(`--env=PATH=$PATH:${sdkPath}`)
+  }
+
+  for (const [key, value] of Object.entries(buildEnv)) {
+    buildArgs.push(`--env=${key}=${value}`)
+  }
+
+  const [buildAppCommand, rebuildAppCommand] = getBuildAppCommand(
+    lastModule,
+    workspace,
+    buildDir,
+    buildArgs
+  )
 
   const buildInit = createTask(
     TaskMode.buildInit,
@@ -155,6 +180,13 @@ export const getTasks = (
   )
   rebuildApp.group = vscode.TaskGroup.Build
 
+  const finishArgs = manifest['finish-args'].map((arg) => {
+    if (arg.endsWith('*')) {
+      const [key, value] = arg.split('=')
+      return `${key}='${value}'`
+    }
+    return arg
+  })
   const run = createTask(
     TaskMode.run,
     'Run',
@@ -166,7 +198,7 @@ export const getTasks = (
         '--with-appdir',
         '--allow=devel',
         `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
-        ...manifest['finish-args'],
+        ...finishArgs,
         "--talk-name='org.freedesktop.portal.*'",
         '--talk-name=org.a11y.Bus',
         buildDir,

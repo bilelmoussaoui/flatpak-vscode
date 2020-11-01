@@ -23,6 +23,7 @@ export interface Module {
   buildsystem: string
   'config-opts': string[]
   sources: Source[]
+  'build-commands': string[]
 }
 
 export interface Source {

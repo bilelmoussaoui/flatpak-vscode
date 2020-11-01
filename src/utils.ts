@@ -29,9 +29,14 @@ export const parseManifest = async (
       manifest = yaml.safeLoad(data) as FlatpakManifest
       break
     default:
-      await vscode.window.showErrorMessage(
-        'Failed to parse the manifest, please use a valid extension.'
-      )
+      vscode.window
+        .showErrorMessage(
+          'Failed to parse the manifest, please use a valid extension.'
+        )
+        .then(
+          () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+          () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+        )
       break
   }
   if (isFlatpak(manifest)) {
@@ -87,7 +92,10 @@ export const execTask = async (
   message: string | null
 ): Promise<void> => {
   if (message) {
-    await Promise.resolve(vscode.window.showInformationMessage(message))
+    vscode.window.showInformationMessage(message).then(
+      () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+    )
   }
   const task = await getTask(mode)
   await vscode.tasks.executeTask(task)

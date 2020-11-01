@@ -41,14 +41,14 @@ export const getFlatpakTasks = async (
   };
   let buildAppCommand: string[][] = [];
   let rebuildAppCommand: string[][] = [];
-  const configOpts = lastModule["config-opts"].join(" ");
+  const configOpts = (lastModule["config-opts"] || []).join(" ");
 
   const buildEnv = manifest["build-options"]?.env || {};
   let buildArgs = [
     "--share=network",
     "--nofilesystem=host",
     `--filesystem=${workspace}`,
-    `--filesystem=${workspace}/${buildDir}`,
+    `--filesystem=${buildDir}`,
   ];
   const sdkPath = manifest["build-options"]?.["append-path"];
   if (sdkPath) {
@@ -59,17 +59,15 @@ export const getFlatpakTasks = async (
     buildArgs.push(`--env=${key}=${value}`);
   }
 
-  const buildArgsStr = buildArgs.join(" ");
-
   switch (lastModule.buildsystem) {
     case "meson":
       const mesonBuildDir = "_build";
       buildArgs.push(`--filesystem=${workspace}/${mesonBuildDir}`);
       rebuildAppCommand = [
-        ["build", buildArgsStr, buildDir, "ninja", "-C", mesonBuildDir],
+        ["build", ...buildArgs, buildDir, "ninja", "-C", mesonBuildDir],
         [
           "build",
-          buildArgsStr,
+          ...buildArgs,
           buildDir,
           "meson",
           "install",
@@ -80,11 +78,11 @@ export const getFlatpakTasks = async (
       buildAppCommand = [
         [
           "build",
-          buildArgsStr,
+          ...buildArgs,
           buildDir,
           "meson",
-          "--prefix /app",
-          "--reconfigure",
+          "--prefix",
+          "/app",
           mesonBuildDir,
           configOpts,
         ],

@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as vscode from 'vscode'
 import * as yaml from 'js-yaml'
 import { FlatpakManifest } from './flatpak.types'
-import { getTask } from './tasks'
+import { getTask, TaskMode } from './tasks'
 
 export const isFlatpak = (manifest: FlatpakManifest | null): boolean => {
   if (!manifest) {
@@ -88,7 +88,7 @@ export const createTask = (
 }
 
 export const execTask = async (
-  mode: string,
+  mode: TaskMode,
   message: string | null
 ): Promise<void> => {
   if (message) {

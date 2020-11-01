@@ -235,7 +235,7 @@ export const getTasks = (
   ]
 }
 
-export async function getTask(mode: string): Promise<vscode.Task> {
+export async function getTask(mode: TaskMode): Promise<vscode.Task> {
   const tasks = await vscode.tasks.fetchTasks({ type: 'flatpak' })
   const filtered = tasks.filter((t) => t.definition.mode === mode)
   if (filtered.length === 0) {

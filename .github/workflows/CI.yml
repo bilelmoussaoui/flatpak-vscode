@@ -14,12 +14,9 @@ jobs:
         with:
           node-version: '14'
       - run: yarn install
-      - uses: sibiraj-s/action-eslint@v1
-        with:
-          eslintArgs: '--ignore-path .gitignore --quite'
-          extensions: 'js, ts'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: yarn add eslint
+      - run: ./node_modules/.bin/eslint -c ./.eslintrc.js ./src
+
   #tests:
   #  name: Tests
   #  runs-on: ubuntu-latest

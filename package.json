@@ -61,6 +61,16 @@
         "command": "flatpak-vscode.build-init",
         "title": "Flatpak: Init the build"
       }
+    ],
+    "keybindings": [
+      {
+        "command": "flatpak-vscode.rebuild",
+        "linux": "ctrl+alt+B"
+      },
+      {
+        "command": "flatpak-vscode.run",
+        "linux": "ctrl+alt+R"
+      }
     ]
   },
   "scripts": {

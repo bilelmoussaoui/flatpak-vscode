@@ -1,7 +1,16 @@
 import * as path from 'path'
-import * as vscode from 'vscode'
+import {
+  Task,
+  Uri,
+  TaskGroup,
+  TaskScope,
+  ShellExecution,
+  TaskProvider,
+  tasks,
+  ProviderResult,
+} from 'vscode'
 import { FlatpakManifest, Module } from './flatpak.types'
-import { createTask } from './utils'
+import { createTask, getBuildDir, getWorkspacePath } from './utils'
 
 export enum TaskMode {
   buildInit = 'build-init',
@@ -69,27 +78,21 @@ export const getBuildAppCommand = (
   return [buildAppCommand, rebuildAppCommand]
 }
 
-export const getTasks = (
-  manifest: FlatpakManifest,
-  uri: vscode.Uri
-): vscode.Task[] => {
+export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
   const appId = manifest.id || manifest['app-id'] || 'org.flatpak.Test'
   const branch = manifest.branch || 'master'
   const lastModule = manifest.modules.slice(-1)[0]
   const moduleName = lastModule.name
   const uid = process.getuid()
-  const workspace = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath || '/'
-  const buildDir = path.join(workspace, '.flatpak', 'repo')
-  const stateDir = path.join(workspace, '.flatpak', 'flatpak-builder')
-  const cmdEnv = {
-    cwd: workspace,
-  }
+  const workspacePath = getWorkspacePath(uri)
+  const buildDir = path.join(getBuildDir(workspacePath), 'repo')
+  const stateDir = path.join(getBuildDir(workspacePath), 'flatpak-builder')
 
   const buildEnv = manifest['build-options']?.env || {}
   const buildArgs = [
     '--share=network',
     '--nofilesystem=host',
-    `--filesystem=${workspace}`,
+    `--filesystem=${workspacePath}`,
     `--filesystem=${buildDir}`,
   ]
   const sdkPath = manifest['build-options']?.['append-path']
@@ -103,7 +106,7 @@ export const getTasks = (
 
   const [buildAppCommand, rebuildAppCommand] = getBuildAppCommand(
     lastModule,
-    workspace,
+    workspacePath,
     buildDir,
     buildArgs
   )
@@ -114,7 +117,7 @@ export const getTasks = (
     'Prepare the Flatpak build directory',
     'flatpak',
     [['build-init', buildDir, appId, manifest.sdk, manifest.runtime, branch]],
-    cmdEnv
+    workspacePath
   )
 
   const updateDependencies = createTask(
@@ -134,7 +137,7 @@ export const getTasks = (
         uri.fsPath,
       ],
     ],
-    cmdEnv
+    workspacePath
   )
 
   const buildDependencies = createTask(
@@ -156,9 +159,9 @@ export const getTasks = (
         uri.fsPath,
       ],
     ],
-    cmdEnv
+    workspacePath
   )
-  buildDependencies.group = vscode.TaskGroup.Build
+  buildDependencies.group = TaskGroup.Build
 
   const buildApp = createTask(
     TaskMode.buildApp,
@@ -166,9 +169,9 @@ export const getTasks = (
     'Build the application',
     'flatpak',
     buildAppCommand,
-    cmdEnv
+    workspacePath
   )
-  buildApp.group = vscode.TaskGroup.Build
+  buildApp.group = TaskGroup.Build
 
   const rebuildApp = createTask(
     TaskMode.rebuild,
@@ -176,9 +179,9 @@ export const getTasks = (
     'Rebuild the application',
     'flatpak',
     rebuildAppCommand,
-    cmdEnv
+    workspacePath
   )
-  rebuildApp.group = vscode.TaskGroup.Build
+  rebuildApp.group = TaskGroup.Build
 
   const finishArgs = manifest['finish-args']
     .filter((arg) => {
@@ -210,18 +213,18 @@ export const getTasks = (
         manifest.command,
       ],
     ],
-    cmdEnv
+    workspacePath
   )
 
-  const exportBundle = new vscode.Task(
+  const exportBundle = new Task(
     {
       type: 'flatpak',
       mode: TaskMode.export,
     },
-    vscode.TaskScope.Workspace,
+    TaskScope.Workspace,
     'Build the application and export it as a bundle',
     'Export bundle',
-    new vscode.ShellExecution('print "hey"')
+    new ShellExecution('print "hey"')
   )
 
   return [
@@ -235,11 +238,28 @@ export const getTasks = (
   ]
 }
 
-export async function getTask(mode: TaskMode): Promise<vscode.Task> {
-  const tasks = await vscode.tasks.fetchTasks({ type: 'flatpak' })
-  const filtered = tasks.filter((t) => t.definition.mode === mode)
+export async function getTask(mode: TaskMode): Promise<Task> {
+  const flatpakTasks = await tasks.fetchTasks({ type: 'flatpak' })
+  const filtered = flatpakTasks.filter((t) => t.definition.mode === mode)
   if (filtered.length === 0) {
     throw new Error(`Cannot find ${mode} task`)
   }
   return filtered[0]
+}
+
+export class FlatpakTaskProvider implements TaskProvider {
+  private manifest: FlatpakManifest
+  private uri: Uri
+
+  constructor(manifest: FlatpakManifest, uri: Uri) {
+    this.manifest = manifest
+    this.uri = uri
+  }
+
+  provideTasks(): ProviderResult<Task[]> {
+    return getTasks(this.manifest, this.uri)
+  }
+  resolveTask(): ProviderResult<Task> {
+    return undefined
+  }
 }

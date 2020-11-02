@@ -10,7 +10,11 @@
   "preview": true,
   "license": "MIT",
   "extensionKind": [
-    "ui"
+    "ui",
+    "workspace"
+  ],
+  "os": [
+    "linux"
   ],
   "markdown": "github",
   "icon": "flatpak.png",

@@ -116,7 +116,16 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
     'Build Init',
     'Prepare the Flatpak build directory',
     'flatpak',
-    [['build-init', buildDir, appId, manifest.sdk, manifest.runtime, branch]],
+    [
+      [
+        'build-init',
+        buildDir,
+        appId,
+        manifest.sdk,
+        manifest.runtime,
+        manifest['runtime-version'],
+      ],
+    ],
     workspacePath
   )
 

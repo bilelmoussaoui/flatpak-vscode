@@ -77,9 +77,8 @@ export const findManifest = async (): Promise<
 }
 
 export const createTask = (
-  mode: string,
+  mode: TaskMode,
   name: string,
-  description: string,
   cmd: string,
   args: string[][],
   cwd: string
@@ -92,7 +91,7 @@ export const createTask = (
     },
     TaskScope.Workspace,
     name,
-    description,
+    'Flatpak',
     new ShellExecution(command, {
       cwd,
     })

@@ -80,7 +80,6 @@ export const getBuildAppCommand = (
 
 export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
   const appId = manifest.id || manifest['app-id'] || 'org.flatpak.Test'
-  const branch = manifest.branch || 'master'
   const lastModule = manifest.modules.slice(-1)[0]
   const moduleName = lastModule.name
   const uid = process.getuid()
@@ -114,7 +113,6 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
   const buildInit = createTask(
     TaskMode.buildInit,
     'Build Init',
-    'Prepare the Flatpak build directory',
     'flatpak',
     [
       [
@@ -132,7 +130,6 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
   const updateDependencies = createTask(
     TaskMode.updateDeps,
     'Update dependencies',
-    'Update the dependencies the Flatpak build directory',
     'flatpak-builder',
     [
       [
@@ -151,8 +148,7 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
 
   const buildDependencies = createTask(
     TaskMode.buildDeps,
-    'Build',
-    'Build the dependencies of the Flatpak',
+    'Build the dependencies',
     'flatpak-builder',
     [
       [
@@ -174,7 +170,6 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
 
   const buildApp = createTask(
     TaskMode.buildApp,
-    'Build',
     'Build the application',
     'flatpak',
     buildAppCommand,
@@ -185,7 +180,6 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
   const rebuildApp = createTask(
     TaskMode.rebuild,
     'Rebuild',
-    'Rebuild the application',
     'flatpak',
     rebuildAppCommand,
     workspacePath
@@ -208,7 +202,6 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
   const run = createTask(
     TaskMode.run,
     'Run',
-    'Build the application and run it',
     'flatpak',
     [
       [

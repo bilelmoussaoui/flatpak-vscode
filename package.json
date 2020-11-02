@@ -35,33 +35,72 @@
     "commands": [
       {
         "command": "flatpak-vscode.update-deps",
-        "title": "Flatpak: Update dependencies"
+        "title": "Update dependencies",
+        "category": "Flatpak"
       },
       {
         "command": "flatpak-vscode.build-deps",
-        "title": "Flatpak: Build the dependencies"
+        "title": "Build the dependencies",
+        "category": "Flatpak"
       },
       {
         "command": "flatpak-vscode.build-app",
-        "title": "Flatpak: Build the application"
+        "title": "Build the application",
+        "category": "Flatpak"
       },
       {
         "command": "flatpak-vscode.run",
-        "title": "Flatpak: Run"
+        "title": "Run",
+        "category": "Flatpak"
       },
       {
         "command": "flatpak-vscode.rebuild",
-        "title": "Flatpak: Rebuild the application"
+        "title": "Rebuild the application",
+        "category": "Flatpak"
       },
       {
         "command": "flatpak-vscode.clean",
-        "title": "Flatpak: Clean up the build directories"
+        "title": "Clean up the build directories",
+        "category": "Flatpak"
       },
       {
         "command": "flatpak-vscode.build-init",
-        "title": "Flatpak: Init the build"
+        "title": "Init the build",
+        "category": "Flatpak"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "flatpak-vscode.build-init",
+          "when": "!flatpakInitialized && flatpakManifestFound"
+        },
+        {
+          "command": "flatpak-vscode.clean",
+          "when": "flatpakInitialized && flatpakManifestFound"
+        },
+        {
+          "command": "flatpak-vscode.update-deps",
+          "when": "flatpakInitialized && flatpakManifestFound"
+        },
+        {
+          "command": "flatpak-vscode.build-deps",
+          "when": "!flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
+        },
+        {
+          "command": "flatpak-vscode.build-app",
+          "when": "!flatpakApplicationBuilt && flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
+        },
+        {
+          "command": "flatpak-vscode.run",
+          "when": "flatpakDependenciesBuilt && flatpakApplicationBuilt"
+        },
+        {
+          "command": "flatpak-vscode.rebuild",
+          "when": "flatpakDependenciesBuilt && flatpakApplicationBuilt"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "flatpak-vscode.rebuild",

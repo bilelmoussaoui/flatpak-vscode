@@ -195,6 +195,7 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
       }
       return arg
     })
+
   const run = createTask(
     TaskMode.run,
     'Run',

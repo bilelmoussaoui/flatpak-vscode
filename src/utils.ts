@@ -4,6 +4,7 @@ import {
   Task,
   TaskScope,
   ShellExecution,
+  commands,
   tasks,
   window,
   workspace,
@@ -119,4 +120,11 @@ export const getBuildDir = (workspace: string): string => {
 
 export const getWorkspacePath = (manifest: Uri): string => {
   return workspace.getWorkspaceFolder(manifest)?.uri.fsPath || ''
+}
+
+export const setContext = (ctx: string, state: boolean | string): void => {
+  commands.executeCommand('setContext', ctx, state).then(
+    () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+    () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+  )
 }

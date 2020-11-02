@@ -14,6 +14,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const [uri, manifest] = await findManifest()
   if (uri && manifest) {
     const buildDir = getBuildDir(getWorkspacePath(uri))
+
+    store.manifestFound()
     fs.access(buildDir, fsc.F_OK).then(
       () => store.initialize(),
       () => store.clean()

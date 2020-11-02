@@ -2,7 +2,10 @@
   "name": "flatpak-vscode",
   "displayName": "Flatpak",
   "description": "Provides Flatpak manifest integration for building & running your application",
-  "keywords": ["flatpak", "flatpak-builder"],
+  "keywords": [
+    "flatpak",
+    "flatpak-builder"
+  ],
   "publisher": "bilelmoussaoui",
   "preview": true,
   "license": "MIT",
@@ -83,6 +86,7 @@
   },
   "dependencies": {
     "@types/js-yaml": "^3.12.5",
+    "effector": "^21.6.0",
     "js-yaml": "^3.14.0"
   }
 }

@@ -9,6 +9,9 @@
   "publisher": "bilelmoussaoui",
   "preview": true,
   "license": "MIT",
+  "extensionKind":[
+    "ui"
+  ],
   "markdown": "github",
   "icon": "flatpak.png",
   "repository": {

@@ -187,6 +187,148 @@
                 }
             },
             "additionalProperties": false
+        },
+        "module": {
+            "description": "Each module specifies a source that has to be separately built and installed. It contains the build options and a list of sources to download and extract before building. Modules can be nested, in order to turn related modules on and off with a single key.",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "The name of the module, used in e.g. build logs. The name is also used for constructing filenames and commandline arguments, therefore using spaces or '/' in this string is a bad idea.",
+                    "type": "string"
+                },
+                "disabled": {
+                    "description": "If this is true, clear cflags from previous build options before adding it from these options.",
+                    "type": "boolean"
+                },
+                "sources": {
+                    "description": "This is set in the environment variable CPPFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatenated, separated by spaces.",
+                    "type": "array"
+                },
+                "config-opts": {
+                    "description": "If this is true, clear cppflags from previous build options before adding it from these options.",
+                    "type": "array"
+                },
+                "make-args": {
+                    "description": "This is set in the environment variable CXXFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatenated, separated by spaces.",
+                    "type": "array"
+                },
+                "make-install-args": {
+                    "description": "If this is true, clear cxxflags from previous build options before adding it from these options.",
+                    "type": "boolean"
+                },
+                "rm-configure": {
+                    "description": "This is set in the environment variable LDFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatenated, separated by spaces.",
+                    "type": "string"
+                },
+                "no-autogen": {
+                    "description": "If this is true, clear ldflags from previous build options before adding it from these options.",
+                    "type": "boolean"
+                },
+                "no-parallel-make": {
+                    "description": "The build prefix for the modules (defaults to /app for applications and /usr for runtimes).",
+                    "type": "boolean"
+                },
+                "install-rule": {
+                    "description": "The build libdir for the modules (defaults to /app/lib for applications and /usr/lib for runtimes).",
+                    "type": "string"
+                },
+                "no-make-install": {
+                    "description": "This will get appended to PATH in the build environment (with an leading colon if needed).",
+                    "type": "boolean"
+                },
+                "no-python-timestamp-fix": {
+                    "description": "This will get prepended to PATH in the build environment (with an trailing colon if needed).",
+                    "type": "boolean"
+                },
+                "cmake": {
+                    "description": "This will get appended to LD_LIBRARY_PATH in the build environment (with an leading colon if needed).",
+                    "type": "boolean"
+                },
+                "buildsystem": {
+                    "description": "This will get prepended to LD_LIBRARY_PATH in the build environment (with an trailing colon if needed).",
+                    "type": "string"
+                },
+                "builddir": {
+                    "description": "This will get appended to PKG_CONFIG_PATH in the build environment (with an leading colon if needed).",
+                    "type": "boolean"
+                },
+                "subdir": {
+                    "description": "This will get prepended to PKG_CONFIG_PATH in the build environment (with an trailing colon if needed).",
+                    "type": "string"
+                },
+                "build-options": {
+                    "$ref": "#/definitions/build-options"
+                },
+                "build-commands": {
+                    "description": "This is an array containing extra options to pass to flatpak build.",
+                    "type": "array"
+                },
+                "post-install": {
+                    "description": "Similar to build-args but affects the tests, not the normal build.",
+                    "type": "array"
+                },
+                "cleanup": {
+                    "description": "This is an array containing extra options to pass to configure.",
+                    "type": "array"
+                },
+                "ensure-writable": {
+                    "description": "An array of extra arguments that will be passed to make.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "only-arches": {
+                    "description": "An array of extra arguments that will be passed to make install.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "skip-arches": {
+                    "description": "If this is true (the default is false) then all ELF files will be stripped after install.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cleanup-platform": {
+                    "description": "By default (if strip is not true) flatpak-builder extracts all debug info in ELF files to a separate files and puts this in an extension. If you want to disable this, set no-debuginfo to true.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "run tests": {
+                    "description": "By default when extracting debuginfo we compress the debug sections. If you want to disable this, set no-debuginfo-compression to true.",
+                    "type": "boolean"
+                },
+                "test-rule": {
+                    "description": "This is a dictionary defining for each arch a separate build options object that override the main one.",
+                    "type": "string"
+                },
+                "test-commands": {
+                    "description": "This is a dictionary defining for each arch a separate build options object that override the main one.",
+                    "type": "string"
+                },
+                "modules": {
+                    "description": "An array of objects specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module. See below for details.",
+                    "type": "array",
+                    "items": [
+                        {
+                            "oneOf": [
+                                {
+                                    "$ref": "#/definitions/module"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false
         }
     },
     "properties": {
@@ -299,7 +441,19 @@
         },
         "modules": {
             "description": "An array of objects specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module. See below for details.",
-            "type": "array"
+            "type": "array",
+            "items": [
+                {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/module"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                }
+            ]
         },
         "add-extensions": {
             "description": "This is a dictionary of extension objects. The key is the name of the extension. See below for details.",

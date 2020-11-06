@@ -3,7 +3,7 @@
     "$comment": "https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions",
     "definitions": {
         "build-options": {
-            "description": "Object specifying the build environment. See below for details.",
+            "description": "Object specifying the build environment.",
             "type": "object",
             "properties": {
                 "cflags": {
@@ -76,23 +76,38 @@
                 },
                 "build-args": {
                     "description": "This is an array containing extra options to pass to flatpak build.",
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "test-args": {
                     "description": "Similar to build-args but affects the tests, not the normal build.",
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "config-opts": {
                     "description": "This is an array containing extra options to pass to configure.",
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "make-args": {
                     "description": "An array of extra arguments that will be passed to make.",
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "make-install-args": {
                     "description": "An array of extra arguments that will be passed to make install.",
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "strip": {
                     "description": "If this is true (the default is false) then all ELF files will be stripped after install.",
@@ -197,134 +212,202 @@
                     "type": "string"
                 },
                 "disabled": {
-                    "description": "If this is true, clear cflags from previous build options before adding it from these options.",
+                    "description": "If true, skip this module.",
                     "type": "boolean"
                 },
                 "sources": {
-                    "description": "This is set in the environment variable CPPFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatenated, separated by spaces.",
-                    "type": "array"
+                    "description": "An array of objects defining sources that will be downloaded and extracted in order. String members in the array are interpreted as the name of a separate json or yaml file that contains sources.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sources"
+                    }
                 },
                 "config-opts": {
-                    "description": "If this is true, clear cppflags from previous build options before adding it from these options.",
-                    "type": "array"
+                    "description": "An array of options that will be passed to configure.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "make-args": {
-                    "description": "This is set in the environment variable CXXFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatenated, separated by spaces.",
-                    "type": "array"
+                    "description": "An array of arguments that will be passed to make.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "make-install-args": {
-                    "description": "If this is true, clear cxxflags from previous build options before adding it from these options.",
-                    "type": "boolean"
+                    "description": "An array of arguments that will be passed to make install",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "rm-configure": {
-                    "description": "This is set in the environment variable LDFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatenated, separated by spaces.",
-                    "type": "string"
+                    "description": "If true, remove the configure script before starting build",
+                    "type": "boolean"
                 },
                 "no-autogen": {
-                    "description": "If this is true, clear ldflags from previous build options before adding it from these options.",
+                    "description": "Ignore the existence of an autogen script.",
                     "type": "boolean"
                 },
                 "no-parallel-make": {
-                    "description": "The build prefix for the modules (defaults to /app for applications and /usr for runtimes).",
+                    "description": "Don't call make with arguments to build in parallel",
                     "type": "boolean"
                 },
                 "install-rule": {
-                    "description": "The build libdir for the modules (defaults to /app/lib for applications and /usr/lib for runtimes).",
+                    "description": "Name of the rule passed to make for the install phase, default is install",
                     "type": "string"
                 },
                 "no-make-install": {
-                    "description": "This will get appended to PATH in the build environment (with an leading colon if needed).",
+                    "description": "Don't run the make install (or equivalent) stage.",
                     "type": "boolean"
                 },
                 "no-python-timestamp-fix": {
-                    "description": "This will get prepended to PATH in the build environment (with an trailing colon if needed).",
+                    "description": "Don't fix up the *.py[oc] header timestamps for ostree use.",
                     "type": "boolean"
                 },
                 "cmake": {
-                    "description": "This will get appended to LD_LIBRARY_PATH in the build environment (with an leading colon if needed).",
+                    "description": "Use cmake instead of configure (deprecated: use buildsystem instead).",
                     "type": "boolean"
                 },
                 "buildsystem": {
-                    "description": "This will get prepended to LD_LIBRARY_PATH in the build environment (with an trailing colon if needed).",
-                    "type": "string"
+                    "description": "Build system to use.",
+                    "type": "string",
+                    "enum": [
+                        "autotools",
+                        "cmake",
+                        "cmake-ninja",
+                        "meson",
+                        "simple",
+                        "qmake"
+                    ]
                 },
                 "builddir": {
-                    "description": "This will get appended to PKG_CONFIG_PATH in the build environment (with an leading colon if needed).",
+                    "description": "Use a build directory that is separate from the source directory.",
                     "type": "boolean"
                 },
                 "subdir": {
-                    "description": "This will get prepended to PKG_CONFIG_PATH in the build environment (with an trailing colon if needed).",
+                    "description": "Build inside this subdirectory of the extracted sources.",
                     "type": "string"
                 },
                 "build-options": {
                     "$ref": "#/definitions/build-options"
                 },
                 "build-commands": {
-                    "description": "This is an array containing extra options to pass to flatpak build.",
-                    "type": "array"
+                    "description": "An array of commands to run during build (between make and make install if those are used). This is primarily useful when using the simple buildsystem. Each command is run in /bin/sh -c, so it can use standard POSIX shell syntax such as piping output.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "post-install": {
-                    "description": "Similar to build-args but affects the tests, not the normal build.",
-                    "type": "array"
+                    "description": "An array of shell commands that are run after the install phase. Can for example clean up the install dir, or install extra files.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "cleanup": {
-                    "description": "This is an array containing extra options to pass to configure.",
-                    "type": "array"
+                    "description": "An array of file patterns that should be removed at the end. Patterns starting with / are taken to be full pathnames (without the /app prefix), otherwise they just match the basename. Note that any patterns will only match files installed by this module.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "ensure-writable": {
-                    "description": "An array of extra arguments that will be passed to make.",
+                    "description": "The way the builder works is that files in the install directory are hard-links to the cached files, so you're not allowed to modify them in-place. If you list a file in this then the hardlink will be broken and you can modify it. This is a workaround, ideally installing files should replace files, not modify existing ones.",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "only-arches": {
-                    "description": "An array of extra arguments that will be passed to make install.",
+                    "description": "If non-empty, only build the module on the arches listed.",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "skip-arches": {
-                    "description": "If this is true (the default is false) then all ELF files will be stripped after install.",
+                    "description": "Don't build on any of the arches listed.",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "cleanup-platform": {
-                    "description": "By default (if strip is not true) flatpak-builder extracts all debug info in ELF files to a separate files and puts this in an extension. If you want to disable this, set no-debuginfo to true.",
+                    "description": "Extra files to clean up in the platform.",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "run tests": {
-                    "description": "By default when extracting debuginfo we compress the debug sections. If you want to disable this, set no-debuginfo-compression to true.",
+                    "description": "If true this will run the tests after installing.",
                     "type": "boolean"
                 },
                 "test-rule": {
-                    "description": "This is a dictionary defining for each arch a separate build options object that override the main one.",
+                    "description": "The target to build when running the tests. Defaults to 'check' for make and 'test' for ninja. Set to empty to disable.",
                     "type": "string"
                 },
                 "test-commands": {
-                    "description": "This is a dictionary defining for each arch a separate build options object that override the main one.",
+                    "description": "Array of commands to run during the tests.",
                     "type": "string"
                 },
                 "modules": {
-                    "description": "An array of objects specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module. See below for details.",
+                    "description": "An array of objects specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module.",
                     "type": "array",
-                    "items": [
-                        {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/definitions/module"
-                                },
-                                {
-                                    "type": "string"
-                                }
-                            ]
-                        }
+                    "items": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/definitions/module"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "sources": {
+            "description": " These contain a pointer to the source that will be extracted into the source directory before the build starts. They can be of several types, distinguished by the type property. Additionally, the sources list can contain a plain string, which is interpreted as the name of a separate json or yaml file that is read and inserted at this point. The file can contain a single source, or an array of sources.",
+            "type": "object",
+            "properties": {
+                "only-arches": {
+                    "description": "If non-empty, only build the module on the arches listed.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "skip-arches": {
+                    "description": "Don't build on any of the arches listed.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dest": {
+                    "description": "Directory inside the source dir where this source will be extracted.",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Type of the source.",
+                    "type": "string",
+                    "enum": [
+                        "archive",
+                        "git",
+                        "bzr",
+                        "svn",
+                        "dir",
+                        "file",
+                        "script",
+                        "shell",
+                        "patch",
+                        "extra-data"
                     ]
                 }
             },
@@ -422,41 +505,51 @@
         },
         "base-extensions": {
             "description": "Install these extra extensions from the base application when initializing the application directory.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "inherit-extensions": {
             "description": "Inherit these extra extensions points from the base application or sdk when finishing the build.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "inherit-sdk-extensions": {
             "description": "Inherit these extra extensions points from the base application or sdk when finishing the build, but do not inherit them into the platform.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "tags": {
             "description": "Add these tags to the metadata file.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "build-options": {
             "$ref": "#/definitions/build-options"
         },
         "modules": {
-            "description": "An array of objects specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module. See below for details.",
+            "description": "An array of objects specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module.",
             "type": "array",
-            "items": [
-                {
-                    "oneOf": [
-                        {
-                            "$ref": "#/definitions/module"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ]
-                }
-            ]
+            "items": {
+                "oneOf": [
+                    {
+                        "$ref": "#/definitions/module"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            }
         },
         "add-extensions": {
-            "description": "This is a dictionary of extension objects. The key is the name of the extension. See below for details.",
+            "description": "This is a dictionary of extension objects. The key is the name of the extension.",
             "type": "object",
             "patternProperties": {
                 ".*": {
@@ -471,27 +564,45 @@
         },
         "cleanup": {
             "description": "An array of file patterns that should be removed at the end. Patterns starting with / are taken to be full pathnames (without the /app prefix), otherwise they just match the basename.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "cleanup-commands": {
             "description": "An array of commandlines that are run during the cleanup phase.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "cleanup-platform": {
             "description": "Extra files to clean up in the platform.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "cleanup-platform-commands": {
             "description": "An array of commandlines that are run during the cleanup phase of the platform.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "prepare-platform-commands": {
             "description": "An array of commandlines that are run after importing the base platform, but before applying the new files from the sdk. This is a good place to e.g. delete things from the base that may conflict with the files added in the sdk.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "finish-args": {
             "description": "An array of arguments passed to the flatpak build-finish command.",
-            "type": "array"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "rename-desktop-file": {
             "description": "Any desktop file with this name will be renamed to a name based on id during the cleanup phase.",

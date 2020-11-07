@@ -629,6 +629,163 @@
                     "type": "string"
                 }
             }
+        },
+        "svn-sources": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "description": "URL of the svn repository, including branch/tag part.",
+                    "type": "string"
+                },
+                "revision": {
+                    "description": "A specific revision number to use.",
+                    "type": "string"
+                }
+            }
+        },
+        "dir-sources": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "description": "The path of a local directory whose content will be copied into the source dir. Note that directory sources don't currently support caching, so they will be rebuilt each time.",
+                    "type": "string"
+                },
+                "skip": {
+                    "description": "Source files to ignore in the directory.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "file-sources": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "description": "The path of a local file that will be copied into the source dir.",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "The URL of a remote file that will be downloaded and copied into the source dir. This overrides path if both are specified.",
+                    "type": "string"
+                },
+                "mirror-urls": {
+                    "description": "A list of alternative urls that are used if the main url fails.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "md5": {
+                    "description": "The md5 checksum of the file, verified after download. Note that md5 is no longer considered a safe checksum, we recommend you use at least sha256.",
+                    "type": "string"
+                },
+                "sha1": {
+                    "description": "The sha1 checksum of the file, verified after download. Note that sha1 is no longer considered a safe checksum, we recommend you use at least sha256.",
+                    "type": "string"
+                },
+                "sha256": {
+                    "description": "The sha256 checksum of the file, verified after download.",
+                    "type": "string"
+                },
+                "sha512": {
+                    "description": "The sha512 checksum of the file, verified after download.",
+                    "type": "string"
+                },
+                "dest-filename": {
+                    "description": "Filename to for the downloaded file, defaults to the basename of url.",
+                    "type": "string"
+                }
+            }
+        },
+        "script-sources": {
+            "type": "object",
+            "properties": {
+                "commands": {
+                    "description": "An array of shell commands that will be put in a shellscript file.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dest-filename": {
+                    "description": "Filename to use inside the source dir, default to autogen.sh.",
+                    "type": "string"
+                }
+            }
+        },
+        "shell-sources": {
+            "type": "object",
+            "properties": {
+                "commands": {
+                    "description": "An array of shell commands that will be run during source extraction.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "patch-sources": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "description": "The path of a patch file that will be applied in the source dir.",
+                    "type": "string"
+                },
+                "paths": {
+                    "description": "An list of paths to a patch files that will be applied in the source dir, in order.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "strip-components": {
+                    "description": "The value of the -p argument to patch, defaults to 1.",
+                    "type": "integer"
+                },
+                "use-git": {
+                    "description": "Whether to use 'git apply' rather than 'patch' to apply the patch, required when the patch file contains binary diffs.",
+                    "type": "boolean"
+                },
+                "use-git-am": {
+                    "description": "Whether to use 'git am' rather than 'patch' to apply the patch, required when the patch file contains binary diffs. You cannot use this at the same time as use-git.",
+                    "type": "boolean"
+                },
+                "options": {
+                    "description": "Extra options to pass to the patch command.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "extra-data-sources": {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "description": "The name to use for the downloaded extra data",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "The url to the extra data.",
+                    "type": "string"
+                },
+                "sha256": {
+                    "description": "The sha256 of the extra data.",
+                    "type": "string"
+                },
+                "size": {
+                    "description": "The size of the extra data.",
+                    "type": "number"
+                },
+                "installed-size": {
+                    "description": "The extra installed size this adds to the app (optional).",
+                    "type": "number"
+                }
+            }
         }
     },
     "properties": {

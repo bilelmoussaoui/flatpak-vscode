@@ -375,43 +375,106 @@
         "sources": {
             "description": " These contain a pointer to the source that will be extracted into the source directory before the build starts. They can be of several types, distinguished by the type property. Additionally, the sources list can contain a plain string, which is interpreted as the name of a separate json or yaml file that is read and inserted at this point. The file can contain a single source, or an array of sources.",
             "type": "object",
+            "allOf": [
+                {
+                    "properties": {
+                        "only-arches": {
+                            "description": "If non-empty, only build the module on the arches listed.",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "skip-arches": {
+                            "description": "Don't build on any of the arches listed.",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "dest": {
+                            "description": "Directory inside the source dir where this source will be extracted.",
+                            "type": "string"
+                        },
+                        "type": {
+                            "description": "Type of the source.",
+                            "type": "string",
+                            "enum": [
+                                "archive",
+                                "git",
+                                "bzr",
+                                "svn",
+                                "dir",
+                                "file",
+                                "script",
+                                "shell",
+                                "patch",
+                                "extra-data"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "archive"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/archive-sources"
+                    }
+                }
+            ]
+        },
+        "archive-sources": {
+            "type": "object",
             "properties": {
-                "only-arches": {
-                    "description": "If non-empty, only build the module on the arches listed.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "skip-arches": {
-                    "description": "Don't build on any of the arches listed.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "dest": {
-                    "description": "Directory inside the source dir where this source will be extracted.",
+                "path": {
+                    "description": "The path of the archive.",
                     "type": "string"
                 },
-                "type": {
-                    "description": "Type of the source.",
-                    "type": "string",
-                    "enum": [
-                        "archive",
-                        "git",
-                        "bzr",
-                        "svn",
-                        "dir",
-                        "file",
-                        "script",
-                        "shell",
-                        "patch",
-                        "extra-data"
-                    ]
+                "url": {
+                    "description": "The URL of a remote archive that will be downloaded. This overrides path if both are specified.",
+                    "type": "string"
+                },
+                "mirror-urls": {
+                    "description": "A list of alternative urls that are used if the main url fails.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "git-init": {
+                    "description": "Whether to initialise the repository as a git repository.",
+                    "type": "boolean"
+                },
+                "md5": {
+                    "description": "The md5 checksum of the file, verified after download. Note that md5 is no longer considered a safe checksum, we recommend you use at least sha256.",
+                    "type": "string"
+                },
+                "sha1": {
+                    "description": "The sha1 checksum of the file, verified after download. Note that sha1 is no longer considered a safe checksum, we recommend you use at least sha256.",
+                    "type": "string"
+                },
+                "sha256": {
+                    "description": "The sha256 checksum of the file, verified after download.",
+                    "type": "string"
+                },
+                "sha512": {
+                    "description": "The sha512 checksum of the file, verified after download.",
+                    "type": "string"
+                },
+                "strip-components": {
+                    "description": "The number of initial pathname components to strip during extraction. Defaults to 1.",
+                    "type": "integer"
+                },
+                "dest-filename": {
+                    "description": "Filename to for the downloaded file, defaults to the basename of url.",
+                    "type": "string"
                 }
-            },
-            "additionalProperties": false
+            }
         }
     },
     "properties": {

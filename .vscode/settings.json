@@ -15,25 +15,5 @@
     "devel",
     "freedesktop",
     "nofilesystem"
-  ],
-  "json.schemas": [
-    {
-      "fileMatch": [
-        "/*.*.*.json",
-        "/*.*.*.*.json",
-        "/*.*.*.*.*.json"
-      ],
-      "url": "./myschema.json"
-    }
-  ],
-  "yaml.schemas": {
-    "./myschema.json": [
-      "/*.*.*.yaml",
-      "/*.*.*.*.yaml",
-      "/*.*.*.*.*.yaml",
-      "/*.*.*.yml",
-      "/*.*.*.*.yml",
-      "/*.*.*.*.*.yml",
-    ]
-  }
+  ]
 }

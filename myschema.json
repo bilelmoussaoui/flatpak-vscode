@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$comment": "https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions",
+    "$comment": "https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest",
     "definitions": {
         "build-options": {
             "description": "Object specifying the build environment.",

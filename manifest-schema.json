@@ -807,7 +807,7 @@
             "type": "string"
         },
         "branch": {
-            "description": "The default branch to use when exporting the application. Defaults to master. This key can be overriden by the --default-branch commandline option.",
+            "description": "The default branch to use when exporting the application. Defaults to master. This key can be overridden by the --default-branch commandline option.",
             "type": "string"
         },
         "collection-id": {

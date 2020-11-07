@@ -272,7 +272,7 @@
                     "type": "boolean"
                 },
                 "buildsystem": {
-                    "description": "Build system to use.",
+                    "description": "Build system to use: autotools, cmake, cmake-ninja, meson, simple, qmake",
                     "type": "string",
                     "enum": [
                         "autotools",
@@ -425,6 +425,114 @@
                     "then": {
                         "$ref": "#/definitions/archive-sources"
                     }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "git"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/git-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "bzr"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/bzr-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "svn"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/svn-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "dir"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/dir-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "file"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/file-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "script"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/script-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "shell"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/shell-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "patch"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/patch-sources"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "extra-data"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/extra-data-sources"
+                    }
                 }
             ]
         },
@@ -472,6 +580,52 @@
                 },
                 "dest-filename": {
                     "description": "Filename to for the downloaded file, defaults to the basename of url.",
+                    "type": "string"
+                }
+            }
+        },
+        "git-sources": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "description": "The path to a local checkout of the git repository. Due to how git-clone works, this will be much faster than specifying a URL of file:///...",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "URL of the git repository. This overrides path if both are specified. When using git via SSH, the correct syntax is ssh://user@domain/path/to/repo.git.",
+                    "type": "string"
+                },
+                "branch": {
+                    "description": "The branch to use from the git repository.",
+                    "type": "string"
+                },
+                "tag": {
+                    "description": "The tag to use from the git repository.",
+                    "type": "string"
+                },
+                "commit": {
+                    "description": "The commit to use from the git repository. If branch is also specified, then it is verified that the branch/tag is at this specific commit. This is a readable way to document that you're using a particular tag, but verify that it does not change.",
+                    "type": "string"
+                },
+                "disable-fsckobjects": {
+                    "description": "Don't use transfer.fsckObjects=1 to mirror git repository. This may be needed for some (broken) repositories.",
+                    "type": "boolean"
+                },
+                "disable-shallow-clone": {
+                    "description": "Don't optimize by making a shallow clone when downloading the git repo.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "bzr-sources": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "description": "URL of the bzr repository.",
+                    "type": "string"
+                },
+                "branch": {
+                    "description": "A specific revision to use in the branch.",
                     "type": "string"
                 }
             }

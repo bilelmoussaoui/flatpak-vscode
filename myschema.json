@@ -219,7 +219,14 @@
                     "description": "An array of objects defining sources that will be downloaded and extracted in order. String members in the array are interpreted as the name of a separate json or yaml file that contains sources.",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/sources"
+                        "oneOf": [
+                            {
+                                "$ref": "#/definitions/sources"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
                     }
                 },
                 "config-opts": {

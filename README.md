@@ -4,6 +4,11 @@
 
 A very simple VSCode extension that detects a Flatpak manifest and offers various commands to build, run & export a bundle.
 
+## Download
+
+- [Microsoft Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=bilelmoussaoui.flatpak-vscode)
+- [Open VSX Registry](https://open-vsx.org/extension/bilelmoussaoui/flatpak-vscode)
+
 ## Requirements
 
 * `flatpak`

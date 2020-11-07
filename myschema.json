@@ -224,7 +224,8 @@
                                 "$ref": "#/definitions/sources"
                             },
                             {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Name of a separate json or yaml file that contains sources."
                             }
                         ]
                     }
@@ -371,7 +372,8 @@
                                 "$ref": "#/definitions/module"
                             },
                             {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Name of a separate json or yaml file that contains a module."
                             }
                         ]
                     }
@@ -916,7 +918,7 @@
             "$ref": "#/definitions/build-options"
         },
         "modules": {
-            "description": "An array of objects specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module.",
+            "description": "An array of objects or strings specifying the modules to be built in order. String members in the array are interpreted as the name of a separate json or yaml file that contains a module.",
             "type": "array",
             "items": {
                 "oneOf": [
@@ -924,7 +926,8 @@
                         "$ref": "#/definitions/module"
                     },
                     {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Name of a separate json or yaml file that contains a module."
                     }
                 ]
             }

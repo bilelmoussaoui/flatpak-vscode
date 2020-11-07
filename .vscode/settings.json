@@ -15,5 +15,6 @@
     "devel",
     "freedesktop",
     "nofilesystem"
-  ]
+  ],
+  "cSpell.enabled": true
 }

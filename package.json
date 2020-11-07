@@ -117,6 +117,42 @@
         "command": "flatpak-vscode.run",
         "linux": "ctrl+alt+R"
       }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "/*.*.*.json",
+          "/*.*.*.*.json",
+          "/*.*.*.*.*.json"
+        ],
+        "url": "./manifest-schema.json"
+      }
+    ],
+    "yamlValidation": [
+      {
+        "fileMatch": "/*.*.*.yaml",
+        "url": "./manifest-schema.json"
+      },
+      {
+        "fileMatch": "/*.*.*.*.yaml",
+        "url": "./manifest-schema.json"
+      },
+      {
+        "fileMatch": "/*.*.*.*.*.yaml",
+        "url": "./manifest-schema.json"
+      },
+      {
+        "fileMatch": "/*.*.*.yml",
+        "url": "./manifest-schema.json"
+      },
+      {
+        "fileMatch": "/*.*.*.*.yml",
+        "url": "./manifest-schema.json"
+      },
+      {
+        "fileMatch": "/*.*.*.*.*.yml",
+        "url": "./manifest-schema.json"
+      }
     ]
   },
   "scripts": {
@@ -144,5 +180,8 @@
     "@types/js-yaml": "^3.12.5",
     "effector": "^21.6.0",
     "js-yaml": "^3.14.0"
-  }
+  },
+  "extensionDependencies": [
+    "redhat.vscode-yaml"
+  ]
 }

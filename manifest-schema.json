@@ -123,7 +123,13 @@
         },
         "arch": {
           "description": "This is a dictionary defining for each arch a separate build options object that override the main one.",
-          "type": "boolean"
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/definitions/build-options"
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

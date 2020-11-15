@@ -1,18 +1,21 @@
-import * as fs from 'fs'
+import { promises as fs, constants as fsc } from 'fs'
 import * as path from 'path'
 import {
   Task,
   TaskScope,
-  ShellExecution,
   commands,
   tasks,
   window,
   workspace,
   Uri,
+  TaskPanelKind,
+  CustomExecution,
+  Pseudoterminal,
 } from 'vscode'
 import * as yaml from 'js-yaml'
 import { FlatpakManifest } from './flatpak.types'
 import { getTask, TaskMode } from './tasks'
+import { Command, FlatpakTaskTerminal } from './terminal'
 
 export const isFlatpak = (manifest: FlatpakManifest | null): boolean => {
   if (!manifest) {
@@ -26,7 +29,7 @@ export const isFlatpak = (manifest: FlatpakManifest | null): boolean => {
 export const parseManifest = async (
   uri: Uri
 ): Promise<FlatpakManifest | null> => {
-  const data = (await fs.promises.readFile(uri.fsPath)).toString()
+  const data = (await fs.readFile(uri.fsPath)).toString()
   let manifest = null
 
   switch (path.extname(uri.fsPath)) {
@@ -79,11 +82,8 @@ export const findManifest = async (): Promise<
 export const createTask = (
   mode: TaskMode,
   name: string,
-  cmd: string,
-  args: string[][],
-  cwd: string
+  commands: Command[]
 ): Task => {
-  const command = args.map((arg) => [cmd, ...arg].join(' ')).join(' && ')
   const task = new Task(
     {
       type: 'flatpak',
@@ -92,10 +92,14 @@ export const createTask = (
     TaskScope.Workspace,
     name,
     'Flatpak',
-    new ShellExecution(command, {
-      cwd,
-    })
+    new CustomExecution(
+      (): Thenable<Pseudoterminal> => {
+        return Promise.resolve(new FlatpakTaskTerminal(commands))
+      }
+    )
   )
+  task.presentationOptions.panel = TaskPanelKind.Shared
+  task.presentationOptions.showReuseMessage = false
   return task
 }
 
@@ -126,4 +130,13 @@ export const setContext = (ctx: string, state: boolean | string): void => {
     () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
     () => {} // eslint-disable-line @typescript-eslint/no-empty-function
   )
+}
+
+export const exists = async (path: string): Promise<boolean> => {
+  try {
+    await fs.access(path, fsc.F_OK)
+    return true
+  } catch {
+    return false
+  }
 }

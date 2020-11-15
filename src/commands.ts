@@ -2,15 +2,14 @@ import * as path from 'path'
 import {
   Task,
   Uri,
-  TaskGroup,
-  TaskScope,
-  ShellExecution,
   TaskProvider,
   tasks,
   ProviderResult,
 } from 'vscode'
 import { FlatpakManifest, Module } from './flatpak.types'
 import { createTask, getBuildDir, getWorkspacePath } from './utils'
+import { Command } from './terminal'
+import { getuid } from 'process'
 
 export enum TaskMode {
   buildInit = 'build-init',
@@ -28,9 +27,9 @@ export const getBuildAppCommand = (
   workspace: string,
   buildDir: string,
   buildArgs: string[]
-): [string[][], string[][]] => {
-  let buildAppCommand: string[][] = []
-  let rebuildAppCommand: string[][] = []
+): [Command[], Command[]] => {
+  let buildAppCommand: Command[] = []
+  let rebuildAppCommand: Command[] = []
   const configOpts = (module['config-opts'] || []).join(' ')
 
   switch (module.buildsystem) {
@@ -39,8 +38,15 @@ export const getBuildAppCommand = (
         const mesonBuildDir = '_build'
         buildArgs.push(`--filesystem=${workspace}/${mesonBuildDir}`)
         rebuildAppCommand = [
-          ['build', ...buildArgs, buildDir, 'ninja', '-C', mesonBuildDir],
-          [
+          new Command('flatpak', [
+            'build',
+            ...buildArgs,
+            buildDir,
+            'ninja',
+            '-C',
+            mesonBuildDir,
+          ]),
+          new Command('flatpak', [
             'build',
             ...buildArgs,
             buildDir,
@@ -48,10 +54,11 @@ export const getBuildAppCommand = (
             'install',
             '-C',
             mesonBuildDir,
-          ],
+          ]),
         ]
+
         buildAppCommand = [
-          [
+          new Command('flatpak', [
             'build',
             ...buildArgs,
             buildDir,
@@ -60,7 +67,7 @@ export const getBuildAppCommand = (
             '/app',
             mesonBuildDir,
             configOpts,
-          ],
+          ]),
           ...rebuildAppCommand,
         ]
       }
@@ -68,7 +75,12 @@ export const getBuildAppCommand = (
     case 'simple':
       {
         const buildCommands = module['build-commands'].map((command) => {
-          return ['build', ...buildArgs, buildDir, command]
+          return new Command('flatpak', [
+            'build',
+            ...buildArgs,
+            buildDir,
+            command,
+          ])
         })
         rebuildAppCommand = buildCommands
         buildAppCommand = buildCommands
@@ -79,11 +91,10 @@ export const getBuildAppCommand = (
 }
 
 export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
-  const appId = manifest.id || manifest['app-id'] || 'org.flatpak.Test'
   const lastModule = manifest.modules.slice(-1)[0]
   const moduleName = lastModule.name
-  const uid = process.getuid()
   const workspacePath = getWorkspacePath(uri)
+  console.log(workspacePath)
   const buildDir = path.join(getBuildDir(workspacePath), 'repo')
   const stateDir = path.join(getBuildDir(workspacePath), 'flatpak-builder')
 
@@ -109,83 +120,81 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
     buildDir,
     buildArgs
   )
+  return []
+}
 
-  const buildInit = createTask(
-    TaskMode.buildInit,
-    'Build Init',
-    'flatpak',
-    [
-      [
-        'build-init',
-        buildDir,
-        appId,
-        manifest.sdk,
-        manifest.runtime,
-        manifest['runtime-version'],
-      ],
-    ],
-    workspacePath
-  )
+export const exportBundle = (): Command => {
+  return new Command('flatpak-builder', [])
+}
 
-  const updateDependencies = createTask(
-    TaskMode.updateDeps,
-    'Update dependencies',
+export const buildDependencies = (manifestPath: string, buildDir: string, cwd: string, stateDir?: string, stopAt?: string): Command => {
+  const args = [
+    '--ccache',
+    '--force-clean',
+    '--disable-updates',
+    '--disable-download',
+    '--build-only',
+    '--keep-build-dirs',
+  ]
+  if (stateDir) {
+    args.push(`--state-dir=${stateDir}`)
+  }
+  if (stopAt) {
+    args.push(`--stop-at=${stopAt}`)
+  }
+  args.push(buildDir)
+  args.push(manifestPath)
+
+  return new Command('flatpak-builder', args, cwd)
+}
+
+export const updateDependencies = (manifestPath: string, buildDir: string, cwd: string, stateDir?: string, stopAt?: string): Command => {
+  const args = [
+    '--ccache',
+    '--force-clean',
+    '--disable-updates',
+    '--disable-download',
+    '--build-only',
+    '--keep-build-dirs',
+  ]
+  if (stateDir) {
+    args.push(`--state-dir=${stateDir}`)
+  }
+  if (stopAt) {
+    args.push(`--stop-at=${stopAt}`)
+  }
+  args.push(buildDir)
+  args.push(manifestPath)
+  return new Command(
     'flatpak-builder',
-    [
-      [
-        '--ccache',
-        '--force-clean',
-        '--disable-updates',
-        '--download-only',
-        `--state-dir=${stateDir}`,
-        `--stop-at=${moduleName}`,
-        buildDir,
-        uri.fsPath,
-      ],
-    ],
-    workspacePath
+    args,
+    cwd
   )
+}
 
-  const buildDependencies = createTask(
-    TaskMode.buildDeps,
-    'Build the dependencies',
-    'flatpak-builder',
-    [
-      [
-        '--ccache',
-        '--force-clean',
-        '--disable-updates',
-        '--disable-download',
-        '--build-only',
-        `--state-dir=${stateDir}`,
-        '--keep-build-dirs',
-        `--stop-at=${moduleName}`,
-        buildDir,
-        uri.fsPath,
-      ],
-    ],
-    workspacePath
-  )
-  buildDependencies.group = TaskGroup.Build
-
-  const buildApp = createTask(
-    TaskMode.buildApp,
-    'Build the application',
+export const buildInit = (manifest: FlatpakManifest, buildDir: string, cwd: string): Command => {
+  const appId = manifest['app-id'] || manifest.id || 'org.flatpak.Test'
+  return new Command(
     'flatpak',
-    buildAppCommand,
-    workspacePath
+    [
+      'build-init',
+      buildDir,
+      appId,
+      manifest.sdk,
+      manifest.runtime,
+      manifest['runtime-version'],
+    ],
+    cwd
   )
-  buildApp.group = TaskGroup.Build
+}
 
-  const rebuildApp = createTask(
-    TaskMode.rebuild,
-    'Rebuild',
-    'flatpak',
-    rebuildAppCommand,
-    workspacePath
-  )
-  rebuildApp.group = TaskGroup.Build
-
+export const run = (
+  manifest: FlatpakManifest,
+  buildDir: string,
+  cwd: string
+): Command => {
+  const appId = manifest['app-id'] || manifest.id || 'org.flatpak.Test'
+  const uid = getuid()
   const finishArgs = manifest['finish-args']
     .filter((arg) => {
       // --metadata causes a weird issue
@@ -199,46 +208,21 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
       return arg
     })
 
-  const run = createTask(
-    TaskMode.run,
-    'Run',
+  return new Command(
     'flatpak',
     [
-      [
-        'build',
-        '--with-appdir',
-        '--allow=devel',
-        `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
-        ...finishArgs,
-        "--talk-name='org.freedesktop.portal.*'",
-        '--talk-name=org.a11y.Bus',
-        buildDir,
-        manifest.command,
-      ],
+      'build',
+      '--with-appdir',
+      '--allow=devel',
+      `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
+      ...finishArgs,
+      "--talk-name='org.freedesktop.portal.*'",
+      '--talk-name=org.a11y.Bus',
+      buildDir,
+      manifest.command,
     ],
-    workspacePath
+    cwd
   )
-
-  const exportBundle = new Task(
-    {
-      type: 'flatpak',
-      mode: TaskMode.export,
-    },
-    TaskScope.Workspace,
-    'Build the application and export it as a bundle',
-    'Export bundle',
-    new ShellExecution('print "hey"')
-  )
-
-  return [
-    buildInit,
-    buildDependencies,
-    buildApp,
-    run,
-    rebuildApp,
-    exportBundle,
-    updateDependencies,
-  ]
 }
 
 export async function getTask(mode: TaskMode): Promise<Task> {

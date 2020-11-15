@@ -96,7 +96,7 @@
         },
         {
           "command": "flatpak-vscode.build-app",
-          "when": "!flatpakApplicationBuilt && flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
+          "when": "flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
         },
         {
           "command": "flatpak-vscode.run",

@@ -130,27 +130,14 @@
     ],
     "yamlValidation": [
       {
-        "fileMatch": "/*.*.*.yaml",
-        "url": "./manifest-schema.json"
-      },
-      {
-        "fileMatch": "/*.*.*.*.yaml",
-        "url": "./manifest-schema.json"
-      },
-      {
-        "fileMatch": "/*.*.*.*.*.yaml",
-        "url": "./manifest-schema.json"
-      },
-      {
-        "fileMatch": "/*.*.*.yml",
-        "url": "./manifest-schema.json"
-      },
-      {
-        "fileMatch": "/*.*.*.*.yml",
-        "url": "./manifest-schema.json"
-      },
-      {
-        "fileMatch": "/*.*.*.*.*.yml",
+        "fileMatch": [
+          "/*.*.*.yaml",
+          "/*.*.*.*.yaml",
+          "/*.*.*.*.*.yaml",
+          "/*.*.*.yml",
+          "/*.*.*.*.yml",
+          "/*.*.*.*.*.yml"
+        ],
         "url": "./manifest-schema.json"
       }
     ]

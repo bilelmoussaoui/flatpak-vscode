@@ -1,5 +1,5 @@
 import * as store from './store'
-import { window, tasks, ExtensionContext, commands } from 'vscode'
+import { window, tasks, ExtensionContext, commands, DebugConsoleMode } from 'vscode'
 import {
   execTask,
   exists,
@@ -7,7 +7,7 @@ import {
   getBuildDir,
   getWorkspacePath,
 } from './utils'
-import { TaskMode, FlatpakTaskProvider } from './commands'
+import { FlatpakTaskProvider, TaskMode } from './tasks'
 import { promises as fs } from 'fs'
 const { onDidEndTask, registerTaskProvider } = tasks
 const { executeCommand, registerCommand } = commands
@@ -27,6 +27,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
     }
 
     store.manifestFound()
+
+    store.failed.watch(({command, message}) => {
+      console.log(message, command)
+    })
 
     showInformationMessage(
       'Flatpak manifest detected, would you like VS Code to init a build ?',

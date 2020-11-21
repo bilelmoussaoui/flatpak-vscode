@@ -1,4 +1,5 @@
 import { createStore, createEvent } from 'effector'
+import { Command } from './terminal'
 import { setContext } from './utils'
 
 export const manifestFound = createEvent()
@@ -50,4 +51,19 @@ export const application = createStore({ built: false })
   .on(clean, (state) => {
     setContext('flatpakApplicationBuilt', false)
     state.built = false
+  })
+
+
+  export interface PayloadError {
+    command: Command | null,
+    message: string | null,
+  }
+
+export const failed = createEvent<PayloadError>()
+
+export const error = createStore<PayloadError>({command: null, message: null})
+  .on(failed, (state, payload: PayloadError ): void => {
+      state.command = payload.command
+      state.message = payload.message
+
   })

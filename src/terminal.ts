@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as readline from 'readline'
+import { failed } from './store'
 
 export class Command {
   name: string
@@ -55,11 +56,21 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
     this.spawn(this.commands[0])
   }
 
+  onError(message: string, command: Command): void {
+    this.writeEmitter.fire(message)
+    failed( { command, message})
+    this.failed = true
+  }
+
   spawnNext(): void {
+    this.currentCommand++
     if (this.failed) {
+      this.currentCommand = 0
       this.closeEmitter.fire()
       return
     }
+    console.log(this.commands.length)
+    console.log(this.current())
     if (this.currentCommand < this.commands.length) {
       this.spawn(this.commands[this.currentCommand])
     } else {
@@ -93,19 +104,22 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
         this.writeEmitter.fire('\r\n')
       })
       .on('close', () => {
-        this.failed = true
+        this.spawnNext()
       })
 
     proc.on('error', (error) => {
-      this.writeEmitter.fire(error.message)
-      this.failed = true
+      this.onError(error.message, this.current())
     })
     proc.on('close', (code) => {
       if (code !== 0) {
-        this.failed = true
+        this.onError('', this.current())
+        return
       }
-      this.currentCommand++
       this.spawnNext()
     })
+  }
+
+  current(): Command {
+    return this.commands[this.currentCommand]
   }
 }

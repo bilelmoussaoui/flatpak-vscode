@@ -1,30 +1,11 @@
-import * as path from 'path'
-import {
-  Task,
-  Uri,
-  TaskProvider,
-  tasks,
-  ProviderResult,
-} from 'vscode'
 import { FlatpakManifest, Module } from './flatpak.types'
-import { createTask, getBuildDir, getWorkspacePath } from './utils'
 import { Command } from './terminal'
 import { getuid } from 'process'
 
-export enum TaskMode {
-  buildInit = 'build-init',
-  updateDeps = 'update-deps',
-  buildDeps = 'build-deps',
-  buildApp = 'build-app',
-  rebuild = 'rebuild',
-  run = 'run',
-  export = 'export',
-  clean = 'clean',
-}
 
 export const getBuildAppCommand = (
   module: Module,
-  workspace: string,
+  cwd: string,
   buildDir: string,
   buildArgs: string[]
 ): [Command[], Command[]] => {
@@ -36,7 +17,7 @@ export const getBuildAppCommand = (
     case 'meson':
       {
         const mesonBuildDir = '_build'
-        buildArgs.push(`--filesystem=${workspace}/${mesonBuildDir}`)
+        buildArgs.push(`--filesystem=${cwd}/${mesonBuildDir}`)
         rebuildAppCommand = [
           new Command('flatpak', [
             'build',
@@ -45,7 +26,7 @@ export const getBuildAppCommand = (
             'ninja',
             '-C',
             mesonBuildDir,
-          ]),
+          ],cwd),
           new Command('flatpak', [
             'build',
             ...buildArgs,
@@ -54,7 +35,7 @@ export const getBuildAppCommand = (
             'install',
             '-C',
             mesonBuildDir,
-          ]),
+          ],cwd),
         ]
 
         buildAppCommand = [
@@ -67,7 +48,7 @@ export const getBuildAppCommand = (
             '/app',
             mesonBuildDir,
             configOpts,
-          ]),
+          ],cwd),
           ...rebuildAppCommand,
         ]
       }
@@ -80,7 +61,7 @@ export const getBuildAppCommand = (
             ...buildArgs,
             buildDir,
             command,
-          ])
+          ],cwd)
         })
         rebuildAppCommand = buildCommands
         buildAppCommand = buildCommands
@@ -88,39 +69,6 @@ export const getBuildAppCommand = (
       break
   }
   return [buildAppCommand, rebuildAppCommand]
-}
-
-export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
-  const lastModule = manifest.modules.slice(-1)[0]
-  const moduleName = lastModule.name
-  const workspacePath = getWorkspacePath(uri)
-  console.log(workspacePath)
-  const buildDir = path.join(getBuildDir(workspacePath), 'repo')
-  const stateDir = path.join(getBuildDir(workspacePath), 'flatpak-builder')
-
-  const buildEnv = manifest['build-options']?.env || {}
-  const buildArgs = [
-    '--share=network',
-    '--nofilesystem=host',
-    `--filesystem=${workspacePath}`,
-    `--filesystem=${buildDir}`,
-  ]
-  const sdkPath = manifest['build-options']?.['append-path']
-  if (sdkPath) {
-    buildArgs.push(`--env=PATH=$PATH:${sdkPath}`)
-  }
-
-  for (const [key, value] of Object.entries(buildEnv)) {
-    buildArgs.push(`--env=${key}=${value}`)
-  }
-
-  const [buildAppCommand, rebuildAppCommand] = getBuildAppCommand(
-    lastModule,
-    workspacePath,
-    buildDir,
-    buildArgs
-  )
-  return []
 }
 
 export const exportBundle = (): Command => {
@@ -223,30 +171,4 @@ export const run = (
     ],
     cwd
   )
-}
-
-export async function getTask(mode: TaskMode): Promise<Task> {
-  const flatpakTasks = await tasks.fetchTasks({ type: 'flatpak' })
-  const filtered = flatpakTasks.filter((t) => t.definition.mode === mode)
-  if (filtered.length === 0) {
-    throw new Error(`Cannot find ${mode} task`)
-  }
-  return filtered[0]
-}
-
-export class FlatpakTaskProvider implements TaskProvider {
-  private manifest: FlatpakManifest
-  private uri: Uri
-
-  constructor(manifest: FlatpakManifest, uri: Uri) {
-    this.manifest = manifest
-    this.uri = uri
-  }
-
-  provideTasks(): ProviderResult<Task[]> {
-    return getTasks(this.manifest, this.uri)
-  }
-  resolveTask(): ProviderResult<Task> {
-    return undefined
-  }
 }

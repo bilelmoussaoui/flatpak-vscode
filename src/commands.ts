@@ -101,9 +101,7 @@ export const updateDependencies = (manifestPath: string, buildDir: string, cwd: 
     '--ccache',
     '--force-clean',
     '--disable-updates',
-    '--disable-download',
-    '--build-only',
-    '--keep-build-dirs',
+    '--download-only',
   ]
   if (stateDir) {
     args.push(`--state-dir=${stateDir}`)

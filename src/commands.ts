@@ -26,7 +26,7 @@ export const getBuildAppCommand = (
             'ninja',
             '-C',
             mesonBuildDir,
-          ],cwd, isSandboxed),
+          ], cwd, isSandboxed),
           new Command('flatpak', [
             'build',
             ...buildArgs,
@@ -35,7 +35,7 @@ export const getBuildAppCommand = (
             'install',
             '-C',
             mesonBuildDir,
-          ],cwd, isSandboxed),
+          ], cwd, isSandboxed),
         ]
 
         buildAppCommand = [
@@ -48,7 +48,7 @@ export const getBuildAppCommand = (
             '/app',
             mesonBuildDir,
             configOpts,
-          ],cwd, isSandboxed),
+          ], cwd, isSandboxed),
           ...rebuildAppCommand,
         ]
       }
@@ -61,7 +61,7 @@ export const getBuildAppCommand = (
             ...buildArgs,
             buildDir,
             command,
-          ],cwd, isSandboxed)
+          ], cwd, isSandboxed)
         })
         rebuildAppCommand = buildCommands
         buildAppCommand = buildCommands

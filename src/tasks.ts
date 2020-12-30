@@ -53,9 +53,9 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri, isSandboxed: boole
     isSandboxed,
   )
   return [
-    createTask(TaskMode.buildInit, 'init', [buildInit (manifest, buildDir, workspacePath, isSandboxed)]),
-    createTask(TaskMode.updateDeps, 'Update dependencies', [updateDependencies (manifestPath, buildDir, workspacePath, isSandboxed, stateDir, lastModule.name)]),
-    createTask(TaskMode.buildDeps, 'Build dependencies', [buildDependencies (manifestPath, buildDir, workspacePath, isSandboxed, stateDir, lastModule.name )]),
+    createTask(TaskMode.buildInit, 'init', [buildInit(manifest, buildDir, workspacePath, isSandboxed)]),
+    createTask(TaskMode.updateDeps, 'Update dependencies', [updateDependencies(manifestPath, buildDir, workspacePath, isSandboxed, stateDir, lastModule.name)]),
+    createTask(TaskMode.buildDeps, 'Build dependencies', [buildDependencies(manifestPath, buildDir, workspacePath, isSandboxed, stateDir, lastModule.name)]),
     createTask(TaskMode.buildApp, 'Build application', buildAppCommand),
     createTask(TaskMode.rebuild, 'Rebuild application', rebuildAppCommand),
     createTask(TaskMode.run, 'run', [run(manifest, buildDir, workspacePath, isSandboxed)]),

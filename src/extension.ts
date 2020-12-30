@@ -29,7 +29,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     store.manifestFound()
 
-    store.failed.watch(({command, message}) => {
+    store.failed.watch(({ command, message }) => {
       console.log(message, command)
     })
 
@@ -48,7 +48,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
           }
         }
       },
-      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+      () => { } // eslint-disable-line @typescript-eslint/no-empty-function
     )
 
     onDidEndTask(async (e) => {

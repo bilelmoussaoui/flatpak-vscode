@@ -46,8 +46,8 @@ export const parseManifest = async (
           'Failed to parse the manifest, please use a valid extension.'
         )
         .then(
-          () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-          () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { } // eslint-disable-line @typescript-eslint/no-empty-function
         )
       break
   }
@@ -110,8 +110,8 @@ export const execTask = async (
 ): Promise<void> => {
   if (message) {
     window.showInformationMessage(message).then(
-      () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+      () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+      () => { } // eslint-disable-line @typescript-eslint/no-empty-function
     )
   }
   const task = await getTask(mode)
@@ -128,8 +128,8 @@ export const getWorkspacePath = (manifest: Uri): string => {
 
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
-    () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-    () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { } // eslint-disable-line @typescript-eslint/no-empty-function
   )
 }
 

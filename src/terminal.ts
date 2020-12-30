@@ -58,7 +58,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
 
   onError(message: string, command: Command): void {
     this.writeEmitter.fire(message)
-    failed( { command, message})
+    failed({ command, message })
     this.failed = true
   }
 
@@ -81,10 +81,19 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
 
   spawn(command: Command): void {
     this.writeEmitter.fire(`${command.toString()}`)
-    const proc = child_process.spawn(command.name, command.arguments, {
-      cwd: command.cwd,
-      shell: '/usr/bin/bash',
-    })
+    let proc
+    if (command.isSandboxed) {
+      proc = child_process.spawn("flatpak-spawn", ["--host", command.name, ...command.arguments], {
+        cwd: command.cwd,
+        shell: '/usr/bin/bash',
+      })
+    }
+    else {
+      proc = child_process.spawn(command.name, command.arguments, {
+        cwd: command.cwd,
+        shell: '/usr/bin/bash',
+      })
+    }
     readline
       .createInterface({
         input: proc.stdout,

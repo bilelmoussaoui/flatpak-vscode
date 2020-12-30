@@ -1,5 +1,5 @@
 import * as store from './store'
-import { window, tasks, ExtensionContext, commands, DebugConsoleMode } from 'vscode'
+import { window, tasks, ExtensionContext, commands } from 'vscode'
 import {
   execTask,
   exists,
@@ -19,6 +19,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   // Look for a flatpak manifest
   const [uri, manifest] = await findManifest()
   const isSandboxed = await exists('/.flatpak-info')
+
 
   if (uri && manifest) {
     const buildDir = getBuildDir(getWorkspacePath(uri))
@@ -74,7 +75,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     })
 
     context.subscriptions.push(
-      registerTaskProvider('flatpak', new FlatpakTaskProvider(manifest, uri))
+      registerTaskProvider('flatpak', new FlatpakTaskProvider(manifest, uri, isSandboxed))
     )
 
     // Init the build environment

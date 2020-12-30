@@ -21,7 +21,7 @@ export enum TaskMode {
   clean = 'clean',
 }
 
-export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
+export const getTasks = (manifest: FlatpakManifest, uri: Uri, isSandboxed: boolean): Task[] => {
   const manifestPath = uri.fsPath
   const lastModule = manifest.modules.slice(-1)[0]
   const workspacePath = getWorkspacePath(uri)
@@ -49,15 +49,16 @@ export const getTasks = (manifest: FlatpakManifest, uri: Uri): Task[] => {
     lastModule,
     workspacePath,
     buildDir,
-    buildArgs
+    buildArgs,
+    isSandboxed,
   )
   return [
-    createTask(TaskMode.buildInit, 'init', [buildInit (manifest, buildDir, workspacePath)]),
-    createTask(TaskMode.updateDeps, 'Update dependencies', [updateDependencies (manifestPath, buildDir, workspacePath, stateDir, lastModule.name)]),
-    createTask(TaskMode.buildDeps, 'Build dependencies', [buildDependencies (manifestPath, buildDir, workspacePath, stateDir, lastModule.name )]),
+    createTask(TaskMode.buildInit, 'init', [buildInit (manifest, buildDir, workspacePath, isSandboxed)]),
+    createTask(TaskMode.updateDeps, 'Update dependencies', [updateDependencies (manifestPath, buildDir, workspacePath, isSandboxed, stateDir, lastModule.name)]),
+    createTask(TaskMode.buildDeps, 'Build dependencies', [buildDependencies (manifestPath, buildDir, workspacePath, isSandboxed, stateDir, lastModule.name )]),
     createTask(TaskMode.buildApp, 'Build application', buildAppCommand),
     createTask(TaskMode.rebuild, 'Rebuild application', rebuildAppCommand),
-    createTask(TaskMode.run, 'run', [run(manifest, buildDir, workspacePath)]),
+    createTask(TaskMode.run, 'run', [run(manifest, buildDir, workspacePath, isSandboxed)]),
   ]
 }
 
@@ -73,14 +74,16 @@ export async function getTask(mode: TaskMode): Promise<Task> {
 export class FlatpakTaskProvider implements TaskProvider {
   private manifest: FlatpakManifest
   private uri: Uri
+  private isSandboxed: boolean
 
-  constructor(manifest: FlatpakManifest, uri: Uri) {
+  constructor(manifest: FlatpakManifest, uri: Uri, isSandboxed: boolean) {
+    this.isSandboxed = isSandboxed
     this.manifest = manifest
     this.uri = uri
   }
 
   provideTasks(): ProviderResult<Task[]> {
-    return getTasks(this.manifest, this.uri)
+    return getTasks(this.manifest, this.uri, this.isSandboxed)
   }
   resolveTask(): ProviderResult<Task> {
     return undefined

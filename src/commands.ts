@@ -2,12 +2,12 @@ import { FlatpakManifest, Module } from './flatpak.types'
 import { Command } from './terminal'
 import { getuid } from 'process'
 
-
 export const getBuildAppCommand = (
   module: Module,
   cwd: string,
   buildDir: string,
-  buildArgs: string[]
+  buildArgs: string[],
+  isSandboxed: boolean
 ): [Command[], Command[]] => {
   let buildAppCommand: Command[] = []
   let rebuildAppCommand: Command[] = []
@@ -26,7 +26,7 @@ export const getBuildAppCommand = (
             'ninja',
             '-C',
             mesonBuildDir,
-          ],cwd),
+          ],cwd, isSandboxed),
           new Command('flatpak', [
             'build',
             ...buildArgs,
@@ -35,7 +35,7 @@ export const getBuildAppCommand = (
             'install',
             '-C',
             mesonBuildDir,
-          ],cwd),
+          ],cwd, isSandboxed),
         ]
 
         buildAppCommand = [
@@ -48,7 +48,7 @@ export const getBuildAppCommand = (
             '/app',
             mesonBuildDir,
             configOpts,
-          ],cwd),
+          ],cwd, isSandboxed),
           ...rebuildAppCommand,
         ]
       }
@@ -61,7 +61,7 @@ export const getBuildAppCommand = (
             ...buildArgs,
             buildDir,
             command,
-          ],cwd)
+          ],cwd, isSandboxed)
         })
         rebuildAppCommand = buildCommands
         buildAppCommand = buildCommands
@@ -75,7 +75,7 @@ export const exportBundle = (): Command => {
   return new Command('flatpak-builder', [])
 }
 
-export const buildDependencies = (manifestPath: string, buildDir: string, cwd: string, stateDir?: string, stopAt?: string): Command => {
+export const buildDependencies = (manifestPath: string, buildDir: string, cwd: string, isSandboxed: boolean, stateDir?: string, stopAt?: string): Command => {
   const args = [
     '--ccache',
     '--force-clean',
@@ -93,10 +93,10 @@ export const buildDependencies = (manifestPath: string, buildDir: string, cwd: s
   args.push(buildDir)
   args.push(manifestPath)
 
-  return new Command('flatpak-builder', args, cwd)
+  return new Command('flatpak-builder', args, cwd, isSandboxed)
 }
 
-export const updateDependencies = (manifestPath: string, buildDir: string, cwd: string, stateDir?: string, stopAt?: string): Command => {
+export const updateDependencies = (manifestPath: string, buildDir: string, cwd: string, isSandboxed: boolean, stateDir?: string, stopAt?: string): Command => {
   const args = [
     '--ccache',
     '--force-clean',
@@ -114,11 +114,12 @@ export const updateDependencies = (manifestPath: string, buildDir: string, cwd: 
   return new Command(
     'flatpak-builder',
     args,
-    cwd
+    cwd,
+    isSandboxed
   )
 }
 
-export const buildInit = (manifest: FlatpakManifest, buildDir: string, cwd: string): Command => {
+export const buildInit = (manifest: FlatpakManifest, buildDir: string, cwd: string, isSandboxed: boolean): Command => {
   const appId = manifest['app-id'] || manifest.id || 'org.flatpak.Test'
   return new Command(
     'flatpak',
@@ -130,14 +131,16 @@ export const buildInit = (manifest: FlatpakManifest, buildDir: string, cwd: stri
       manifest.runtime,
       manifest['runtime-version'],
     ],
-    cwd
+    cwd,
+    isSandboxed
   )
 }
 
 export const run = (
   manifest: FlatpakManifest,
   buildDir: string,
-  cwd: string
+  cwd: string,
+  isSandboxed: boolean,
 ): Command => {
   const appId = manifest['app-id'] || manifest.id || 'org.flatpak.Test'
   const uid = getuid()
@@ -167,6 +170,7 @@ export const run = (
       buildDir,
       manifest.command,
     ],
-    cwd
+    cwd,
+    isSandboxed,
   )
 }

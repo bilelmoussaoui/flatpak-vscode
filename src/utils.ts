@@ -82,7 +82,7 @@ export const findManifest = async (): Promise<
 export const createTask = (
   mode: TaskMode,
   name: string,
-  commands: Command[]
+  commands: Command[],
 ): Task => {
   const task = new Task(
     {
@@ -98,8 +98,9 @@ export const createTask = (
       }
     )
   )
-  task.presentationOptions.panel = TaskPanelKind.Shared
+  task.presentationOptions.panel = TaskPanelKind.Dedicated
   task.presentationOptions.showReuseMessage = false
+  task.group = "flatpak"
   return task
 }
 

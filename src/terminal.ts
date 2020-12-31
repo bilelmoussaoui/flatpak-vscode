@@ -28,6 +28,23 @@ export class Command {
     }
     return cmd
   }
+
+  run(): child_process.ChildProcessWithoutNullStreams {
+    let proc
+    if (this.isSandboxed) {
+      proc = child_process.spawn("flatpak-spawn", ["--host", this.name, ...this.arguments], {
+        cwd: this.cwd,
+        shell: '/usr/bin/bash',
+      })
+    }
+    else {
+      proc = child_process.spawn(this.name, this.arguments, {
+        cwd: this.cwd,
+        shell: '/usr/bin/bash',
+      })
+    }
+    return proc
+  }
 }
 
 export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
@@ -81,19 +98,9 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
 
   spawn(command: Command): void {
     this.writeEmitter.fire(`${command.toString()}`)
-    let proc
-    if (command.isSandboxed) {
-      proc = child_process.spawn("flatpak-spawn", ["--host", command.name, ...command.arguments], {
-        cwd: command.cwd,
-        shell: '/usr/bin/bash',
-      })
-    }
-    else {
-      proc = child_process.spawn(command.name, command.arguments, {
-        cwd: command.cwd,
-        shell: '/usr/bin/bash',
-      })
-    }
+    this.writeEmitter.fire('\r\n\r\n')
+    const proc = command.run()
+
     readline
       .createInterface({
         input: proc.stdout,

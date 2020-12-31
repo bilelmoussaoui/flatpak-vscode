@@ -29,3 +29,6 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 * `run` - Run the application
 
 * `clean` - Clean the build directory (`.flatpak`) inside the current workspace
+
+## Contributing
+Click [here](CONTRIBUTING.md) to find out how to contribute.

@@ -372,7 +372,7 @@
             "type": "string"
           }
         },
-        "run tests": {
+        "run-tests": {
           "description": "If true this will run the tests after installing.",
           "type": "boolean"
         },

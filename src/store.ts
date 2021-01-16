@@ -53,17 +53,17 @@ export const application = createStore({ built: false })
     state.built = false
   })
 
-
 export interface PayloadError {
-  command: Command | null,
-  message: string | null,
+  command: Command | null
+  message: string | null
 }
 
 export const failed = createEvent<PayloadError>()
 
-export const error = createStore<PayloadError>({ command: null, message: null })
-  .on(failed, (state, payload: PayloadError): void => {
-    state.command = payload.command
-    state.message = payload.message
-
-  })
+export const error = createStore<PayloadError>({
+  command: null,
+  message: null,
+}).on(failed, (state, payload: PayloadError): void => {
+  state.command = payload.command
+  state.message = payload.message
+})

@@ -1,12 +1,6 @@
 import * as store from './store'
 import { window, tasks, ExtensionContext, commands } from 'vscode'
-import {
-  execTask,
-  exists,
-  findManifest,
-  getBuildDir,
-  getWorkspacePath,
-} from './utils'
+import { execTask, exists, findManifest } from './utils'
 import { FlatpakTaskProvider, TaskMode } from './tasks'
 import { promises as fs } from 'fs'
 const { onDidEndTask, registerTaskProvider } = tasks
@@ -17,13 +11,12 @@ const EXT_ID = 'flatpak-vscode'
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // Look for a flatpak manifest
-  const [uri, manifest] = await findManifest()
   const isSandboxed = await exists('/.flatpak-info')
-
-
-  if (uri && manifest) {
-    const buildDir = getBuildDir(getWorkspacePath(uri))
-    if (await exists(buildDir)) {
+  const manifests = await findManifest(isSandboxed)
+  if (manifests.length > 0) {
+    //TODO: allow the user to select a manifest
+    const manifest = manifests[0]
+    if (await exists(manifest.buildDir)) {
       store.initialize()
     }
 
@@ -48,7 +41,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
           }
         }
       },
-      () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
     )
 
     onDidEndTask(async (e) => {
@@ -75,7 +68,24 @@ export async function activate(context: ExtensionContext): Promise<void> {
     })
 
     context.subscriptions.push(
-      registerTaskProvider('flatpak', new FlatpakTaskProvider(manifest, uri, isSandboxed))
+      registerTaskProvider('flatpak', new FlatpakTaskProvider(manifest))
+    )
+
+    context.subscriptions.push(
+      registerCommand(`${EXT_ID}.runtime-terminal`, () => {
+        const terminal = window.createTerminal('Flatpak: Runtime Terminal')
+        terminal.sendText(manifest.runtimeTerminal().toString())
+        terminal.show()
+      })
+    )
+
+    context.subscriptions.push(
+      registerCommand(`${EXT_ID}.build-terminal`, () => {
+        const terminal = window.createTerminal('Flatpak: Build Terminal')
+
+        terminal.sendText(manifest.buildTerminal().toString())
+        terminal.show()
+      })
     )
 
     // Init the build environment
@@ -129,7 +139,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.clean}`, async () => {
         if (store.initialized.getState()) {
-          await fs.rmdir(buildDir, {
+          await fs.rmdir(manifest.buildDir, {
             recursive: true,
           })
           store.clean()

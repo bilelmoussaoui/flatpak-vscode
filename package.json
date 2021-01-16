@@ -41,6 +41,16 @@
   "contributes": {
     "commands": [
       {
+        "command": "flatpak-vscode.runtime-terminal",
+        "title": "Open a Runtime Terminal",
+        "category": "Flatpak"
+      },
+      {
+        "command": "flatpak-vscode.build-terminal",
+        "title": "Open a Build Terminal",
+        "category": "Flatpak"
+      },
+      {
         "command": "flatpak-vscode.update-deps",
         "title": "Update dependencies",
         "category": "Flatpak"
@@ -78,6 +88,14 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "flatpak-vscode.runtime-terminal",
+          "when": "flatpakManifestFound"
+        },
+        {
+          "command": "flatpak-vscode.build-terminal",
+          "when": "flatpakManifestFound && flatpakInitialized"
+        },
         {
           "command": "flatpak-vscode.build-init",
           "when": "!flatpakInitialized && flatpakManifestFound"

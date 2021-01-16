@@ -2,7 +2,263 @@ import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as readline from 'readline'
 import { failed } from './store'
+import { FlatpakManifestSchema, Module } from './flatpak.types'
+import * as path from 'path'
+import { getuid } from 'process'
 
+export class FlatpakManifest {
+  uri: vscode.Uri
+  manifest: FlatpakManifestSchema
+  buildDir: string
+  workspace: string
+  stateDir: string
+  isSandboxed: boolean
+
+  constructor(
+    uri: vscode.Uri,
+    manifest: FlatpakManifestSchema,
+    isSandboxed: boolean
+  ) {
+    this.uri = uri
+    this.manifest = manifest
+    this.workspace = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath || ''
+    this.buildDir = path.join(this.workspace, '.flatpak', 'repo')
+    this.stateDir = path.join(this.workspace, '.flatpak', 'flatpak-builder')
+    this.isSandboxed = isSandboxed
+  }
+
+  id(): string {
+    return this.manifest['app-id'] || this.manifest.id || 'org.flatpak.Test'
+  }
+
+  /**
+   * Returns the name of the latest Flatpak model
+   */
+  module(): Module {
+    return this.manifest.modules.slice(-1)[0]
+  }
+
+  /**
+   * Returns the manifest path
+   */
+  path(): string {
+    return this.uri.fsPath
+  }
+
+  finishArgs(): string[] {
+    return this.manifest['finish-args']
+      .filter((arg) => {
+        // --metadata causes a weird issue
+        return arg.split('=')[0] !== '--metadata'
+      })
+      .map((arg) => {
+        if (arg.endsWith('*')) {
+          const [key, value] = arg.split('=')
+          return `${key}='${value}'`
+        }
+        return arg
+      })
+  }
+
+  runtimeTerminal(): Command {
+    return new Command(
+      'flatpak',
+      [
+        'run',
+        '--command=bash',
+        `${this.manifest.sdk}//${this.manifest['runtime-version']}`,
+      ],
+      this.workspace,
+      this.isSandboxed
+    )
+  }
+
+  buildTerminal(): Command {
+    return this.runInRepo('bash', true)
+  }
+
+  initBuild(): Command {
+    return new Command(
+      'flatpak',
+      [
+        'build-init',
+        this.buildDir,
+        this.id(),
+        this.manifest.sdk,
+        this.manifest.runtime,
+        this.manifest['runtime-version'],
+      ],
+      this.workspace,
+      this.isSandboxed
+    )
+  }
+
+  updateDependencies(): Command {
+    const args = [
+      '--ccache',
+      '--force-clean',
+      '--disable-updates',
+      '--download-only',
+    ]
+    args.push(`--state-dir=${this.stateDir}`)
+    args.push(`--stop-at=${this.module().name}`)
+    args.push(this.buildDir)
+    args.push(this.path())
+
+    return new Command(
+      'flatpak-builder',
+      args,
+      this.workspace,
+      this.isSandboxed
+    )
+  }
+
+  buildDependencies(): Command {
+    const args = [
+      '--ccache',
+      '--force-clean',
+      '--disable-updates',
+      '--disable-download',
+      '--build-only',
+      '--keep-build-dirs',
+    ]
+    args.push(`--state-dir=${this.stateDir}`)
+    args.push(`--stop-at=${this.module().name}`)
+    args.push(this.buildDir)
+    args.push(this.path())
+
+    return new Command(
+      'flatpak-builder',
+      args,
+      this.workspace,
+      this.isSandboxed
+    )
+  }
+
+  build(rebuild: boolean): Command[] {
+    const buildEnv = this.manifest['build-options']?.env || {}
+    const buildArgs = [
+      '--share=network',
+      '--nofilesystem=host',
+      `--filesystem=${this.workspace}`,
+      `--filesystem=${this.buildDir}`,
+    ]
+    const sdkPath = this.manifest['build-options']?.['append-path']
+    if (sdkPath) {
+      buildArgs.push(`--env=PATH=$PATH:${sdkPath}`)
+    }
+
+    for (const [key, value] of Object.entries(buildEnv)) {
+      buildArgs.push(`--env=${key}=${value}`)
+    }
+    const module = this.module()
+    const configOpts = (module['config-opts'] || []).join(' ')
+
+    let commands: Command[] = []
+    switch (module.buildsystem) {
+      case 'meson':
+        {
+          const mesonBuildDir = '_build'
+          buildArgs.push(`--filesystem=${this.workspace}/${mesonBuildDir}`)
+          if (!rebuild) {
+            commands.push(
+              new Command(
+                'flatpak',
+                [
+                  'build',
+                  ...buildArgs,
+                  this.buildDir,
+                  'meson',
+                  '--prefix',
+                  '/app',
+                  mesonBuildDir,
+                  configOpts,
+                ],
+                this.workspace,
+                this.isSandboxed
+              )
+            )
+          }
+          commands.push(
+            new Command(
+              'flatpak',
+              [
+                'build',
+                ...buildArgs,
+                this.buildDir,
+                'ninja',
+                '-C',
+                mesonBuildDir,
+              ],
+              this.workspace,
+              this.isSandboxed
+            )
+          )
+          commands.push(
+            new Command(
+              'flatpak',
+              [
+                'build',
+                ...buildArgs,
+                this.buildDir,
+                'meson',
+                'install',
+                '-C',
+                mesonBuildDir,
+              ],
+              this.workspace,
+              this.isSandboxed
+            )
+          )
+        }
+        break
+      case 'simple':
+        {
+          commands = module['build-commands'].map((command) => {
+            return new Command(
+              'flatpak',
+              ['build', ...buildArgs, this.buildDir, command],
+              this.workspace,
+              this.isSandboxed
+            )
+          })
+        }
+        break
+    }
+    return commands
+  }
+
+  run(): Command {
+    return this.runInRepo(this.manifest.command, false)
+  }
+
+  runInRepo(shellCommand: string, mountExtensions: boolean): Command {
+    const uid = getuid()
+
+    const appId = this.id()
+
+    const args = [
+      'build',
+      '--with-appdir',
+      '--allow=devel',
+      `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
+      ...this.finishArgs(),
+      "--talk-name='org.freedesktop.portal.*'",
+      '--talk-name=org.a11y.Bus',
+    ]
+
+    if (mountExtensions) {
+      const sdkPath = this.manifest['build-options']?.['append-path']
+      if (sdkPath) {
+        args.push(`--env=PATH=$PATH:${sdkPath}`)
+      }
+    }
+
+    args.push(this.buildDir)
+    args.push(shellCommand)
+    return new Command('flatpak', args, this.workspace, this.isSandboxed)
+  }
+}
 export class Command {
   name: string
   cwd?: string
@@ -32,12 +288,15 @@ export class Command {
   run(): child_process.ChildProcessWithoutNullStreams {
     let proc
     if (this.isSandboxed) {
-      proc = child_process.spawn("flatpak-spawn", ["--host", this.name, ...this.arguments], {
-        cwd: this.cwd,
-        shell: '/usr/bin/bash',
-      })
-    }
-    else {
+      proc = child_process.spawn(
+        'flatpak-spawn',
+        ['--host', this.name, ...this.arguments],
+        {
+          cwd: this.cwd,
+          shell: '/usr/bin/bash',
+        }
+      )
+    } else {
       proc = child_process.spawn(this.name, this.arguments, {
         cwd: this.cwd,
         shell: '/usr/bin/bash',

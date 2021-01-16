@@ -13,11 +13,11 @@ import {
   Pseudoterminal,
 } from 'vscode'
 import * as yaml from 'js-yaml'
-import { FlatpakManifest } from './flatpak.types'
+import { FlatpakManifestSchema } from './flatpak.types'
 import { getTask, TaskMode } from './tasks'
-import { Command, FlatpakTaskTerminal } from './terminal'
+import { Command, FlatpakManifest, FlatpakTaskTerminal } from './terminal'
 
-export const isFlatpak = (manifest: FlatpakManifest | null): boolean => {
+export const isFlatpak = (manifest: FlatpakManifestSchema | null): boolean => {
   if (!manifest) {
     return false
   }
@@ -27,18 +27,19 @@ export const isFlatpak = (manifest: FlatpakManifest | null): boolean => {
 }
 
 export const parseManifest = async (
-  uri: Uri
+  uri: Uri,
+  isSandboxed: boolean
 ): Promise<FlatpakManifest | null> => {
   const data = (await fs.readFile(uri.fsPath)).toString()
   let manifest = null
 
   switch (path.extname(uri.fsPath)) {
     case '.json':
-      manifest = JSON.parse(data) as FlatpakManifest
+      manifest = JSON.parse(data) as FlatpakManifestSchema
       break
     case '.yml':
     case '.yaml':
-      manifest = yaml.safeLoad(data) as FlatpakManifest
+      manifest = yaml.safeLoad(data) as FlatpakManifestSchema
       break
     default:
       window
@@ -46,43 +47,47 @@ export const parseManifest = async (
           'Failed to parse the manifest, please use a valid extension.'
         )
         .then(
-          () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-          () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+          () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+          () => {} // eslint-disable-line @typescript-eslint/no-empty-function
         )
       break
   }
   if (isFlatpak(manifest)) {
-    return manifest
+    return new FlatpakManifest(
+      uri,
+      manifest as FlatpakManifestSchema,
+      isSandboxed
+    )
   }
   return null
 }
 
-export const findManifest = async (): Promise<
-  [Uri, FlatpakManifest] | [null, null]
-> => {
+export const findManifest = async (
+  isSandboxed: boolean
+): Promise<FlatpakManifest[]> => {
   const uris: Uri[] = await workspace.findFiles(
     '**/*.{json,yaml,yml}',
     '**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak}/*',
     1000
   )
-
+  const manifests = []
   for (const uri of uris) {
     try {
-      const manifest = await parseManifest(uri)
+      const manifest = await parseManifest(uri, isSandboxed)
       if (manifest) {
-        return [uri, manifest]
+        manifests.push(manifest)
       }
     } catch (err) {
       console.warn(`Failed to parse the JSON file at ${uri.fsPath}`)
     }
   }
-  return [null, null]
+  return manifests
 }
 
 export const createTask = (
   mode: TaskMode,
   name: string,
-  commands: Command[],
+  commands: Command[]
 ): Task => {
   const task = new Task(
     {
@@ -100,7 +105,7 @@ export const createTask = (
   )
   task.presentationOptions.panel = TaskPanelKind.Dedicated
   task.presentationOptions.showReuseMessage = false
-  task.group = "flatpak"
+  task.group = 'flatpak'
   return task
 }
 
@@ -110,8 +115,8 @@ export const execTask = async (
 ): Promise<void> => {
   if (message) {
     window.showInformationMessage(message).then(
-      () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-      () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+      () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
     )
   }
   const task = await getTask(mode)
@@ -128,8 +133,8 @@ export const getWorkspacePath = (manifest: Uri): string => {
 
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
-    () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-    () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+    () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+    () => {} // eslint-disable-line @typescript-eslint/no-empty-function
   )
 }
 

@@ -263,6 +263,10 @@ export class FlatpakManifest {
       if (sdkPath) {
         args.push(`--env=PATH=$PATH:${sdkPath}`)
       }
+      const buildEnv = this.manifest['build-options']?.env || {}
+      for (const [key, value] of Object.entries(buildEnv)) {
+        args.push(`--env=${key}=${value}`)
+      }
       // Assume we might need network access by the executable
       args.push('--share=network')
     }

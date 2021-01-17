@@ -15,16 +15,16 @@ export enum TaskMode {
 
 export const getTasks = (manifest: FlatpakManifest): Task[] => {
   return [
-    createTask(TaskMode.buildInit, 'init', [manifest.initBuild()]),
-    createTask(TaskMode.updateDeps, 'Update dependencies', [
+    createTask(TaskMode.buildInit, 'Initialize', [manifest.initBuild()]),
+    createTask(TaskMode.updateDeps, 'Update Dependencies', [
       manifest.updateDependencies(),
     ]),
-    createTask(TaskMode.buildDeps, 'Build dependencies', [
+    createTask(TaskMode.buildDeps, 'Build Dependencies', [
       manifest.buildDependencies(),
     ]),
-    createTask(TaskMode.buildApp, 'Build application', manifest.build(false)),
-    createTask(TaskMode.rebuild, 'Rebuild application', manifest.build(true)),
-    createTask(TaskMode.run, 'run', [manifest.run()]),
+    createTask(TaskMode.buildApp, 'Build', manifest.build(false)),
+    createTask(TaskMode.rebuild, 'Rebuild', manifest.build(true)),
+    createTask(TaskMode.run, 'Run', [manifest.run()]),
   ]
 }
 

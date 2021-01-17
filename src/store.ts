@@ -12,6 +12,8 @@ export const dependenciesUpdated = createEvent()
 export const dependenciesBuilt = createEvent()
 export const applicationBuilt = createEvent()
 export const failure = createEvent<PayloadError>()
+// Triggered before running a task to remove the latest stored error
+export const cleanup = createEvent()
 
 // The extension state
 export interface State {
@@ -89,6 +91,9 @@ state
   })
   .on(failure, (state, payload: PayloadError) => {
     state.pipeline.error = payload
+  })
+  .on(cleanup, (state) => {
+    state.pipeline.error = null
   })
 
 export const currentStep = (): TaskMode | null => {

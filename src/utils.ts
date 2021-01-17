@@ -1,5 +1,6 @@
 import { promises as fs, constants as fsc } from 'fs'
 import * as path from 'path'
+import * as store from './store'
 import {
   Task,
   TaskScope,
@@ -120,6 +121,7 @@ export const execTask = async (
     )
   }
   const task = await getTask(mode)
+  store.cleanup()
   await tasks.executeTask(task)
 }
 

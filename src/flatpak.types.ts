@@ -1,4 +1,4 @@
-export interface FlatpakManifest {
+export interface FlatpakManifestSchema {
   id?: string
   branch?: string
   'app-id'?: string

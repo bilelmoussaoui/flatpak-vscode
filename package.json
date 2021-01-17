@@ -41,6 +41,16 @@
   "contributes": {
     "commands": [
       {
+        "command": "flatpak-vscode.runtime-terminal",
+        "title": "Open a Runtime Terminal",
+        "category": "Flatpak"
+      },
+      {
+        "command": "flatpak-vscode.build-terminal",
+        "title": "Open a Build Terminal",
+        "category": "Flatpak"
+      },
+      {
         "command": "flatpak-vscode.update-deps",
         "title": "Update dependencies",
         "category": "Flatpak"
@@ -79,6 +89,14 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "flatpak-vscode.runtime-terminal",
+          "when": "flatpakManifestFound"
+        },
+        {
+          "command": "flatpak-vscode.build-terminal",
+          "when": "flatpakManifestFound && flatpakInitialized"
+        },
+        {
           "command": "flatpak-vscode.build-init",
           "when": "!flatpakInitialized && flatpakManifestFound"
         },
@@ -96,7 +114,7 @@
         },
         {
           "command": "flatpak-vscode.build-app",
-          "when": "!flatpakApplicationBuilt && flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
+          "when": "flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
         },
         {
           "command": "flatpak-vscode.run",
@@ -167,8 +185,5 @@
     "@types/js-yaml": "^3.12.5",
     "effector": "^21.6.0",
     "js-yaml": "^3.14.0"
-  },
-  "extensionDependencies": [
-    "redhat.vscode-yaml"
-  ]
+  }
 }

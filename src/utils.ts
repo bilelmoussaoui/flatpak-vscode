@@ -1,20 +1,23 @@
-import * as fs from 'fs'
+import { promises as fs, constants as fsc } from 'fs'
 import * as path from 'path'
 import {
   Task,
   TaskScope,
-  ShellExecution,
   commands,
   tasks,
   window,
   workspace,
   Uri,
+  TaskPanelKind,
+  CustomExecution,
+  Pseudoterminal,
 } from 'vscode'
 import * as yaml from 'js-yaml'
-import { FlatpakManifest } from './flatpak.types'
+import { FlatpakManifestSchema } from './flatpak.types'
 import { getTask, TaskMode } from './tasks'
+import { Command, FlatpakManifest, FlatpakTaskTerminal } from './terminal'
 
-export const isFlatpak = (manifest: FlatpakManifest | null): boolean => {
+export const isFlatpak = (manifest: FlatpakManifestSchema | null): boolean => {
   if (!manifest) {
     return false
   }
@@ -24,18 +27,19 @@ export const isFlatpak = (manifest: FlatpakManifest | null): boolean => {
 }
 
 export const parseManifest = async (
-  uri: Uri
+  uri: Uri,
+  isSandboxed: boolean
 ): Promise<FlatpakManifest | null> => {
-  const data = (await fs.promises.readFile(uri.fsPath)).toString()
+  const data = (await fs.readFile(uri.fsPath)).toString()
   let manifest = null
 
   switch (path.extname(uri.fsPath)) {
     case '.json':
-      manifest = JSON.parse(data) as FlatpakManifest
+      manifest = JSON.parse(data) as FlatpakManifestSchema
       break
     case '.yml':
     case '.yaml':
-      manifest = yaml.safeLoad(data) as FlatpakManifest
+      manifest = yaml.safeLoad(data) as FlatpakManifestSchema
       break
     default:
       window
@@ -49,41 +53,42 @@ export const parseManifest = async (
       break
   }
   if (isFlatpak(manifest)) {
-    return manifest
+    return new FlatpakManifest(
+      uri,
+      manifest as FlatpakManifestSchema,
+      isSandboxed
+    )
   }
   return null
 }
 
-export const findManifest = async (): Promise<
-  [Uri, FlatpakManifest] | [null, null]
-> => {
+export const findManifest = async (
+  isSandboxed: boolean
+): Promise<FlatpakManifest[]> => {
   const uris: Uri[] = await workspace.findFiles(
     '**/*.{json,yaml,yml}',
     '**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak}/*',
     1000
   )
-
+  const manifests = []
   for (const uri of uris) {
     try {
-      const manifest = await parseManifest(uri)
+      const manifest = await parseManifest(uri, isSandboxed)
       if (manifest) {
-        return [uri, manifest]
+        manifests.push(manifest)
       }
     } catch (err) {
       console.warn(`Failed to parse the JSON file at ${uri.fsPath}`)
     }
   }
-  return [null, null]
+  return manifests
 }
 
 export const createTask = (
   mode: TaskMode,
   name: string,
-  cmd: string,
-  args: string[][],
-  cwd: string
+  commands: Command[]
 ): Task => {
-  const command = args.map((arg) => [cmd, ...arg].join(' ')).join(' && ')
   const task = new Task(
     {
       type: 'flatpak',
@@ -92,10 +97,15 @@ export const createTask = (
     TaskScope.Workspace,
     name,
     'Flatpak',
-    new ShellExecution(command, {
-      cwd,
-    })
+    new CustomExecution(
+      (): Thenable<Pseudoterminal> => {
+        return Promise.resolve(new FlatpakTaskTerminal(commands))
+      }
+    )
   )
+  task.presentationOptions.panel = TaskPanelKind.Shared
+  task.presentationOptions.showReuseMessage = false
+  task.group = 'flatpak'
   return task
 }
 
@@ -113,17 +123,18 @@ export const execTask = async (
   await tasks.executeTask(task)
 }
 
-export const getBuildDir = (workspace: string): string => {
-  return path.join(workspace, '.flatpak')
-}
-
-export const getWorkspacePath = (manifest: Uri): string => {
-  return workspace.getWorkspaceFolder(manifest)?.uri.fsPath || ''
-}
-
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
     () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
     () => {} // eslint-disable-line @typescript-eslint/no-empty-function
   )
+}
+
+export const exists = async (path: string): Promise<boolean> => {
+  try {
+    await fs.access(path, fsc.F_OK)
+    return true
+  } catch {
+    return false
+  }
 }

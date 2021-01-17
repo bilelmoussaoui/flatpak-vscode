@@ -1,45 +1,79 @@
 import * as store from './store'
 import { window, tasks, ExtensionContext, commands } from 'vscode'
-import { execTask, findManifest, getBuildDir, getWorkspacePath } from './utils'
-import { TaskMode, FlatpakTaskProvider } from './tasks'
-import { promises as fs, constants as fsc } from 'fs'
-const { executeCommand, registerCommand } = commands
+import { execTask, exists, findManifest } from './utils'
+import { FlatpakTaskProvider, TaskMode } from './tasks'
+import { promises as fs } from 'fs'
 const { onDidEndTask, registerTaskProvider } = tasks
+const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
 const EXT_ID = 'flatpak-vscode'
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // Look for a flatpak manifest
-  const [uri, manifest] = await findManifest()
-  if (uri && manifest) {
-    const buildDir = getBuildDir(getWorkspacePath(uri))
+  const isSandboxed = await exists('/.flatpak-info')
+  const manifests = await findManifest(isSandboxed)
+  if (manifests.length > 0) {
+    //TODO: allow the user to select a manifest
+    const manifest = manifests[0]
+    if (await exists(manifest.buildDir)) {
+      store.initialize()
+    }
 
-    store.manifestFound()
-    fs.access(buildDir, fsc.F_OK).then(
-      () => store.initialize(),
-      () => store.clean()
-    )
-
-    showInformationMessage(
-      'Flatpak manifest detected, would you like VS Code to init a build ?',
-      ...['No', 'Yes']
-    ).then(
-      async (response) => {
-        if (response === 'Yes') {
-          // If the build repository wasn't initialized yet
-          if (!store.initialized.getState()) {
-            await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
-          } else {
-            // We assume that the dependencies were already downloaded here
-            await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
-          }
+    // Automatically set stuff depending on the current SDK
+    switch (manifest.sdk()) {
+      case 'rust':
+        {
+          await manifest.overrideWorkspaceConfig(
+            'rust-analyzer',
+            'server.path',
+            'rust-analyzer'
+          )
+          await manifest.overrideWorkspaceConfig(
+            'rust-analyzer',
+            'rustfmt.overrideCommand',
+            'rustfmt'
+          )
+          await manifest.overrideWorkspaceConfig(
+            'rust-analyzer',
+            'runnables.overrideCargo',
+            'cargo'
+          )
         }
-      },
-      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
-    )
+        break
+    }
+
+    store.manifestFound(manifest)
+
+    store.failure.watch(({ command, message }) => {
+      console.log(message, command)
+    })
+
+    if (!store.state.getState().pipeline.initialized) {
+      showInformationMessage(
+        'Flatpak manifest detected, would you like VS Code to init a build ?',
+        ...['No', 'Yes']
+      ).then(
+        async (response) => {
+          if (response === 'Yes') {
+            // If the build repository wasn't initialized yet
+            if (!store.state.getState().pipeline.initialized) {
+              await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
+            } else {
+              // We assume that the dependencies were already downloaded here
+              await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
+            }
+          }
+        },
+        () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+      )
+    }
 
     onDidEndTask(async (e) => {
+      if (store.state.getState().pipeline.error !== null) {
+        // Don't spawn the next task if there was a failure
+        return
+      }
       switch (e.execution.task.definition.mode) {
         case TaskMode.buildInit:
           store.initialize()
@@ -63,13 +97,30 @@ export async function activate(context: ExtensionContext): Promise<void> {
     })
 
     context.subscriptions.push(
-      registerTaskProvider('flatpak', new FlatpakTaskProvider(manifest, uri))
+      registerTaskProvider('flatpak', new FlatpakTaskProvider(manifest))
+    )
+
+    context.subscriptions.push(
+      registerCommand(`${EXT_ID}.runtime-terminal`, () => {
+        const terminal = window.createTerminal('Flatpak: Runtime Terminal')
+        terminal.sendText(manifest.runtimeTerminal().toString())
+        terminal.show()
+      })
+    )
+
+    context.subscriptions.push(
+      registerCommand(`${EXT_ID}.build-terminal`, () => {
+        const terminal = window.createTerminal('Flatpak: Build Terminal')
+
+        terminal.sendText(manifest.buildTerminal().toString())
+        terminal.show()
+      })
     )
 
     // Init the build environment
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async () => {
-        if (!store.initialized.getState()) {
+        if (!store.state.getState().pipeline.initialized) {
           await execTask(TaskMode.buildInit, 'Configuring the build...')
         }
       })
@@ -78,7 +129,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Update the application's dependencies
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, async () => {
-        if (!store.dependencies.getState().updated) {
+        if (!store.state.getState().pipeline.dependencies.updated) {
           await execTask(TaskMode.updateDeps, 'Updating the dependencies...')
         }
       })
@@ -87,7 +138,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Build the application's dependencies
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, async () => {
-        if (!store.dependencies.getState().built) {
+        if (!store.state.getState().pipeline.dependencies.built) {
           await execTask(TaskMode.buildDeps, 'Building the dependencies...')
         }
       })
@@ -96,7 +147,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Build the application
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, async () => {
-        if (store.dependencies.getState().built) {
+        if (store.state.getState().pipeline.dependencies.built) {
           await execTask(TaskMode.buildApp, 'Building the application...')
         }
       })
@@ -107,7 +158,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // could be different, the rebuild also triggers a run command afterwards
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, async () => {
-        if (store.dependencies.getState().built) {
+        if (store.state.getState().pipeline.application.built) {
           await execTask(TaskMode.rebuild, 'Rebuilding the application...')
         }
       })
@@ -116,8 +167,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Clean build environment
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.clean}`, async () => {
-        if (store.initialized.getState()) {
-          await fs.rmdir(buildDir, {
+        if (store.state.getState().pipeline.initialized) {
+          await fs.rmdir(manifest.buildDir, {
             recursive: true,
           })
           store.clean()
@@ -129,11 +180,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Run the application, only if it was already built
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.run}`, async () => {
-        if (
-          store.initialized.getState() &&
-          store.dependencies.getState().built &&
-          store.application.getState().built
-        ) {
+        if (store.state.getState().pipeline.application.built) {
           await execTask(TaskMode.run, 'Running the application...')
         }
       })

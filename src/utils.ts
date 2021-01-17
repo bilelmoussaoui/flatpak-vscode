@@ -103,7 +103,7 @@ export const createTask = (
       }
     )
   )
-  task.presentationOptions.panel = TaskPanelKind.Dedicated
+  task.presentationOptions.panel = TaskPanelKind.Shared
   task.presentationOptions.showReuseMessage = false
   task.group = 'flatpak'
   return task

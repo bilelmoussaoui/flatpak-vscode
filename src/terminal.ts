@@ -5,10 +5,12 @@ import { failed } from './store'
 import { FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
+import { promises as fs } from 'fs'
 
 export class FlatpakManifest {
   uri: vscode.Uri
   manifest: FlatpakManifestSchema
+  repoDir: string
   buildDir: string
   workspace: string
   stateDir: string
@@ -22,13 +24,22 @@ export class FlatpakManifest {
     this.uri = uri
     this.manifest = manifest
     this.workspace = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath || ''
-    this.buildDir = path.join(this.workspace, '.flatpak', 'repo')
-    this.stateDir = path.join(this.workspace, '.flatpak', 'flatpak-builder')
+    this.buildDir = path.join(this.workspace, '.flatpak')
+    this.repoDir = path.join(this.buildDir, 'repo')
+    this.stateDir = path.join(this.buildDir, 'flatpak-builder')
     this.isSandboxed = isSandboxed
   }
 
   id(): string {
     return this.manifest['app-id'] || this.manifest.id || 'org.flatpak.Test'
+  }
+
+  sdk(): string | null {
+    const sdkPath = this.manifest['build-options']?.['append-path']
+    if (sdkPath?.includes('rust')) {
+      return 'rust'
+    }
+    return null
   }
 
   /**
@@ -82,7 +93,7 @@ export class FlatpakManifest {
       'flatpak',
       [
         'build-init',
-        this.buildDir,
+        this.repoDir,
         this.id(),
         this.manifest.sdk,
         this.manifest.runtime,
@@ -102,7 +113,7 @@ export class FlatpakManifest {
     ]
     args.push(`--state-dir=${this.stateDir}`)
     args.push(`--stop-at=${this.module().name}`)
-    args.push(this.buildDir)
+    args.push(this.repoDir)
     args.push(this.path())
 
     return new Command(
@@ -124,7 +135,7 @@ export class FlatpakManifest {
     ]
     args.push(`--state-dir=${this.stateDir}`)
     args.push(`--stop-at=${this.module().name}`)
-    args.push(this.buildDir)
+    args.push(this.repoDir)
     args.push(this.path())
 
     return new Command(
@@ -141,7 +152,7 @@ export class FlatpakManifest {
       '--share=network',
       '--nofilesystem=host',
       `--filesystem=${this.workspace}`,
-      `--filesystem=${this.buildDir}`,
+      `--filesystem=${this.repoDir}`,
     ]
     const sdkPath = this.manifest['build-options']?.['append-path']
     if (sdkPath) {
@@ -167,7 +178,7 @@ export class FlatpakManifest {
                 [
                   'build',
                   ...buildArgs,
-                  this.buildDir,
+                  this.repoDir,
                   'meson',
                   '--prefix',
                   '/app',
@@ -185,7 +196,7 @@ export class FlatpakManifest {
               [
                 'build',
                 ...buildArgs,
-                this.buildDir,
+                this.repoDir,
                 'ninja',
                 '-C',
                 mesonBuildDir,
@@ -200,7 +211,7 @@ export class FlatpakManifest {
               [
                 'build',
                 ...buildArgs,
-                this.buildDir,
+                this.repoDir,
                 'meson',
                 'install',
                 '-C',
@@ -217,7 +228,7 @@ export class FlatpakManifest {
           commands = module['build-commands'].map((command) => {
             return new Command(
               'flatpak',
-              ['build', ...buildArgs, this.buildDir, command],
+              ['build', ...buildArgs, this.repoDir, command],
               this.workspace,
               this.isSandboxed
             )
@@ -254,7 +265,7 @@ export class FlatpakManifest {
       }
     }
 
-    args.push(this.buildDir)
+    args.push(this.repoDir)
     args.push(shellCommand)
     return new Command('flatpak', args, this.workspace, this.isSandboxed)
   }
@@ -283,6 +294,13 @@ export class Command {
       return `flatpak-spawn --host ${cmd}`
     }
     return cmd
+  }
+
+  // Store the command as a bash script and returns it path
+  async save(output: string): Promise<void> {
+    const cmd = ['#!/bin/sh', '', `${this.toString()} "$@"`].join('\n')
+    await fs.writeFile(output, cmd)
+    await fs.chmod(output, 0o755)
   }
 
   run(): child_process.ChildProcessWithoutNullStreams {

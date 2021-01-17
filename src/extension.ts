@@ -1,11 +1,13 @@
 import * as store from './store'
-import { window, tasks, ExtensionContext, commands } from 'vscode'
+import { window, tasks, ExtensionContext, commands, workspace } from 'vscode'
 import { execTask, exists, findManifest } from './utils'
 import { FlatpakTaskProvider, TaskMode } from './tasks'
 import { promises as fs } from 'fs'
 const { onDidEndTask, registerTaskProvider } = tasks
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
+import * as path from 'path'
+import { downloadAndUnzipVSCode } from 'vscode-test'
 
 const EXT_ID = 'flatpak-vscode'
 
@@ -18,6 +20,21 @@ export async function activate(context: ExtensionContext): Promise<void> {
     const manifest = manifests[0]
     if (await exists(manifest.buildDir)) {
       store.initialize()
+    }
+
+    // Automatically set stuff depending on the current SDK
+    switch (manifest.sdk()) {
+      case 'rust':
+        {
+          const commandPath = path.join(manifest.buildDir, 'rust-analyzer.sh')
+          await manifest.runInRepo('rust-analyzer', true).save(commandPath)
+          const config = workspace.getConfiguration('rust-analyzer')
+          const currentServer = config.get<string>('server.path')
+          if (currentServer !== commandPath) {
+            await config.update('server.path', commandPath)
+          }
+        }
+        break
     }
 
     store.manifestFound()
@@ -91,6 +108,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Init the build environment
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async () => {
+        console.log(manifest.sdk())
         if (!store.initialized.getState()) {
           await execTask(TaskMode.buildInit, 'Configuring the build...')
         }

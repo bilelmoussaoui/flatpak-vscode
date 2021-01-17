@@ -7,7 +7,6 @@ const { onDidEndTask, registerTaskProvider } = tasks
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 import * as path from 'path'
-import { downloadAndUnzipVSCode } from 'vscode-test'
 
 const EXT_ID = 'flatpak-vscode'
 
@@ -26,13 +25,21 @@ export async function activate(context: ExtensionContext): Promise<void> {
     switch (manifest.sdk()) {
       case 'rust':
         {
-          const commandPath = path.join(manifest.buildDir, 'rust-analyzer.sh')
-          await manifest.runInRepo('rust-analyzer', true).save(commandPath)
-          const config = workspace.getConfiguration('rust-analyzer')
-          const currentServer = config.get<string>('server.path')
-          if (currentServer !== commandPath) {
-            await config.update('server.path', commandPath)
-          }
+          await manifest.overrideWorkspaceConfig(
+            'rust-analyzer',
+            'server.path',
+            'rust-analyzer'
+          )
+          await manifest.overrideWorkspaceConfig(
+            'rust-analyzer',
+            'rustfmt.overrideCommand',
+            'rustfmt'
+          )
+          await manifest.overrideWorkspaceConfig(
+            'rust-analyzer',
+            'runnables.overrideCargo',
+            'cargo'
+          )
         }
         break
     }

@@ -50,23 +50,25 @@ export async function activate(context: ExtensionContext): Promise<void> {
       console.log(message, command)
     })
 
-    showInformationMessage(
-      'Flatpak manifest detected, would you like VS Code to init a build ?',
-      ...['No', 'Yes']
-    ).then(
-      async (response) => {
-        if (response === 'Yes') {
-          // If the build repository wasn't initialized yet
-          if (!store.initialized.getState()) {
-            await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
-          } else {
-            // We assume that the dependencies were already downloaded here
-            await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
+    if (!store.initialized.getState()) {
+      showInformationMessage(
+        'Flatpak manifest detected, would you like VS Code to init a build ?',
+        ...['No', 'Yes']
+      ).then(
+        async (response) => {
+          if (response === 'Yes') {
+            // If the build repository wasn't initialized yet
+            if (!store.initialized.getState()) {
+              await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
+            } else {
+              // We assume that the dependencies were already downloaded here
+              await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
+            }
           }
-        }
-      },
-      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
-    )
+        },
+        () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+      )
+    }
 
     onDidEndTask(async (e) => {
       switch (e.execution.task.definition.mode) {

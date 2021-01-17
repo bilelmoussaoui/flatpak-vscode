@@ -185,8 +185,5 @@
     "@types/js-yaml": "^3.12.5",
     "effector": "^21.6.0",
     "js-yaml": "^3.14.0"
-  },
-  "extensionDependencies": [
-    "redhat.vscode-yaml"
-  ]
+  }
 }

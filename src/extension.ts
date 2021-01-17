@@ -29,16 +29,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
             'server.path',
             'rust-analyzer'
           )
-          await manifest.overrideWorkspaceConfig(
-            'rust-analyzer',
-            'rustfmt.overrideCommand',
-            'rustfmt'
-          )
-          await manifest.overrideWorkspaceConfig(
-            'rust-analyzer',
-            'runnables.overrideCargo',
-            'cargo'
-          )
         }
         break
     }

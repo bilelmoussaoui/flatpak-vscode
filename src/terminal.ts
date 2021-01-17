@@ -263,6 +263,8 @@ export class FlatpakManifest {
       if (sdkPath) {
         args.push(`--env=PATH=$PATH:${sdkPath}`)
       }
+      // Assume we might need network access by the executable
+      args.push('--share=network')
     }
 
     args.push(this.repoDir)

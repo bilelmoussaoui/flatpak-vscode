@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as readline from 'readline'
-import { failed } from './store'
+import { failure } from './store'
 import { FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
@@ -43,7 +43,7 @@ export class FlatpakManifest {
   }
 
   /**
-   * Returns the name of the latest Flatpak model
+   * Returns the the latest Flatpak module
    */
   module(): Module {
     return this.manifest.modules.slice(-1)[0]
@@ -263,10 +263,6 @@ export class FlatpakManifest {
       if (sdkPath) {
         args.push(`--env=PATH=$PATH:${sdkPath}`)
       }
-      const buildEnv = this.manifest['build-options']?.env || {}
-      for (const [key, value] of Object.entries(buildEnv)) {
-        args.push(`--env=${key}=${value}`)
-      }
       // Assume we might need network access by the executable
       args.push('--share=network')
     }
@@ -371,8 +367,9 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
 
   onError(message: string, command: Command): void {
     this.writeEmitter.fire(message)
-    failed({ command, message })
+    failure({ command, message })
     this.failed = true
+    this.closeEmitter.fire()
   }
 
   spawnNext(): void {
@@ -382,8 +379,6 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
       this.closeEmitter.fire()
       return
     }
-    console.log(this.commands.length)
-    console.log(this.current())
     if (this.currentCommand < this.commands.length) {
       this.spawn(this.commands[this.currentCommand])
     } else {

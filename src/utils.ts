@@ -123,14 +123,6 @@ export const execTask = async (
   await tasks.executeTask(task)
 }
 
-export const getBuildDir = (workspace: string): string => {
-  return path.join(workspace, '.flatpak')
-}
-
-export const getWorkspacePath = (manifest: Uri): string => {
-  return workspace.getWorkspaceFolder(manifest)?.uri.fsPath || ''
-}
-
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
     () => {}, // eslint-disable-line @typescript-eslint/no-empty-function

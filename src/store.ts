@@ -1,69 +1,96 @@
 import { createStore, createEvent } from 'effector'
-import { Command } from './terminal'
+import { Command, FlatpakManifest } from './terminal'
 import { setContext } from './utils'
+import { TaskMode } from './tasks'
 
-export const manifestFound = createEvent()
-export const found = createStore(false).on(manifestFound, () => {
-  setContext('flatpakManifestFound', true)
-  return true
-})
-
+// Events
+export const manifestFound = createEvent<FlatpakManifest>()
+export const manifestRemoved = createEvent<FlatpakManifest>()
 export const initialize = createEvent()
 export const clean = createEvent()
-
-export const initialized = createStore(false)
-  .on(initialize, () => {
-    setContext('flatpakInitialized', true)
-    return true
-  })
-  .on(clean, () => {
-    setContext('flatpakInitialized', false)
-    setContext('flatpakDependenciesBuilt', false)
-    setContext('flatpakApplicationBuilt', false)
-    return false
-  })
-
 export const dependenciesUpdated = createEvent()
 export const dependenciesBuilt = createEvent()
-
-export const dependencies = createStore({ updated: false, built: false })
-  .on(dependenciesUpdated, (state) => {
-    state.updated = true
-    // Assume user might want to rebuild dependencies
-    setContext('flatpakDependenciesBuilt', false)
-  })
-  .on(dependenciesBuilt, (state) => {
-    setContext('flatpakDependenciesBuilt', true)
-    state.built = true
-  })
-  .on(clean, (state) => {
-    state.updated = false
-    state.built = false
-  })
-
 export const applicationBuilt = createEvent()
+export const failure = createEvent<PayloadError>()
 
-export const application = createStore({ built: false })
-  .on(applicationBuilt, (state) => {
-    setContext('flatpakApplicationBuilt', true)
-    state.built = true
-  })
-  .on(clean, (state) => {
-    setContext('flatpakApplicationBuilt', false)
-    state.built = false
-  })
+// The extension state
+export interface State {
+  selectedManifest: FlatpakManifest | null
+  manifests: FlatpakManifest[]
+  pipeline: {
+    latestStep: null | TaskMode
+    initialized: boolean
+    error: PayloadError | null
+    dependencies: {
+      updated: boolean
+      built: boolean
+    }
+    application: {
+      built: boolean
+    }
+  }
+}
 
+export const state = createStore<State>({
+  selectedManifest: null,
+  manifests: [],
+  pipeline: {
+    latestStep: null,
+    error: null,
+    initialized: false,
+    dependencies: {
+      updated: false,
+      built: false,
+    },
+    application: {
+      built: false,
+    },
+  },
+})
+
+// A typical error
 export interface PayloadError {
   command: Command | null
   message: string | null
 }
 
-export const failed = createEvent<PayloadError>()
+state
+  .on(manifestFound, (state, manifest) => {
+    setContext('flatpakManifestFound', true)
+    state.manifests.push(manifest)
+  })
+  .on(initialize, (state) => {
+    setContext('flatpakInitialized', true)
+    state.pipeline.initialized = true
+    state.pipeline.latestStep = TaskMode.buildInit
+  })
+  .on(clean, (state) => {
+    setContext('flatpakInitialized', false)
+    setContext('flatpakDependenciesBuilt', false)
+    setContext('flatpakApplicationBuilt', false)
+    state.pipeline.initialized = false
+    state.pipeline.latestStep = null
+  })
+  .on(dependenciesUpdated, (state) => {
+    state.pipeline.dependencies.updated = true
+    // Assume user might want to rebuild dependencies
+    setContext('flatpakDependenciesBuilt', false)
+    state.pipeline.latestStep = TaskMode.updateDeps
+  })
+  .on(dependenciesBuilt, (state) => {
+    setContext('flatpakDependenciesBuilt', true)
+    state.pipeline.dependencies.built = true
+    state.pipeline.latestStep = TaskMode.buildDeps
+  })
+  .on(applicationBuilt, (state) => {
+    setContext('flatpakApplicationBuilt', true)
+    state.pipeline.application.built = true
+    state.pipeline.latestStep = TaskMode.buildApp
+  })
+  .on(failure, (state, payload: PayloadError) => {
+    state.pipeline.error = payload
+  })
 
-export const error = createStore<PayloadError>({
-  command: null,
-  message: null,
-}).on(failed, (state, payload: PayloadError): void => {
-  state.command = payload.command
-  state.message = payload.message
-})
+export const currentStep = (): TaskMode | null => {
+  return state.getState().pipeline.latestStep
+}

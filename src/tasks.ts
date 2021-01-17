@@ -47,6 +47,7 @@ export class FlatpakTaskProvider implements TaskProvider {
   provideTasks(): ProviderResult<Task[]> {
     return getTasks(this.manifest)
   }
+
   resolveTask(): ProviderResult<Task> {
     return undefined
   }

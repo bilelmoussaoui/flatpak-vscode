@@ -47,8 +47,8 @@ export const parseManifest = async (
           'Failed to parse the manifest, please use a valid extension.'
         )
         .then(
-          () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-          () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { } // eslint-disable-line @typescript-eslint/no-empty-function
         )
       break
   }
@@ -62,7 +62,7 @@ export const parseManifest = async (
   return null
 }
 
-export const findManifest = async (
+export const findManifests = async (
   isSandboxed: boolean
 ): Promise<FlatpakManifest[]> => {
   const uris: Uri[] = await workspace.findFiles(
@@ -78,7 +78,7 @@ export const findManifest = async (
         manifests.push(manifest)
       }
     } catch (err) {
-      console.warn(`Failed to parse the JSON file at ${uri.fsPath}`)
+      console.warn(`Failed to parse the manifest at ${uri.fsPath}`)
     }
   }
   return manifests
@@ -115,8 +115,8 @@ export const execTask = async (
 ): Promise<void> => {
   if (message) {
     window.showInformationMessage(message).then(
-      () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+      () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+      () => { } // eslint-disable-line @typescript-eslint/no-empty-function
     )
   }
   const task = await getTask(mode)
@@ -125,8 +125,8 @@ export const execTask = async (
 
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
-    () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-    () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { } // eslint-disable-line @typescript-eslint/no-empty-function
   )
 }
 

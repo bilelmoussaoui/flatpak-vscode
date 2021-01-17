@@ -1,6 +1,6 @@
 import * as store from './store'
 import { window, tasks, ExtensionContext, commands } from 'vscode'
-import { execTask, exists, findManifest } from './utils'
+import { execTask, exists, findManifests } from './utils'
 import { FlatpakTaskProvider, TaskMode } from './tasks'
 import { promises as fs } from 'fs'
 const { onDidEndTask, registerTaskProvider } = tasks
@@ -12,7 +12,7 @@ const EXT_ID = 'flatpak-vscode'
 export async function activate(context: ExtensionContext): Promise<void> {
   // Look for a flatpak manifest
   const isSandboxed = await exists('/.flatpak-info')
-  const manifests = await findManifest(isSandboxed)
+  const manifests = await findManifests(isSandboxed)
   if (manifests.length > 0) {
     //TODO: allow the user to select a manifest
     const manifest = manifests[0]
@@ -55,7 +55,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
             }
           }
         },
-        () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
       )
     }
 

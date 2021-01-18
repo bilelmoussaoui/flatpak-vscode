@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.8]
+
+- Properly initialize a new Rust project
+- Ensure `.flatpak` directory exists before re-configuring r-a
+
 ## [0.0.6]
 
 - New Command: Open Runtime Terminal

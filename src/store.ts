@@ -1,6 +1,6 @@
 import { createStore, createEvent } from 'effector'
 import { Command, FlatpakManifest } from './terminal'
-import { setContext } from './utils'
+import { exists, setContext } from './utils'
 import { TaskMode } from './tasks'
 
 // Events
@@ -60,6 +60,31 @@ state
   .on(manifestFound, (state, manifest) => {
     setContext('flatpakManifestFound', true)
     state.manifests.push(manifest)
+    exists(manifest.repoDir).then(
+      (exists) => {
+        if (exists) {
+          initialize()
+        }
+      },
+      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+    )
+    // Automatically set stuff depending on the current SDK
+    switch (manifest.sdk()) {
+      case 'rust':
+        {
+          manifest
+            .overrideWorkspaceConfig(
+              'rust-analyzer',
+              'server.path',
+              'rust-analyzer'
+            )
+            .then(
+              () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+              () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+            )
+        }
+        break
+    }
   })
   .on(initialize, (state) => {
     setContext('flatpakInitialized', true)

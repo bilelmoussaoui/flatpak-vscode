@@ -16,23 +16,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
   if (manifests.length > 0) {
     //TODO: allow the user to select a manifest
     const manifest = manifests[0]
-    if (await exists(manifest.buildDir)) {
-      store.initialize()
+    // Create the build directory if it doesn't exists
+    if (!(await exists(manifest.buildDir))) {
+      await fs.mkdir(manifest.buildDir)
     }
-
-    // Automatically set stuff depending on the current SDK
-    switch (manifest.sdk()) {
-      case 'rust':
-        {
-          await manifest.overrideWorkspaceConfig(
-            'rust-analyzer',
-            'server.path',
-            'rust-analyzer'
-          )
-        }
-        break
-    }
-
+    // Mark the app as already initialized
     store.manifestFound(manifest)
 
     store.failure.watch(({ command, message }) => {
@@ -55,7 +43,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
             }
           }
         },
-        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+        () => {} // eslint-disable-line @typescript-eslint/no-empty-function
       )
     }
 

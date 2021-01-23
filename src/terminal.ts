@@ -6,7 +6,7 @@ import { FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
 import { promises as fs } from 'fs'
-import { getEnvVars } from './utils'
+import { getHostEnv } from './utils'
 
 export class FlatpakManifest {
   uri: vscode.Uri
@@ -259,7 +259,7 @@ export class FlatpakManifest {
       '--talk-name=org.a11y.Bus',
     ]
 
-    const envVars = getEnvVars()
+    const envVars = getHostEnv()
 
     for (const [key, value] of envVars) {
       args.push(`--env=${key}=${value}`)

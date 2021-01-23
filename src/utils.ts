@@ -141,8 +141,8 @@ export const exists = async (path: string): Promise<boolean> => {
   }
 }
 
-export const getEnvVars = (): Map<string, string> => {
-  const envVarKeys: string[] = [
+export const getHostEnv = (): Map<string, string> => {
+  const forwardedEnvKeys: string[] = [
     "COLORTERM",
     "DESKTOP_SESSION",
     "LANG",
@@ -158,7 +158,7 @@ export const getEnvVars = (): Map<string, string> => {
   const envVars = new Map<string, string>()
 
   for (const [key, value] of Object.entries(process.env)) {
-    if (value !== undefined && envVarKeys.includes(key)) {
+    if (value !== undefined && forwardedEnvKeys.includes(key)) {
       envVars.set(key, value)
     }
   }

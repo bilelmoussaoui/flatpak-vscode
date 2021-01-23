@@ -48,8 +48,8 @@ export const parseManifest = async (
           'Failed to parse the manifest, please use a valid extension.'
         )
         .then(
-          () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-          () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { } // eslint-disable-line @typescript-eslint/no-empty-function
         )
       break
   }
@@ -116,8 +116,8 @@ export const execTask = async (
 ): Promise<void> => {
   if (message) {
     window.showInformationMessage(message).then(
-      () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-      () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+      () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+      () => { } // eslint-disable-line @typescript-eslint/no-empty-function
     )
   }
   const task = await getTask(mode)
@@ -127,8 +127,8 @@ export const execTask = async (
 
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
-    () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-    () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { } // eslint-disable-line @typescript-eslint/no-empty-function
   )
 }
 
@@ -139,4 +139,28 @@ export const exists = async (path: string): Promise<boolean> => {
   } catch {
     return false
   }
+}
+
+export const getHostEnv = (): Map<string, string> => {
+  const forwardedEnvKeys: string[] = [
+    "COLORTERM",
+    "DESKTOP_SESSION",
+    "LANG",
+    "WAYLAND_DISPLAY",
+    "XDG_CURRENT_DESKTOP",
+    "XDG_SEAT",
+    "XDG_SESSION_DESKTOP",
+    "XDG_SESSION_ID",
+    "XDG_SESSION_TYPE",
+    "XDG_VTNR",
+    "AT_SPI_BUS_ADDRESS",];
+
+  const envVars = new Map<string, string>()
+
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined && forwardedEnvKeys.includes(key)) {
+      envVars.set(key, value)
+    }
+  }
+  return envVars
 }

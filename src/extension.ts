@@ -43,7 +43,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
             }
           }
         },
-        () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
       )
     }
 

@@ -171,9 +171,8 @@ export class FlatpakManifest {
       case 'autotools':
         throw new Error('Autotools is not implemented yet')
       case 'cmake':
-        return this.getCmakeCommands(rebuild, buildArgs, configOpts)
       case 'cmake-ninja':
-        throw new Error('Cmake-ninja is not implemented yet')
+        return this.getCmakeCommands(rebuild, buildArgs, configOpts)
       case 'meson':
         return this.getMesonCommands(rebuild, buildArgs, configOpts)
       case 'simple':
@@ -190,19 +189,33 @@ export class FlatpakManifest {
     if (!rebuild) {
       commands.push(
         new Command(
+          'mkdir',
+          [
+            '-p',
+            cmakeBuildDir
+          ],
+          this.workspace,
+          this.isSandboxed
+        )
+      )
+      commands.push(
+        new Command(
           'flatpak',
           [
             'build',
             ...buildArgs,
             this.repoDir,
             'cmake',
-            '-S',
+            '-G',
+            'Ninja',
+            '..',
             '.',
-            '-B',
-            cmakeBuildDir,
+            '-DCMAKE_EXPORT_COMPILE_COMMANDS=1',
+            '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
+            '-DCMAKE_INSTALL_PREFIX=/app',
             configOpts,
           ],
-          this.workspace,
+          path.join(this.workspace, cmakeBuildDir),
           this.isSandboxed
         )
       )
@@ -214,14 +227,13 @@ export class FlatpakManifest {
           'build',
           ...buildArgs,
           this.repoDir,
-          'cmake',
-          '--build',
-          cmakeBuildDir,
+          'ninja'
         ],
-        this.workspace,
+        path.join(this.workspace, cmakeBuildDir),
         this.isSandboxed
       )
     )
+
     commands.push(
       new Command(
         'flatpak',
@@ -229,12 +241,10 @@ export class FlatpakManifest {
           'build',
           ...buildArgs,
           this.repoDir,
-          'cmake',
-          '--install',
-          cmakeBuildDir
-
+          'ninja',
+          'install'
         ],
-        this.workspace,
+        path.join(this.workspace, cmakeBuildDir),
         this.isSandboxed
       )
     )

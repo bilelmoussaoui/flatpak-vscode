@@ -141,7 +141,8 @@
         "fileMatch": [
           "/*.*.*.json",
           "/*.*.*.*.json",
-          "/*.*.*.*.*.json"
+          "/*.*.*.*.*.json",
+          "!/settings.json"
         ],
         "url": "./manifest-schema.json"
       }

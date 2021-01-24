@@ -6,7 +6,7 @@ on:
 name: CI
 jobs:
   eslint:
-    name: Eslint
+    name: Tslint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -14,8 +14,8 @@ jobs:
         with:
           node-version: '14'
       - run: yarn install
-      - run: yarn add eslint
-      - run: ./node_modules/.bin/eslint -c ./.eslintrc.json --ignore-path .gitignore ./src
+      - run: yarn add tslint
+      - run: ./node_modules/.bin/tslint -c ./.tslintrc.json --ignore-path .gitignore ./src
 
   codespell:
     runs-on: ubuntu-latest

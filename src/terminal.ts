@@ -171,7 +171,7 @@ export class FlatpakManifest {
       case 'autotools':
         throw new Error('Autotools is not implemented yet')
       case 'cmake':
-        throw new Error('Cmake is not implemented yet')
+        return this.getCmakeCommands(rebuild, buildArgs, configOpts)
       case 'cmake-ninja':
         throw new Error('Cmake-ninja is not implemented yet')
       case 'meson':
@@ -182,6 +182,63 @@ export class FlatpakManifest {
         throw new Error('Qmake is not implemented yet')
     }
     throw new Error('Failed to build application')
+  }
+  getCmakeCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {
+    const commands: Command[] = []
+    const cmakeBuildDir = '_build'
+    buildArgs.push(`--filesystem=${this.workspace}/${cmakeBuildDir}`)
+    if (!rebuild) {
+      commands.push(
+        new Command(
+          'flatpak',
+          [
+            'build',
+            ...buildArgs,
+            this.repoDir,
+            'cmake',
+            '-S',
+            '.',
+            '-B',
+            cmakeBuildDir,
+            configOpts,
+          ],
+          this.workspace,
+          this.isSandboxed
+        )
+      )
+    }
+    commands.push(
+      new Command(
+        'flatpak',
+        [
+          'build',
+          ...buildArgs,
+          this.repoDir,
+          'cmake',
+          '--build',
+          cmakeBuildDir,
+        ],
+        this.workspace,
+        this.isSandboxed
+      )
+    )
+    commands.push(
+      new Command(
+        'flatpak',
+        [
+          'build',
+          ...buildArgs,
+          this.repoDir,
+          'cmake',
+          '--install',
+          cmakeBuildDir
+
+        ],
+        this.workspace,
+        this.isSandboxed
+      )
+    )
+    return commands
   }
 
   getMesonCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {

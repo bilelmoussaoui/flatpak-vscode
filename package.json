@@ -139,9 +139,9 @@
     "jsonValidation": [
       {
         "fileMatch": [
-          "/*.*.*.json",
-          "/*.*.*.*.json",
-          "/*.*.*.*.*.json",
+          "*.*.*.json",
+          "*.*.*.*.json",
+          "*.*.*.*.*.json",
           "!/settings.json"
         ],
         "url": "./manifest-schema.json"
@@ -150,12 +150,12 @@
     "yamlValidation": [
       {
         "fileMatch": [
-          "/*.*.*.yaml",
-          "/*.*.*.*.yaml",
-          "/*.*.*.*.*.yaml",
-          "/*.*.*.yml",
-          "/*.*.*.*.yml",
-          "/*.*.*.*.*.yml"
+          "*.*.*.yaml",
+          "*.*.*.*.yaml",
+          "*.*.*.*.*.yaml",
+          "*.*.*.yml",
+          "*.*.*.*.yml",
+          "*.*.*.*.*.yml"
         ],
         "url": "./manifest-schema.json"
       }

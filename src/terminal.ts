@@ -166,79 +166,181 @@ export class FlatpakManifest {
     const module = this.module()
     const configOpts = (module['config-opts'] || []).join(' ')
 
-    let commands: Command[] = []
     switch (module.buildsystem) {
+      case undefined:
+      case 'autotools':
+        throw new Error('Autotools is not implemented yet')
+      case 'cmake':
+      case 'cmake-ninja':
+        return this.getCmakeCommands(rebuild, buildArgs, configOpts)
       case 'meson':
-        {
-          const mesonBuildDir = '_build'
-          buildArgs.push(`--filesystem=${this.workspace}/${mesonBuildDir}`)
-          if (!rebuild) {
-            commands.push(
-              new Command(
-                'flatpak',
-                [
-                  'build',
-                  ...buildArgs,
-                  this.repoDir,
-                  'meson',
-                  '--prefix',
-                  '/app',
-                  mesonBuildDir,
-                  configOpts,
-                ],
-                this.workspace,
-                this.isSandboxed
-              )
-            )
-          }
-          commands.push(
-            new Command(
-              'flatpak',
-              [
-                'build',
-                ...buildArgs,
-                this.repoDir,
-                'ninja',
-                '-C',
-                mesonBuildDir,
-              ],
-              this.workspace,
-              this.isSandboxed
-            )
-          )
-          commands.push(
-            new Command(
-              'flatpak',
-              [
-                'build',
-                ...buildArgs,
-                this.repoDir,
-                'meson',
-                'install',
-                '-C',
-                mesonBuildDir,
-              ],
-              this.workspace,
-              this.isSandboxed
-            )
-          )
-        }
-        break
+        return this.getMesonCommands(rebuild, buildArgs, configOpts)
       case 'simple':
-        {
-          commands = module['build-commands'].map((command) => {
-            return new Command(
-              'flatpak',
-              ['build', ...buildArgs, this.repoDir, command],
-              this.workspace,
-              this.isSandboxed
-            )
-          })
-        }
-        break
+        return this.getSimpleCommands(module['build-commands'], buildArgs)
+      case 'qmake':
+        throw new Error('Qmake is not implemented yet')
     }
+    throw new Error('Failed to build application')
+  }
+
+  /**
+   * Gets an array of commands for a cmake build
+   * - If the app is being rebuilt
+   *   - Ensure build dir exists
+   *   - Configure with `cmake -G NINJA`
+   * - Build with `ninja`
+   * - Install with `ninja install`
+   * @param  {string}     rebuild     Whether this is a rebuild
+   * @param  {string[]}   buildArgs   The build arguments
+   * @param  {string}     configOpts  The configuration options
+   */
+  getCmakeCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {
+    const commands: Command[] = []
+    const cmakeBuildDir = '_build'
+    buildArgs.push(`--filesystem=${this.workspace}/${cmakeBuildDir}`)
+    if (!rebuild) {
+      commands.push(
+        new Command(
+          'mkdir',
+          [
+            '-p',
+            cmakeBuildDir
+          ],
+          this.workspace,
+          this.isSandboxed
+        )
+      )
+      commands.push(
+        new Command(
+          'flatpak',
+          [
+            'build',
+            ...buildArgs,
+            this.repoDir,
+            'cmake',
+            '-G',
+            'Ninja',
+            '..',
+            '.',
+            '-DCMAKE_EXPORT_COMPILE_COMMANDS=1',
+            '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
+            '-DCMAKE_INSTALL_PREFIX=/app',
+            configOpts,
+          ],
+          path.join(this.workspace, cmakeBuildDir),
+          this.isSandboxed
+        )
+      )
+    }
+    commands.push(
+      new Command(
+        'flatpak',
+        [
+          'build',
+          ...buildArgs,
+          this.repoDir,
+          'ninja'
+        ],
+        path.join(this.workspace, cmakeBuildDir),
+        this.isSandboxed
+      )
+    )
+
+    commands.push(
+      new Command(
+        'flatpak',
+        [
+          'build',
+          ...buildArgs,
+          this.repoDir,
+          'ninja',
+          'install'
+        ],
+        path.join(this.workspace, cmakeBuildDir),
+        this.isSandboxed
+      )
+    )
     return commands
   }
+
+  /**
+   * Gets an array of commands for a meson build
+   * - If the app is being rebuilt
+   *   - Configure with `meson`
+   * - Build with `ninja`
+   * - Install with `meson install`
+   * @param  {string}     rebuild     Whether this is a rebuild
+   * @param  {string[]}   buildArgs   The build arguments
+   * @param  {string}     configOpts  The configuration options
+   */
+  getMesonCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {
+    const commands: Command[] = []
+    const mesonBuildDir = '_build'
+    buildArgs.push(`--filesystem=${this.workspace}/${mesonBuildDir}`)
+    if (!rebuild) {
+      commands.push(
+        new Command(
+          'flatpak',
+          [
+            'build',
+            ...buildArgs,
+            this.repoDir,
+            'meson',
+            '--prefix',
+            '/app',
+            mesonBuildDir,
+            configOpts,
+          ],
+          this.workspace,
+          this.isSandboxed
+        )
+      )
+    }
+    commands.push(
+      new Command(
+        'flatpak',
+        [
+          'build',
+          ...buildArgs,
+          this.repoDir,
+          'ninja',
+          '-C',
+          mesonBuildDir,
+        ],
+        this.workspace,
+        this.isSandboxed
+      )
+    )
+    commands.push(
+      new Command(
+        'flatpak',
+        [
+          'build',
+          ...buildArgs,
+          this.repoDir,
+          'meson',
+          'install',
+          '-C',
+          mesonBuildDir,
+        ],
+        this.workspace,
+        this.isSandboxed
+      )
+    )
+    return commands
+  }
+
+  getSimpleCommands(buildCommands: string[], buildArgs: string[]): Command[] {
+    return buildCommands.map((command) => {
+      return new Command(
+        'flatpak',
+        ['build', ...buildArgs, this.repoDir, command],
+        this.workspace,
+        this.isSandboxed
+      )
+    })
+  }
+
 
   run(): Command {
     return this.runInRepo(this.manifest.command, false)

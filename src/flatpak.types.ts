@@ -20,7 +20,7 @@ export interface BuildOptions {
 
 export interface Module {
   name: string
-  buildsystem: string
+  buildsystem?: string
   'config-opts': string[]
   sources: Source[]
   'build-commands': string[]

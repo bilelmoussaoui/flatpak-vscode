@@ -460,6 +460,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   private commands: Command[]
   private currentCommand: number
   public failed: boolean
+  private currentProcess?: child_process.ChildProcessWithoutNullStreams
 
   constructor(commands: Command[]) {
     this.commands = commands
@@ -467,7 +468,9 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
     this.failed = false
   }
   close(): void {
-    //
+    if (this.currentProcess) {
+      this.currentProcess.emit("close", -1)
+    }
   }
 
   open(): void {
@@ -499,11 +502,11 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   spawn(command: Command): void {
     this.writeEmitter.fire(`${command.toString()}`)
     this.writeEmitter.fire('\r\n\r\n')
-    const proc = command.run()
+    this.currentProcess = command.run()
 
     readline
       .createInterface({
-        input: proc.stdout,
+        input: this.currentProcess.stdout,
         terminal: true,
       })
       .on('line', (line) => {
@@ -512,7 +515,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
       })
     readline
       .createInterface({
-        input: proc.stderr,
+        input: this.currentProcess.stderr,
         terminal: true,
       })
       .on('line', (line) => {
@@ -523,10 +526,10 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
         this.spawnNext()
       })
 
-    proc.on('error', (error) => {
+    this.currentProcess.on('error', (error) => {
       this.onError(error.message, this.current())
     })
-    proc.on('close', (code) => {
+    this.currentProcess.on('close', (code) => {
       if (code !== 0) {
         this.onError('', this.current())
         return

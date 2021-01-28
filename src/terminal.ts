@@ -182,6 +182,18 @@ export class FlatpakManifest {
     }
     throw new Error('Failed to build application')
   }
+
+  /**
+   * Gets an array of commands for a cmake build
+   * - If the app is being rebuilt
+   *   - Ensure build dir exists
+   *   - Configure with `cmake -G NINJA`
+   * - Build with `ninja`
+   * - Install with `ninja install`
+   * @param  {string}     rebuild     Whether this is a rebuild
+   * @param  {string[]}   buildArgs   The build arguments
+   * @param  {string}     configOpts  The configuration options
+   */
   getCmakeCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {
     const commands: Command[] = []
     const cmakeBuildDir = '_build'
@@ -251,6 +263,16 @@ export class FlatpakManifest {
     return commands
   }
 
+  /**
+   * Gets an array of commands for a meson build
+   * - If the app is being rebuilt
+   *   - Configure with `meson`
+   * - Build with `ninja`
+   * - Install with `meson install`
+   * @param  {string}     rebuild     Whether this is a rebuild
+   * @param  {string[]}   buildArgs   The build arguments
+   * @param  {string}     configOpts  The configuration options
+   */
   getMesonCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {
     const commands: Command[] = []
     const mesonBuildDir = '_build'

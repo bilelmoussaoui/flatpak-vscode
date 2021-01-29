@@ -1,5 +1,5 @@
 import * as store from './store'
-import { window, ExtensionContext, commands } from 'vscode'
+import { window, ExtensionContext, commands, Terminal } from 'vscode'
 import { exists, findManifests } from './utils'
 import { TaskMode } from './tasks'
 import { promises as fs } from 'fs'
@@ -10,11 +10,10 @@ const { showInformationMessage } = window
 const EXT_ID = 'flatpak-vscode'
 
 /**
- * Find a flatpak terminal
- * if not create one and focus it
+ * Find a flatpak terminal if not found, create one
  * @param pty: The Flatpak pseudo terminal interface
  */
-const findFlatpakTerminal = (pty: FlatpakTaskTerminal): void => {
+const createFlatpakTerminal = (pty: FlatpakTaskTerminal): Terminal => {
   let defaultTerminal = window.terminals.find(
     (terminal) => terminal.name === 'Flatpak'
   )
@@ -24,7 +23,7 @@ const findFlatpakTerminal = (pty: FlatpakTaskTerminal): void => {
       pty,
     })
   }
-  defaultTerminal.show(true)
+  return defaultTerminal
 }
 
 export async function activate(context: ExtensionContext): Promise<void> {
@@ -43,7 +42,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     const terminalPty = new FlatpakTaskTerminal()
     // Create a Flatpak terminal and focus it
-    findFlatpakTerminal(terminalPty)
+    let defaultTerminal = createFlatpakTerminal(terminalPty)
+    defaultTerminal.show(true)
 
     if (!store.state.getState().pipeline.initialized) {
       showInformationMessage(
@@ -61,9 +61,19 @@ export async function activate(context: ExtensionContext): Promise<void> {
             }
           }
         },
-        () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
       )
     }
+
+    window.onDidCloseTerminal((terminal) => {
+      if (terminal.name === 'Flatpak') {
+        // Re-create a terminal but keep it hidden
+        // This is mostly to avoid creating a terminal the moment
+        // we spawn a command and there would be no one listening to the
+        // write events
+        defaultTerminal = createFlatpakTerminal(terminalPty)
+      }
+    })
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.runtime-terminal`, () => {
@@ -87,7 +97,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
       registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, () => {
         if (!store.state.getState().pipeline.initialized) {
           // Ensures we have a terminal to receive the output
-          findFlatpakTerminal(terminalPty)
+          defaultTerminal.show(true)
           terminalPty.setCommands([manifest.initBuild()], TaskMode.buildInit)
         }
       })
@@ -97,7 +107,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, () => {
         if (!store.state.getState().pipeline.dependencies.updated) {
-          findFlatpakTerminal(terminalPty)
+          defaultTerminal.show(true)
           terminalPty.setCommands(
             [manifest.updateDependencies()],
             TaskMode.updateDeps
@@ -110,7 +120,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, () => {
         if (!store.state.getState().pipeline.dependencies.built) {
-          findFlatpakTerminal(terminalPty)
+          defaultTerminal.show(true)
           terminalPty.setCommands(
             [manifest.buildDependencies()],
             TaskMode.buildDeps
@@ -123,7 +133,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, () => {
         if (store.state.getState().pipeline.dependencies.built) {
-          findFlatpakTerminal(terminalPty)
+          defaultTerminal.show(true)
           terminalPty.setCommands(manifest.build(false), TaskMode.buildApp)
         }
       })
@@ -135,7 +145,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, () => {
         if (store.state.getState().pipeline.application.built) {
-          findFlatpakTerminal(terminalPty)
+          defaultTerminal.show(true)
           terminalPty.setCommands(manifest.build(true), TaskMode.rebuild)
         }
       })
@@ -145,7 +155,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.clean}`, async () => {
         if (store.state.getState().pipeline.initialized) {
-          findFlatpakTerminal(terminalPty)
+          defaultTerminal.show(true)
           await fs.rmdir(manifest.buildDir, {
             recursive: true,
           })
@@ -159,7 +169,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.run}`, () => {
         if (store.state.getState().pipeline.application.built) {
-          findFlatpakTerminal(terminalPty)
+          defaultTerminal.show(true)
           terminalPty.setCommands([manifest.run()], TaskMode.run)
         }
       })

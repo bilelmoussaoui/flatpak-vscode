@@ -110,8 +110,11 @@ state
       },
       () => { } // eslint-disable-line @typescript-eslint/no-empty-function
     )
+  })
+  .on(initialize, (state) => {
+    const manifest = state.selectedManifest
     // Automatically set stuff depending on the current SDK
-    switch (manifest.sdk()) {
+    switch (manifest?.sdk()) {
       case 'rust':
         {
           manifest
@@ -133,6 +136,7 @@ state
       case TaskMode.buildInit:
         setContext('flatpakInitialized', true)
         state.pipeline.initialized = true
+        initialize()
         break
       case TaskMode.updateDeps:
         state.pipeline.dependencies.updated = true

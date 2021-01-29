@@ -1,9 +1,8 @@
 import * as store from './store'
 import { window, ExtensionContext, commands, Terminal } from 'vscode'
 import { exists, findManifests } from './utils'
-import { TaskMode } from './tasks'
 import { promises as fs } from 'fs'
-import { FlatpakTaskTerminal } from './terminal'
+import { FlatpakTaskTerminal, TaskMode } from './terminal'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
@@ -31,6 +30,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const isSandboxed = await exists('/.flatpak-info')
   const manifests = await findManifests(isSandboxed)
   if (manifests.length > 0) {
+    manifests.forEach((manifest) => store.manifestFound(manifest))
     //TODO: allow the user to select a manifest
     const manifest = manifests[0]
     // Create the build directory if it doesn't exists
@@ -38,7 +38,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
       await fs.mkdir(manifest.buildDir)
     }
     // Mark the app as already initialized
-    store.manifestFound(manifest)
+    store.manifestSelected(manifest)
 
     const terminalPty = new FlatpakTaskTerminal()
     // Create a Flatpak terminal and focus it

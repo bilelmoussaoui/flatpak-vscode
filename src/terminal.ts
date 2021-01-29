@@ -7,7 +7,17 @@ import * as path from 'path'
 import { getuid } from 'process'
 import { promises as fs } from 'fs'
 import { getHostEnv } from './utils'
-import { TaskMode } from './tasks'
+
+export enum TaskMode {
+  buildInit = 'build-init',
+  updateDeps = 'update-deps',
+  buildDeps = 'build-deps',
+  buildApp = 'build-app',
+  rebuild = 'rebuild',
+  run = 'run',
+  export = 'export',
+  clean = 'clean',
+}
 
 export class FlatpakManifest {
   uri: vscode.Uri
@@ -15,6 +25,7 @@ export class FlatpakManifest {
   repoDir: string
   buildDir: string
   workspace: string
+  stateFile: string // A on disk copy of the pipeline state
   stateDir: string
   isSandboxed: boolean
 
@@ -29,6 +40,7 @@ export class FlatpakManifest {
     this.buildDir = path.join(this.workspace, '.flatpak')
     this.repoDir = path.join(this.buildDir, 'repo')
     this.stateDir = path.join(this.buildDir, 'flatpak-builder')
+    this.stateFile = path.join(this.buildDir, 'pipeline.json')
     this.isSandboxed = isSandboxed
   }
 
@@ -454,11 +466,11 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   private currentProcess?: child_process.ChildProcessWithoutNullStreams
 
   constructor() {
-    this.currentCommand = 1
+    this.currentCommand = 0
     this.failed = false
   }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  open(): void {}
+  open(): void { }
 
   close(): void {
     if (this.currentProcess) {
@@ -469,7 +481,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   setCommands(commands: Command[], mode: TaskMode): void {
     this.commands = commands
     this.mode = mode
-    this.currentCommand = 1
+    this.currentCommand = 0
     this.failed = false
     this.spawn(this.commands[0])
   }
@@ -481,18 +493,16 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   }
 
   spawnNext(): void {
-    console.log(`${this.currentCommand}, ${this.commands.length}`)
-    console.log(this.failed)
     this.currentCommand++
     if (this.failed) {
-      this.currentCommand = 1
+      this.currentCommand = 0
       return
     }
-    if (this.currentCommand <= this.commands.length) {
+    if (this.currentCommand <= this.commands.length - 1) {
       this.spawn(this.commands[this.currentCommand])
     } else {
-      this.currentCommand = 1
-      finished(this.mode as TaskMode)
+      this.currentCommand = 0
+      finished({ mode: this.mode as TaskMode, restore: false })
     }
   }
 
@@ -530,7 +540,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   }
 
   current(): Command {
-    return this.commands[this.currentCommand - 1]
+    return this.commands[this.currentCommand]
   }
 
   // Borrowed from vscode-docker

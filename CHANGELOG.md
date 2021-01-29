@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.10]
+
+- Properly detect if a command is running before spawning the next one
+
 ## [0.0.9]
 
 - Forward host environment variables when running a command inside the sandbox

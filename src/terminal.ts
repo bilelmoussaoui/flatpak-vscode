@@ -462,6 +462,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   private commands: Command[] = []
   private currentCommand: number
   public failed: boolean
+  private isRunning = false
   private mode?: TaskMode
   private currentProcess?: child_process.ChildProcessWithoutNullStreams
 
@@ -479,11 +480,15 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   }
 
   setCommands(commands: Command[], mode: TaskMode): void {
-    this.commands = commands
-    this.mode = mode
-    this.currentCommand = 0
-    this.failed = false
-    this.spawn(this.commands[0])
+    if (this.isRunning) {
+      this.commands = [...this.commands, ...commands]
+    } else {
+      this.commands = commands
+      this.mode = mode
+      this.currentCommand = 0
+      this.failed = false
+      this.spawn(this.commands[0])
+    }
   }
 
   onError(message: string, command: Command): void {
@@ -495,13 +500,13 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   spawnNext(): void {
     this.currentCommand++
     if (this.failed) {
-      this.currentCommand = 0
       return
     }
     if (this.currentCommand <= this.commands.length - 1) {
       this.spawn(this.commands[this.currentCommand])
     } else {
       this.currentCommand = 0
+      this.isRunning = false
       finished({ mode: this.mode as TaskMode, restore: false })
     }
   }
@@ -509,7 +514,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   spawn(command: Command): void {
     this.write(`> ${command.toString()} <\r\n\r\n`, DEFAULT_BOLD)
     this.currentProcess = command.run()
-
+    this.isRunning = true
     readline
       .createInterface({
         input: this.currentProcess.stdout,
@@ -523,14 +528,11 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
         terminal: true,
       })
       .on('line', (line) => this.writeOutputLine(line))
-      .on('close', () => {
-        this.spawnNext()
-      })
 
     this.currentProcess.on('error', (error) => {
       this.onError(error.message, this.current())
-    })
-    this.currentProcess.on('close', (code) => {
+    }).on('close', (code) => {
+      console.log(code)
       if (code !== 0) {
         this.onError('', this.current())
         return

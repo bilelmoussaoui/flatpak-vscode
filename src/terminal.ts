@@ -495,6 +495,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
     this.writeErrorLine(message)
     failure({ command, message })
     this.failed = true
+    this.isRunning = false
   }
 
   spawnNext(): void {
@@ -529,16 +530,18 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
       })
       .on('line', (line) => this.writeOutputLine(line))
 
-    this.currentProcess.on('error', (error) => {
-      this.onError(error.message, this.current())
-    }).on('close', (code) => {
-      console.log(code)
-      if (code !== 0) {
-        this.onError('', this.current())
-        return
-      }
-      this.spawnNext()
-    })
+    this.currentProcess
+      .on('error', (error) => {
+        this.onError(error.message, this.current())
+      })
+      .on('close', (code) => {
+        console.log(code)
+        if (code !== 0) {
+          this.onError('', this.current())
+          return
+        }
+        this.spawnNext()
+      })
   }
 
   current(): Command {

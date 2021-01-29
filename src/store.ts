@@ -63,8 +63,8 @@ export interface State {
 }
 
 export interface TaskFinished {
-  restore: boolean,
-  mode: TaskMode,
+  restore: boolean
+  mode: TaskMode
 }
 
 export const state = createStore<State>({
@@ -102,7 +102,10 @@ state
         if (exists) {
           initialize()
           // Reload the pipeline state from the on-disk save
-          loadFrom(manifest.stateFile).then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
+          loadFrom(manifest.stateFile).then(
+            () => { },// eslint-disable-line @typescript-eslint/no-empty-function
+            () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+          )
         }
       },
       () => { } // eslint-disable-line @typescript-eslint/no-empty-function
@@ -145,11 +148,16 @@ state
         state.pipeline.application.built = true
         break
     }
-    if (finishedTask.mode !== state.pipeline.latestStep && !finishedTask.restore) {
+    if (
+      finishedTask.mode !== state.pipeline.latestStep &&
+      !finishedTask.restore
+    ) {
       // Re-dump the state of the pipeline whenever a task is over
       const stateFile = state.selectedManifest?.stateFile as string
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      dumpInto(stateFile).then(() => { }, () => { })
+      dumpInto(stateFile).then(
+        () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+      )
     }
     state.pipeline.latestStep = finishedTask.mode
   })

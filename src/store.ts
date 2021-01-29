@@ -2,6 +2,7 @@ import { createStore, createEvent } from 'effector'
 import { Command, FlatpakManifest } from './terminal'
 import { exists, setContext } from './utils'
 import { TaskMode } from './tasks'
+import { Task } from 'vscode'
 
 // Events
 export const manifestFound = createEvent<FlatpakManifest>()
@@ -12,6 +13,7 @@ export const dependenciesUpdated = createEvent()
 export const dependenciesBuilt = createEvent()
 export const applicationBuilt = createEvent()
 export const failure = createEvent<PayloadError>()
+export const finished = createEvent<TaskMode>()
 // Triggered before running a task to remove the latest stored error
 export const cleanup = createEvent()
 
@@ -86,10 +88,28 @@ state
         break
     }
   })
-  .on(initialize, (state) => {
-    setContext('flatpakInitialized', true)
-    state.pipeline.initialized = true
-    state.pipeline.latestStep = TaskMode.buildInit
+  .on(finished, (state, mode) => {
+    console.log(mode)
+    switch (mode) {
+      case TaskMode.buildInit:
+        setContext('flatpakInitialized', true)
+        state.pipeline.initialized = true
+        break
+      case TaskMode.updateDeps:
+        state.pipeline.dependencies.updated = true
+        // Assume user might want to rebuild dependencies
+        setContext('flatpakDependenciesBuilt', false)
+        break
+      case TaskMode.buildDeps:
+        setContext('flatpakDependenciesBuilt', true)
+        state.pipeline.dependencies.built = true
+        break
+      case TaskMode.buildApp:
+        setContext('flatpakApplicationBuilt', true)
+        state.pipeline.application.built = true
+        break
+    }
+    state.pipeline.latestStep = mode
   })
   .on(clean, (state) => {
     setContext('flatpakInitialized', false)
@@ -97,22 +117,6 @@ state
     setContext('flatpakApplicationBuilt', false)
     state.pipeline.initialized = false
     state.pipeline.latestStep = null
-  })
-  .on(dependenciesUpdated, (state) => {
-    state.pipeline.dependencies.updated = true
-    // Assume user might want to rebuild dependencies
-    setContext('flatpakDependenciesBuilt', false)
-    state.pipeline.latestStep = TaskMode.updateDeps
-  })
-  .on(dependenciesBuilt, (state) => {
-    setContext('flatpakDependenciesBuilt', true)
-    state.pipeline.dependencies.built = true
-    state.pipeline.latestStep = TaskMode.buildDeps
-  })
-  .on(applicationBuilt, (state) => {
-    setContext('flatpakApplicationBuilt', true)
-    state.pipeline.application.built = true
-    state.pipeline.latestStep = TaskMode.buildApp
   })
   .on(failure, (state, payload: PayloadError) => {
     state.pipeline.error = payload

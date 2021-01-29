@@ -102,27 +102,27 @@
         },
         {
           "command": "flatpak-vscode.clean",
-          "when": "flatpakInitialized && flatpakManifestFound"
+          "when": "flatpakInitialized"
         },
         {
           "command": "flatpak-vscode.update-deps",
-          "when": "flatpakInitialized && flatpakManifestFound"
+          "when": "flatpakInitialized"
         },
         {
           "command": "flatpak-vscode.build-deps",
-          "when": "!flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
+          "when": "!flatpakDependenciesBuilt && flatpakInitialized"
         },
         {
           "command": "flatpak-vscode.build-app",
-          "when": "flatpakDependenciesBuilt && flatpakInitialized && flatpakManifestFound"
+          "when": "flatpakDependenciesBuilt"
         },
         {
           "command": "flatpak-vscode.run",
-          "when": "flatpakDependenciesBuilt && flatpakApplicationBuilt"
+          "when": "flatpakApplicationBuilt"
         },
         {
           "command": "flatpak-vscode.rebuild",
-          "when": "flatpakDependenciesBuilt && flatpakApplicationBuilt"
+          "when": "flatpakApplicationBuilt"
         }
       ]
     },

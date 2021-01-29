@@ -1,13 +1,31 @@
 import * as store from './store'
-import { window, tasks, ExtensionContext, commands } from 'vscode'
-import { execTask, exists, findManifests } from './utils'
-import { FlatpakTaskProvider, TaskMode } from './tasks'
+import { window, ExtensionContext, commands } from 'vscode'
+import { exists, findManifests } from './utils'
+import { TaskMode } from './tasks'
 import { promises as fs } from 'fs'
-const { onDidEndTask, registerTaskProvider } = tasks
+import { FlatpakTaskTerminal } from './terminal'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
 const EXT_ID = 'flatpak-vscode'
+
+/**
+ * Find a flatpak terminal
+ * if not create one and focus it
+ * @param pty: The Flatpak pseudo terminal interface
+ */
+const findFlatpakTerminal = (pty: FlatpakTaskTerminal): void => {
+  let defaultTerminal = window.terminals.find(
+    (terminal) => terminal.name === 'Flatpak'
+  )
+  if (!defaultTerminal) {
+    defaultTerminal = window.createTerminal({
+      name: 'Flatpak',
+      pty,
+    })
+  }
+  defaultTerminal.show(true)
+}
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // Look for a flatpak manifest
@@ -23,9 +41,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Mark the app as already initialized
     store.manifestFound(manifest)
 
-    store.failure.watch(({ command, message }) => {
-      console.log(message, command)
-    })
+    const terminalPty = new FlatpakTaskTerminal()
+    // Create a Flatpak terminal and focus it
+    findFlatpakTerminal(terminalPty)
 
     if (!store.state.getState().pipeline.initialized) {
       showInformationMessage(
@@ -43,40 +61,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
             }
           }
         },
-        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+        () => {} // eslint-disable-line @typescript-eslint/no-empty-function
       )
     }
-
-    onDidEndTask(async (e) => {
-      if (store.state.getState().pipeline.error !== null) {
-        // Don't spawn the next task if there was a failure
-        return
-      }
-      switch (e.execution.task.definition.mode) {
-        case TaskMode.buildInit:
-          store.initialize()
-          await executeCommand(`${EXT_ID}.${TaskMode.updateDeps}`)
-          break
-        case TaskMode.buildDeps:
-          store.dependenciesBuilt()
-          break
-        case TaskMode.updateDeps:
-          store.dependenciesUpdated()
-          await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
-          break
-        case TaskMode.buildApp:
-          store.applicationBuilt()
-          break
-        case TaskMode.rebuild:
-          store.applicationBuilt()
-          await executeCommand(`${EXT_ID}.${TaskMode.run}`)
-          break
-      }
-    })
-
-    context.subscriptions.push(
-      registerTaskProvider('flatpak', new FlatpakTaskProvider(manifest))
-    )
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.runtime-terminal`, () => {
@@ -97,36 +84,47 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Init the build environment
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, () => {
         if (!store.state.getState().pipeline.initialized) {
-          await execTask(TaskMode.buildInit, 'Configuring the build...')
+          // Ensures we have a terminal to receive the output
+          findFlatpakTerminal(terminalPty)
+          terminalPty.setCommands([manifest.initBuild()], TaskMode.buildInit)
         }
       })
     )
 
     // Update the application's dependencies
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, () => {
         if (!store.state.getState().pipeline.dependencies.updated) {
-          await execTask(TaskMode.updateDeps, 'Updating the dependencies...')
+          findFlatpakTerminal(terminalPty)
+          terminalPty.setCommands(
+            [manifest.updateDependencies()],
+            TaskMode.updateDeps
+          )
         }
       })
     )
 
     // Build the application's dependencies
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, () => {
         if (!store.state.getState().pipeline.dependencies.built) {
-          await execTask(TaskMode.buildDeps, 'Building the dependencies...')
+          findFlatpakTerminal(terminalPty)
+          terminalPty.setCommands(
+            [manifest.buildDependencies()],
+            TaskMode.buildDeps
+          )
         }
       })
     )
 
     // Build the application
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, () => {
         if (store.state.getState().pipeline.dependencies.built) {
-          await execTask(TaskMode.buildApp, 'Building the application...')
+          findFlatpakTerminal(terminalPty)
+          terminalPty.setCommands(manifest.build(false), TaskMode.buildApp)
         }
       })
     )
@@ -135,9 +133,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // If a buildsystem is set on the latest module, the build/rebuild commands
     // could be different, the rebuild also triggers a run command afterwards
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, () => {
         if (store.state.getState().pipeline.application.built) {
-          await execTask(TaskMode.rebuild, 'Rebuilding the application...')
+          findFlatpakTerminal(terminalPty)
+          terminalPty.setCommands(manifest.build(true), TaskMode.rebuild)
         }
       })
     )
@@ -146,6 +145,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.clean}`, async () => {
         if (store.state.getState().pipeline.initialized) {
+          findFlatpakTerminal(terminalPty)
           await fs.rmdir(manifest.buildDir, {
             recursive: true,
           })
@@ -157,9 +157,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Run the application, only if it was already built
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.run}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.run}`, () => {
         if (store.state.getState().pipeline.application.built) {
-          await execTask(TaskMode.run, 'Running the application...')
+          findFlatpakTerminal(terminalPty)
+          terminalPty.setCommands([manifest.run()], TaskMode.run)
         }
       })
     )

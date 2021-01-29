@@ -1,12 +1,13 @@
 import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as readline from 'readline'
-import { failure } from './store'
+import { failure, finished } from './store'
 import { FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
 import { promises as fs } from 'fs'
 import { getHostEnv } from './utils'
+import { TaskMode } from './tasks'
 
 export class FlatpakManifest {
   uri: vscode.Uri
@@ -194,7 +195,11 @@ export class FlatpakManifest {
    * @param  {string[]}   buildArgs   The build arguments
    * @param  {string}     configOpts  The configuration options
    */
-  getCmakeCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {
+  getCmakeCommands(
+    rebuild: boolean,
+    buildArgs: string[],
+    configOpts: string
+  ): Command[] {
     const commands: Command[] = []
     const cmakeBuildDir = '_build'
     buildArgs.push(`--filesystem=${this.workspace}/${cmakeBuildDir}`)
@@ -202,10 +207,7 @@ export class FlatpakManifest {
       commands.push(
         new Command(
           'mkdir',
-          [
-            '-p',
-            cmakeBuildDir
-          ],
+          ['-p', cmakeBuildDir],
           this.workspace,
           this.isSandboxed
         )
@@ -235,12 +237,7 @@ export class FlatpakManifest {
     commands.push(
       new Command(
         'flatpak',
-        [
-          'build',
-          ...buildArgs,
-          this.repoDir,
-          'ninja'
-        ],
+        ['build', ...buildArgs, this.repoDir, 'ninja'],
         path.join(this.workspace, cmakeBuildDir),
         this.isSandboxed
       )
@@ -249,13 +246,7 @@ export class FlatpakManifest {
     commands.push(
       new Command(
         'flatpak',
-        [
-          'build',
-          ...buildArgs,
-          this.repoDir,
-          'ninja',
-          'install'
-        ],
+        ['build', ...buildArgs, this.repoDir, 'ninja', 'install'],
         path.join(this.workspace, cmakeBuildDir),
         this.isSandboxed
       )
@@ -273,7 +264,11 @@ export class FlatpakManifest {
    * @param  {string[]}   buildArgs   The build arguments
    * @param  {string}     configOpts  The configuration options
    */
-  getMesonCommands(rebuild: boolean, buildArgs: string[], configOpts: string): Command[] {
+  getMesonCommands(
+    rebuild: boolean,
+    buildArgs: string[],
+    configOpts: string
+  ): Command[] {
     const commands: Command[] = []
     const mesonBuildDir = '_build'
     buildArgs.push(`--filesystem=${this.workspace}/${mesonBuildDir}`)
@@ -299,14 +294,7 @@ export class FlatpakManifest {
     commands.push(
       new Command(
         'flatpak',
-        [
-          'build',
-          ...buildArgs,
-          this.repoDir,
-          'ninja',
-          '-C',
-          mesonBuildDir,
-        ],
+        ['build', ...buildArgs, this.repoDir, 'ninja', '-C', mesonBuildDir],
         this.workspace,
         this.isSandboxed
       )
@@ -340,7 +328,6 @@ export class FlatpakManifest {
       )
     })
   }
-
 
   run(): Command {
     return this.runInRepo(this.manifest.command, false)
@@ -448,6 +435,9 @@ export class Command {
   }
 }
 
+const DEFAULT = '0m'
+const DEFAULT_BOLD = '0;1m'
+const YELLOW = '33m'
 export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   private writeEmitter = new vscode.EventEmitter<string>()
   onDidWrite: vscode.Event<string> = this.writeEmitter.event
@@ -457,51 +447,57 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
     | vscode.Event<vscode.TerminalDimensions | undefined>
     | undefined
 
-  private commands: Command[]
+  private commands: Command[] = []
   private currentCommand: number
   public failed: boolean
+  private mode?: TaskMode
   private currentProcess?: child_process.ChildProcessWithoutNullStreams
 
-  constructor(commands: Command[]) {
-    this.commands = commands
-    this.currentCommand = 0
+  constructor() {
+    this.currentCommand = 1
     this.failed = false
   }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  open(): void {}
+
   close(): void {
     if (this.currentProcess) {
-      this.currentProcess.emit("close", -1)
+      this.currentProcess.emit('close', -1)
     }
   }
 
-  open(): void {
+  setCommands(commands: Command[], mode: TaskMode): void {
+    this.commands = commands
+    this.mode = mode
+    this.currentCommand = 1
+    this.failed = false
     this.spawn(this.commands[0])
   }
 
   onError(message: string, command: Command): void {
-    this.writeEmitter.fire(message)
+    this.writeErrorLine(message)
     failure({ command, message })
     this.failed = true
-    this.closeEmitter.fire()
   }
 
   spawnNext(): void {
+    console.log(`${this.currentCommand}, ${this.commands.length}`)
+    console.log(this.failed)
     this.currentCommand++
     if (this.failed) {
-      this.currentCommand = 0
-      this.closeEmitter.fire()
+      this.currentCommand = 1
       return
     }
-    if (this.currentCommand < this.commands.length) {
+    if (this.currentCommand <= this.commands.length) {
       this.spawn(this.commands[this.currentCommand])
     } else {
-      this.currentCommand = 0
-      this.closeEmitter.fire()
+      this.currentCommand = 1
+      finished(this.mode as TaskMode)
     }
   }
 
   spawn(command: Command): void {
-    this.writeEmitter.fire(`${command.toString()}`)
-    this.writeEmitter.fire('\r\n\r\n')
+    this.write(`> ${command.toString()} <\r\n\r\n`, DEFAULT_BOLD)
     this.currentProcess = command.run()
 
     readline
@@ -509,19 +505,14 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
         input: this.currentProcess.stdout,
         terminal: true,
       })
-      .on('line', (line) => {
-        this.writeEmitter.fire(line)
-        this.writeEmitter.fire('\r\n')
-      })
+      .on('line', (line) => this.writeOutputLine(line))
+
     readline
       .createInterface({
         input: this.currentProcess.stderr,
         terminal: true,
       })
-      .on('line', (line) => {
-        this.writeEmitter.fire(line)
-        this.writeEmitter.fire('\r\n')
-      })
+      .on('line', (line) => this.writeOutputLine(line))
       .on('close', () => {
         this.spawnNext()
       })
@@ -539,6 +530,36 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   }
 
   current(): Command {
-    return this.commands[this.currentCommand]
+    return this.commands[this.currentCommand - 1]
+  }
+
+  // Borrowed from vscode-docker
+  public writeOutput(message: string): void {
+    this.write(message, DEFAULT)
+  }
+
+  public writeWarning(message: string): void {
+    this.write(message, YELLOW)
+  }
+
+  public writeError(message: string): void {
+    this.write(message, DEFAULT)
+  }
+
+  public writeOutputLine(message: string): void {
+    this.writeOutput(`${message}\r\n`) // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
+  }
+
+  public writeWarningLine(message: string): void {
+    this.writeWarning(`${message}\r\n`) // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
+  }
+
+  public writeErrorLine(message: string): void {
+    this.writeError(`${message}\r\n`) // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
+  }
+
+  private write(message: string, color: string): void {
+    message = message.replace(/\r?\n/g, '\r\n') // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
+    this.writeEmitter.fire(`\x1b[${color}${message}\x1b[0m`)
   }
 }

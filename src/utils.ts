@@ -1,22 +1,9 @@
 import { promises as fs, constants as fsc } from 'fs'
 import * as path from 'path'
-import * as store from './store'
-import {
-  Task,
-  TaskScope,
-  commands,
-  tasks,
-  window,
-  workspace,
-  Uri,
-  TaskPanelKind,
-  CustomExecution,
-  Pseudoterminal,
-} from 'vscode'
+import { commands, window, workspace, Uri } from 'vscode'
 import * as yaml from 'js-yaml'
 import { FlatpakManifestSchema } from './flatpak.types'
-import { getTask, TaskMode } from './tasks'
-import { Command, FlatpakManifest, FlatpakTaskTerminal } from './terminal'
+import { FlatpakManifest } from './terminal'
 
 export const isFlatpak = (manifest: FlatpakManifestSchema | null): boolean => {
   if (!manifest) {
@@ -48,8 +35,8 @@ export const parseManifest = async (
           'Failed to parse the manifest, please use a valid extension.'
         )
         .then(
-          () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-          () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+          () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+          () => {} // eslint-disable-line @typescript-eslint/no-empty-function
         )
       break
   }
@@ -85,50 +72,10 @@ export const findManifests = async (
   return manifests
 }
 
-export const createTask = (
-  mode: TaskMode,
-  name: string,
-  commands: Command[]
-): Task => {
-  const task = new Task(
-    {
-      type: 'flatpak',
-      mode,
-    },
-    TaskScope.Workspace,
-    name,
-    'Flatpak',
-    new CustomExecution(
-      (): Thenable<Pseudoterminal> => {
-        return Promise.resolve(new FlatpakTaskTerminal(commands))
-      }
-    )
-  )
-  task.presentationOptions.panel = TaskPanelKind.Shared
-  task.presentationOptions.showReuseMessage = false
-  task.group = 'flatpak'
-  return task
-}
-
-export const execTask = async (
-  mode: TaskMode,
-  message: string | null
-): Promise<void> => {
-  if (message) {
-    window.showInformationMessage(message).then(
-      () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-      () => { } // eslint-disable-line @typescript-eslint/no-empty-function
-    )
-  }
-  const task = await getTask(mode)
-  store.cleanup()
-  await tasks.executeTask(task)
-}
-
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
-    () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-    () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+    () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+    () => {} // eslint-disable-line @typescript-eslint/no-empty-function
   )
 }
 
@@ -143,17 +90,18 @@ export const exists = async (path: string): Promise<boolean> => {
 
 export const getHostEnv = (): Map<string, string> => {
   const forwardedEnvKeys: string[] = [
-    "COLORTERM",
-    "DESKTOP_SESSION",
-    "LANG",
-    "WAYLAND_DISPLAY",
-    "XDG_CURRENT_DESKTOP",
-    "XDG_SEAT",
-    "XDG_SESSION_DESKTOP",
-    "XDG_SESSION_ID",
-    "XDG_SESSION_TYPE",
-    "XDG_VTNR",
-    "AT_SPI_BUS_ADDRESS",];
+    'COLORTERM',
+    'DESKTOP_SESSION',
+    'LANG',
+    'WAYLAND_DISPLAY',
+    'XDG_CURRENT_DESKTOP',
+    'XDG_SEAT',
+    'XDG_SESSION_DESKTOP',
+    'XDG_SESSION_ID',
+    'XDG_SESSION_TYPE',
+    'XDG_VTNR',
+    'AT_SPI_BUS_ADDRESS',
+  ]
 
   const envVars = new Map<string, string>()
 

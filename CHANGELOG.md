@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.0.9]
+
+- Forward host environment variables when running a command inside the sandbox
+- `cmake` & `cmake-ninja` build systems support
+- Use one terminal for all the extensions commands instead of spawning a new terminal per task
+- Save the pipeline state per project & restore it at start
+
 ## [0.0.8]
 
 - Properly initialize a new Rust project

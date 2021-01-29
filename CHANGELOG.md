@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.11]
+
+- Allow to re-run a command if the latest one failed
+- Configure Rust-Analyzer only if the Flatpak repository is initialized
+
 ## [0.0.10]
 
 - Properly detect if a command is running before spawning the next one

@@ -7,6 +7,7 @@ import * as path from 'path'
 import { getuid } from 'process'
 import { promises as fs } from 'fs'
 import { getHostEnv } from './utils'
+import { cpus } from 'os'
 
 export enum TaskMode {
   buildInit = 'build-init',
@@ -182,7 +183,7 @@ export class FlatpakManifest {
     switch (module.buildsystem) {
       case undefined:
       case 'autotools':
-        throw new Error('Autotools is not implemented yet')
+        return this.getAutotoolsCommands(rebuild, buildArgs, configOpts)
       case 'cmake':
       case 'cmake-ninja':
         return this.getCmakeCommands(rebuild, buildArgs, configOpts)
@@ -194,6 +195,60 @@ export class FlatpakManifest {
         throw new Error('Qmake is not implemented yet')
     }
     throw new Error('Failed to build application')
+  }
+
+  /**
+  * Gets an array of commands for a autotools build
+  * - If the app is being rebuilt
+  *   - Configure with `configure`
+  * - Build with `make`
+  * - Install with `make install`
+  * @param  {string}     rebuild     Whether this is a rebuild
+  * @param  {string[]}   buildArgs   The build arguments
+  * @param  {string}     configOpts  The configuration options
+  */
+  getAutotoolsCommands(
+    rebuild: boolean,
+    buildArgs: string[],
+    configOpts: string
+  ): Command[] {
+    const numCPUs = cpus().length
+    const commands: Command[] = []
+    if (!rebuild) {
+      commands.push(
+        new Command(
+          'flatpak',
+          [
+            'build',
+            ...buildArgs,
+            this.repoDir,
+            './configure',
+            '--prefix=/app',
+            configOpts,
+          ],
+          path.join(this.workspace),
+          this.isSandboxed
+        )
+      )
+    }
+    commands.push(
+      new Command(
+        'flatpak',
+        ['build', ...buildArgs, this.repoDir, 'make', '-p', '-n', '-s'],
+        path.join(this.workspace),
+        this.isSandboxed
+      )
+    )
+
+    commands.push(
+      new Command(
+        'flatpak',
+        ['build', ...buildArgs, this.repoDir, 'make', 'V=0', `-j${numCPUs}`, 'install'],
+        path.join(this.workspace),
+        this.isSandboxed
+      )
+    )
+    return commands
   }
 
   /**

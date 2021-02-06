@@ -7,6 +7,16 @@
     "flatpak-builder"
   ],
   "publisher": "bilelmoussaoui",
+  "author": {
+    "name": "Bilal Elmoussaoui",
+    "email": "bilelmoussaoui@gnome.org"
+  },
+  "contributors": [
+    {
+      "name": "Julian Hofer",
+      "email": "julianhofer@gnome.org"
+    }
+  ],
   "preview": true,
   "license": "MIT",
   "extensionKind": [

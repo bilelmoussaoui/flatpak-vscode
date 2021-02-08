@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.12]
+
+- use an output channel instead of a hackish terminal
+- autotools buildsystem support
+
 ## [0.0.11]
 
 - Allow to re-run a command if the latest one failed

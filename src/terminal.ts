@@ -502,32 +502,21 @@ export class Command {
   }
 }
 
-const DEFAULT = '0m'
-const DEFAULT_BOLD = '0;1m'
-const YELLOW = '33m'
-export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
-  private writeEmitter = new vscode.EventEmitter<string>()
-  onDidWrite: vscode.Event<string> = this.writeEmitter.event
-  private closeEmitter = new vscode.EventEmitter<void>()
-  onDidClose?: vscode.Event<void> = this.closeEmitter.event
-  onDidOverrideDimensions?:
-    | vscode.Event<vscode.TerminalDimensions | undefined>
-    | undefined
-
+export class FlatpakTaskTerminal {
   private commands: Command[] = []
   private currentCommand: number
   public failed: boolean
   private isRunning = false
   private mode?: TaskMode
+  private output: vscode.OutputChannel
   private currentProcess?: child_process.ChildProcessWithoutNullStreams
 
-  constructor() {
+  constructor(outputChannel: vscode.OutputChannel) {
     this.currentCommand = 0
+    this.output = outputChannel
     this.failed = false
   }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  open(): void { }
-
   close(): void {
     if (this.currentProcess) {
       this.currentProcess.emit('close', -1)
@@ -547,7 +536,7 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   }
 
   onError(message: string, command: Command): void {
-    this.writeErrorLine(message)
+    this.writeError(message)
     failure({ command, message })
     this.failed = true
     this.isRunning = false
@@ -568,22 +557,22 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
   }
 
   spawn(command: Command): void {
-    this.write(`> ${command.toString()} <\r\n\r\n`, DEFAULT_BOLD)
+    this.write(`> ${command.toString()} <`)
     this.currentProcess = command.run()
     this.isRunning = true
     readline
       .createInterface({
         input: this.currentProcess.stdout,
-        terminal: true,
+        terminal: false,
       })
-      .on('line', (line) => this.writeOutputLine(line))
+      .on('line', (line) => this.write(line))
 
     readline
       .createInterface({
         input: this.currentProcess.stderr,
-        terminal: true,
+        terminal: false,
       })
-      .on('line', (line) => this.writeOutputLine(line))
+      .on('line', (line) => this.write(line))
 
     this.currentProcess
       .on('error', (error) => {
@@ -603,33 +592,11 @@ export class FlatpakTaskTerminal implements vscode.Pseudoterminal {
     return this.commands[this.currentCommand]
   }
 
-  // Borrowed from vscode-docker
-  public writeOutput(message: string): void {
-    this.write(message, DEFAULT)
+  private writeError(message: string): void {
+    this.write(message)
   }
 
-  public writeWarning(message: string): void {
-    this.write(message, YELLOW)
-  }
-
-  public writeError(message: string): void {
-    this.write(message, DEFAULT)
-  }
-
-  public writeOutputLine(message: string): void {
-    this.writeOutput(`${message}\r\n`) // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
-  }
-
-  public writeWarningLine(message: string): void {
-    this.writeWarning(`${message}\r\n`) // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
-  }
-
-  public writeErrorLine(message: string): void {
-    this.writeError(`${message}\r\n`) // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
-  }
-
-  private write(message: string, color: string): void {
-    message = message.replace(/\r?\n/g, '\r\n') // The carriage return (/r) is necessary or the pseudoterminal does not return back to the start of line
-    this.writeEmitter.fire(`\x1b[${color}${message}\x1b[0m`)
+  private write(message: string): void {
+    this.output.appendLine(message)
   }
 }

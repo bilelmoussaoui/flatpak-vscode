@@ -80,7 +80,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Update the application's dependencies
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, () => {
-        if (!store.state.getState().pipeline.dependencies.updated) {
+        if (store.state.getState().pipeline.initialized) {
           outputChannel.show(true)
           terminal.setCommands(
             [manifest.updateDependencies()],

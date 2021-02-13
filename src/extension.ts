@@ -27,7 +27,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
     const outputChannel = window.createOutputChannel('Flatpak')
     // Create a Flatpak pty
     const terminal = new FlatpakTaskTerminal(outputChannel)
-    outputChannel.show(true)
 
     if (!store.state.getState().pipeline.initialized) {
       showInformationMessage(

@@ -156,7 +156,17 @@
         ],
         "url": "https://raw.githubusercontent.com/flatpak/flatpak-builder/master/data/flatpak-manifest.schema.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "flatpak-vscode",
+      "properties": {
+        "flatpak-vscode.enableRustAnalyzerServerPathOverride": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic language server path override for the rust-analyzer extension"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile",

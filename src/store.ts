@@ -1,3 +1,4 @@
+import * as vscode from 'vscode'
 import { createStore, createEvent } from 'effector'
 import { promises as fs } from 'fs'
 

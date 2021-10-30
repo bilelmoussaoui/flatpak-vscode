@@ -32,6 +32,15 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Mark the app as already initialized
     store.manifestSelected(manifest)
 
+    // Watch for workspace config changes
+    workspace.onDidChangeConfiguration(event => {
+      // Reinitialize when settings have changed
+      let affected = event.affectsConfiguration(`${EXT_ID}`, (workspace.workspaceFolders as WorkspaceFolder[])[0].uri);
+      if (affected) {
+        store.initialize()
+      }
+    })
+
     const outputChannel = window.createOutputChannel('Flatpak')
     // Create a Flatpak pty
     const terminal = new FlatpakTerminal(outputChannel)

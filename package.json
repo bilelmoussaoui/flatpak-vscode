@@ -160,10 +160,10 @@
     "configuration": {
       "title": "flatpak-vscode",
       "properties": {
-        "flatpak-vscode.enableRustAnalyzerServerPathOverride": {
+        "flatpak-vscode.extensionsIntegration": {
           "type": "boolean",
           "default": true,
-          "description": "Enable automatic language server path override for the rust-analyzer extension"
+          "description": "integrate flatpak-vscode with other Flatpak extensions like rust-analyzer. Enabling this will make the integrated extensions run their binaries inside the Flatpak sandbox instead of running on the host."
         }
       }
     }

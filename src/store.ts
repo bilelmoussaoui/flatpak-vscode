@@ -1,4 +1,3 @@
-import * as vscode from 'vscode'
 import { createStore, createEvent } from 'effector'
 import { promises as fs } from 'fs'
 
@@ -10,8 +9,12 @@ import { exists, setContext } from './utils'
 import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 
 import { commands } from 'vscode'
-import { EXT_ID } from './extension'
 const { executeCommand } = commands
+
+// Config Values
+export enum ConfigValues {
+  extensionsIntegration = 'extensionsIntegration',
+}
 
 // Events
 export const manifestFound = createEvent<FlatpakManifest>()

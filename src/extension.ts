@@ -35,7 +35,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Watch for workspace config changes
     workspace.onDidChangeConfiguration(event => {
       // Reinitialize when settings have changed
-      let affected = event.affectsConfiguration(`${EXT_ID}`, (workspace.workspaceFolders as WorkspaceFolder[])[0].uri);
+      const affected = event.affectsConfiguration(`${EXT_ID}`, (workspace.workspaceFolders as WorkspaceFolder[])[0].uri);
       if (affected) {
         store.initialize()
       }

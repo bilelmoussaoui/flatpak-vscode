@@ -154,7 +154,7 @@
           "*.*.*.*.*.json",
           "!/settings.json"
         ],
-        "url": "./manifest-schema.json"
+        "url": "https://raw.githubusercontent.com/flatpak/flatpak-builder/master/data/flatpak-manifest.schema.json"
       }
     ],
     "yamlValidation": [
@@ -167,7 +167,7 @@
           "*.*.*.*.yml",
           "*.*.*.*.*.yml"
         ],
-        "url": "./manifest-schema.json"
+        "url": "https://raw.githubusercontent.com/flatpak/flatpak-builder/master/data/flatpak-manifest.schema.json"
       }
     ]
   },

@@ -35,8 +35,8 @@ export const parseManifest = async (
           'Failed to parse the manifest, please use a valid extension.'
         )
         .then(
-          () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-          () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+          () => { } // eslint-disable-line @typescript-eslint/no-empty-function
         )
       break
   }
@@ -74,8 +74,8 @@ export const findManifests = async (
 
 export const setContext = (ctx: string, state: boolean | string): void => {
   commands.executeCommand('setContext', ctx, state).then(
-    () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-    () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+    () => { } // eslint-disable-line @typescript-eslint/no-empty-function
   )
 }
 
@@ -111,4 +111,17 @@ export const getHostEnv = (): Map<string, string> => {
     }
   }
   return envVars
+}
+
+export const generatePathOverride = (oldValue: string, prependValues: string[], appendValues: string[]): string => {
+  let output = oldValue || ''
+  for (let path of prependValues) {
+    if (path)
+      output = `${path}:${output}`
+  }
+  for (let path of appendValues) {
+    if (path)
+      output = `${output}:${path}`
+  }
+  return output
 }

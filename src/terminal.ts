@@ -4,9 +4,9 @@ import * as readline from 'readline'
 import { failure, finished } from './store'
 import { FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
-import { getuid } from 'process'
+import { env, getuid } from 'process'
 import { promises as fs } from 'fs'
-import { getHostEnv } from './utils'
+import { generatePathOverride, getHostEnv } from './utils'
 import { cpus } from 'os'
 
 export enum TaskMode {
@@ -161,24 +161,66 @@ export class FlatpakManifest {
     )
   }
 
+  /**
+   * Generate a new PATH like override
+   * @param envVariable the env variable name
+   * @param defaultValue the default value
+   * @param prependOption an array of the paths to pre-append
+   * @param appendOption an array of the paths to append
+   * @returns the new path
+   */
+  getPathOverrides(envVariable: string, defaultValue: string, prependOption: string, appendOption: string): string {
+    const module = this.module()
+    const prependPaths = [
+      this.manifest['build-options']?.[prependOption],
+      module['build-options']?.[prependOption]
+    ]
+    const appendPaths = [
+      this.manifest['build-options']?.[appendOption],
+      module['build-options']?.[appendOption]
+    ]
+    const currentValue = process.env[envVariable] || defaultValue
+    const path = generatePathOverride(currentValue, prependPaths, appendPaths)
+    return `--env=${envVariable}=${path}`
+  }
+
+  getPaths(): string[] {
+    let paths: string[] = []
+    paths.push(
+      this.getPathOverrides('PATH', '', 'prepend-path', 'append-path')
+    )
+    paths.push(
+      this.getPathOverrides('LD_LIBRARY_PATH', '/app/lib', 'prepend-ld-library-path', 'append-ld-library-path')
+    )
+    paths.push(
+      this.getPathOverrides('PKG_CONFIG_PATH', '/app/lib/pkgconfig:/app/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig', 'prepend-pkg-config-path', 'append-pkg-config-path')
+    )
+    return paths
+  }
+
   build(rebuild: boolean): Command[] {
-    const buildEnv = this.manifest['build-options']?.env || {}
-    const buildArgs = [
+    const module = this.module()
+    let buildEnv = {
+      ...this.manifest['build-options']?.env || {},
+      ...module['build-options']?.env || {},
+    }
+    let buildArgs = [
       '--share=network',
       '--nofilesystem=host',
       `--filesystem=${this.workspace}`,
       `--filesystem=${this.repoDir}`,
     ]
-    const sdkPath = this.manifest['build-options']?.['append-path']
-    if (sdkPath) {
-      buildArgs.push(`--env=PATH=$PATH:${sdkPath}`)
-    }
 
     for (const [key, value] of Object.entries(buildEnv)) {
       buildArgs.push(`--env=${key}=${value}`)
     }
-    const module = this.module()
-    const configOpts = (module['config-opts'] || []).join(' ')
+    buildArgs = buildArgs.concat(this.getPaths())
+
+    const configOpts = (
+      (module['config-opts'] || []).concat(
+        this.manifest['build-options']?.['config-opts'] || []
+      )
+    ).join(' ')
 
     switch (module.buildsystem) {
       case undefined:
@@ -204,12 +246,12 @@ export class FlatpakManifest {
   * - Build with `make`
   * - Install with `make install`
   * @param  {string}     rebuild     Whether this is a rebuild
-  * @param  {string[]}   buildArgs   The build arguments
+  * @param  {String[]}   buildArgs   The build arguments
   * @param  {string}     configOpts  The configuration options
   */
   getAutotoolsCommands(
     rebuild: boolean,
-    buildArgs: string[],
+    buildArgs: String[],
     configOpts: string
   ): Command[] {
     const numCPUs = cpus().length
@@ -259,12 +301,12 @@ export class FlatpakManifest {
    * - Build with `ninja`
    * - Install with `ninja install`
    * @param  {string}     rebuild     Whether this is a rebuild
-   * @param  {string[]}   buildArgs   The build arguments
+   * @param  {String[]}   buildArgs   The build arguments
    * @param  {string}     configOpts  The configuration options
    */
   getCmakeCommands(
     rebuild: boolean,
-    buildArgs: string[],
+    buildArgs: String[],
     configOpts: string
   ): Command[] {
     const commands: Command[] = []
@@ -328,12 +370,12 @@ export class FlatpakManifest {
    * - Build with `ninja`
    * - Install with `meson install`
    * @param  {string}     rebuild     Whether this is a rebuild
-   * @param  {string[]}   buildArgs   The build arguments
+   * @param  {String[]}   buildArgs   The build arguments
    * @param  {string}     configOpts  The configuration options
    */
   getMesonCommands(
     rebuild: boolean,
-    buildArgs: string[],
+    buildArgs: String[],
     configOpts: string
   ): Command[] {
     const commands: Command[] = []
@@ -385,7 +427,7 @@ export class FlatpakManifest {
     return commands
   }
 
-  getSimpleCommands(buildCommands: string[], buildArgs: string[]): Command[] {
+  getSimpleCommands(buildCommands: String[], buildArgs: String[]): Command[] {
     return buildCommands.map((command) => {
       return new Command(
         'flatpak',
@@ -451,12 +493,12 @@ export class FlatpakManifest {
 export class Command {
   name: string
   cwd?: string
-  arguments: readonly string[]
+  arguments: readonly String[]
   isSandboxed: boolean
 
   constructor(
     name: string,
-    args: string[],
+    args: String[],
     cwd?: string,
     isSandboxed?: boolean
   ) {

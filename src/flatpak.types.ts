@@ -13,9 +13,15 @@ export interface FlatpakManifestSchema {
 }
 
 export interface BuildOptions {
-  'append-path'?: string
-  'build-args': string[]
-  env: Record<string, string>
+  'build-args': string[],
+  'append-path'?: string,
+  'prepend-path'?: string,
+  'append-ld-library-path'?: string,
+  'prepend-ld-library-path'?: string,
+  'append-pkg-config-path'?: string,
+  'prepend-pkg-config-path'?: string,
+  env: Record<string, string>,
+  'config-opts': string[],
 }
 
 export interface Module {
@@ -24,6 +30,7 @@ export interface Module {
   'config-opts': string[]
   sources: Source[]
   'build-commands': string[]
+  'build-options'?: BuildOptions,
 }
 
 export interface Source {

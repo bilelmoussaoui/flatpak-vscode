@@ -118,10 +118,20 @@ state
       case 'rust':
         {
           manifest
-            .overrideWorkspaceConfig(
+            .overrideWorkspaceCommandConfig(
               'rust-analyzer',
               'server.path',
               'rust-analyzer'
+            )
+            .then(
+              () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+              () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+            )
+          manifest
+            .overrideWorkspaceConfig(
+              'rust-analyzer',
+              'files.excludeDirs',
+              ['.flatpak']
             )
             .then(
               () => { }, // eslint-disable-line @typescript-eslint/no-empty-function

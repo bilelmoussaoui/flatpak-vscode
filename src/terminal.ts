@@ -477,17 +477,30 @@ export class FlatpakManifest {
     return new Command('flatpak', args, this.workspace, this.isSandboxed)
   }
 
-  async overrideWorkspaceConfig(
+  async overrideWorkspaceCommandConfig(
     section: string,
     configName: string,
     command: string
   ): Promise<void> {
     const commandPath = path.join(this.buildDir, `${command}.sh`)
     await this.runInRepo(command, true).save(commandPath)
+    await this.overrideWorkspaceConfig(section, configName, commandPath)
+  }
+
+  async overrideWorkspaceConfig(
+    section: string,
+    configName: string,
+    value: any
+  ): Promise<void> {
     const config = vscode.workspace.getConfiguration(section)
-    if (config.get<string>(configName) !== commandPath) {
-      await config.update(configName, commandPath)
-    }
+    await config.update(configName, value)
+  }
+  async restoreWorkspaceConfig(
+    section: string,
+    configName: string,
+  ): Promise<void> {
+    const config = vscode.workspace.getConfiguration(section)
+    await config.update(configName, undefined)
   }
 }
 export class Command {

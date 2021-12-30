@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.0.13]
+
+- support `prepend-path` `append-ld-library-path` `prepend-ld-library-path` `append-pkg-config-path` `prepend-pkg-config-path` in `build-options`
+- support `build-options` in a module
+- configure `rust-analyzer`'s `excludeDirs` option to exclude `.flatpak`
+- reset `rust-analyzer` overrides when the extension is disabled
+- use flatpak-builder schema from upstream repository
+
 ## [0.0.12]
 
 - use an output channel instead of a hackish terminal

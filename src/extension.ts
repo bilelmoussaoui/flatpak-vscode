@@ -150,7 +150,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   }
 }
 
-export async function deactivate(_context: vscode.ExtensionContext) {
+export async function deactivate(_context: ExtensionContext) {
   const manifest = store.state.getState().selectedManifest
   if (manifest) {
     switch (manifest?.sdk()) {

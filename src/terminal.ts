@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as readline from 'readline'
 import { failure, finished } from './store'
-import { FlatpakManifestSchema, Module } from './flatpak.types'
+import { BuildOptions, FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { env, getuid } from 'process'
 import { promises as fs } from 'fs'
@@ -169,7 +169,7 @@ export class FlatpakManifest {
    * @param appendOption an array of the paths to append
    * @returns the new path
    */
-  getPathOverrides(envVariable: string, defaultValue: string, prependOption: string, appendOption: string): string {
+  getPathOverrides(envVariable: string, defaultValue: string, prependOption: keyof BuildOptions, appendOption: keyof BuildOptions): string {
     const module = this.module()
     const prependPaths = [
       this.manifest['build-options']?.[prependOption],
@@ -246,12 +246,12 @@ export class FlatpakManifest {
   * - Build with `make`
   * - Install with `make install`
   * @param  {string}     rebuild     Whether this is a rebuild
-  * @param  {String[]}   buildArgs   The build arguments
+  * @param  {string[]}   buildArgs   The build arguments
   * @param  {string}     configOpts  The configuration options
   */
   getAutotoolsCommands(
     rebuild: boolean,
-    buildArgs: String[],
+    buildArgs: string[],
     configOpts: string
   ): Command[] {
     const numCPUs = cpus().length
@@ -301,12 +301,12 @@ export class FlatpakManifest {
    * - Build with `ninja`
    * - Install with `ninja install`
    * @param  {string}     rebuild     Whether this is a rebuild
-   * @param  {String[]}   buildArgs   The build arguments
+   * @param  {string[]}   buildArgs   The build arguments
    * @param  {string}     configOpts  The configuration options
    */
   getCmakeCommands(
     rebuild: boolean,
-    buildArgs: String[],
+    buildArgs: string[],
     configOpts: string
   ): Command[] {
     const commands: Command[] = []
@@ -370,12 +370,12 @@ export class FlatpakManifest {
    * - Build with `ninja`
    * - Install with `meson install`
    * @param  {string}     rebuild     Whether this is a rebuild
-   * @param  {String[]}   buildArgs   The build arguments
+   * @param  {string[]}   buildArgs   The build arguments
    * @param  {string}     configOpts  The configuration options
    */
   getMesonCommands(
     rebuild: boolean,
-    buildArgs: String[],
+    buildArgs: string[],
     configOpts: string
   ): Command[] {
     const commands: Command[] = []
@@ -427,7 +427,7 @@ export class FlatpakManifest {
     return commands
   }
 
-  getSimpleCommands(buildCommands: String[], buildArgs: String[]): Command[] {
+  getSimpleCommands(buildCommands: string[], buildArgs: string[]): Command[] {
     return buildCommands.map((command) => {
       return new Command(
         'flatpak',
@@ -506,12 +506,12 @@ export class FlatpakManifest {
 export class Command {
   name: string
   cwd?: string
-  arguments: readonly String[]
+  arguments: readonly string[]
   isSandboxed: boolean
 
   constructor(
     name: string,
-    args: String[],
+    args: string[],
     cwd?: string,
     isSandboxed?: boolean
   ) {

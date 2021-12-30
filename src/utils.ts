@@ -113,7 +113,7 @@ export const getHostEnv = (): Map<string, string> => {
   return envVars
 }
 
-export const generatePathOverride = (oldValue: string, prependValues: string[], appendValues: string[]): string => {
+export const generatePathOverride = (oldValue: string, prependValues: any[], appendValues: any[]): string => {
   let output = oldValue || ''
   for (let path of prependValues) {
     if (path)

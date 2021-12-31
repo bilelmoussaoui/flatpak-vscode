@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.16]
+
+- Mark dependencies as not build after an update
+
 ## [0.0.15]
 
 - Don't hardcode the path to `/usr/bin/bash`

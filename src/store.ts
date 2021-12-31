@@ -150,6 +150,7 @@ state
         break
       case TaskMode.updateDeps:
         state.pipeline.dependencies.updated = true
+        state.pipeline.dependencies.built = false
         // Assume user might want to rebuild dependencies
         setContext('flatpakDependenciesBuilt', false)
         break

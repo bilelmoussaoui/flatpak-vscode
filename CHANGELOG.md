@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.0.15]
+
+- Don't hardcode the path to `/usr/bin/bash`
+- Code cleanup 
+
+## [0.0.14]
+
+- Make use of `prepend-path` `append-ld-library-path` `prepend-ld-library-path` `append-pkg-config-path` `prepend-pkg-config-path` in `build-options` when opening a build terminal
+
 ## [0.0.13]
 
 - support `prepend-path` `append-ld-library-path` `prepend-ld-library-path` `append-pkg-config-path` `prepend-pkg-config-path` in `build-options`

@@ -67,21 +67,21 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Init the build environment
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async () => {
         if (!store.state.getState().pipeline.initialized) {
           // Ensures we have a terminal to receive the output
           outputChannel.show(true)
-          terminal.setCommands([manifest.initBuild()], TaskMode.buildInit)
+          await terminal.setCommands([manifest.initBuild()], TaskMode.buildInit)
         }
       })
     )
 
     // Update the application's dependencies
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, () => {
+      registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, async () => {
         if (store.state.getState().pipeline.initialized) {
           outputChannel.show(true)
-          terminal.setCommands(
+          await terminal.setCommands(
             [manifest.updateDependencies()],
             TaskMode.updateDeps
           )
@@ -91,10 +91,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Build the application's dependencies
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, async () => {
         if (!store.state.getState().pipeline.dependencies.built) {
           outputChannel.show(true)
-          terminal.setCommands(
+          await terminal.setCommands(
             [manifest.buildDependencies()],
             TaskMode.buildDeps
           )
@@ -104,10 +104,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Build the application
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, async () => {
         if (store.state.getState().pipeline.dependencies.built) {
           outputChannel.show(true)
-          terminal.setCommands(manifest.build(false), TaskMode.buildApp)
+          await terminal.setCommands(manifest.build(false), TaskMode.buildApp)
         }
       })
     )
@@ -116,10 +116,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // If a buildsystem is set on the latest module, the build/rebuild commands
     // could be different, the rebuild also triggers a run command afterwards
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, () => {
+      registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, async () => {
         if (store.state.getState().pipeline.application.built) {
           outputChannel.show(true)
-          terminal.setCommands(manifest.build(true), TaskMode.rebuild)
+          await terminal.setCommands(manifest.build(true), TaskMode.rebuild)
         }
       })
     )
@@ -140,17 +140,17 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Run the application, only if it was already built
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.run}`, () => {
+      registerCommand(`${EXT_ID}.${TaskMode.run}`, async () => {
         if (store.state.getState().pipeline.application.built) {
           outputChannel.show(true)
-          terminal.setCommands([manifest.run()], TaskMode.run)
+          await terminal.setCommands([manifest.run()], TaskMode.run)
         }
       })
     )
   }
 }
 
-export async function deactivate(_context: ExtensionContext) {
+export function deactivate() {
   const manifest = store.state.getState().selectedManifest
   if (manifest) {
     switch (manifest?.sdk()) {

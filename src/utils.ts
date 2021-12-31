@@ -125,3 +125,14 @@ export const generatePathOverride = (oldValue: string, prependValues: any[], app
   }
   return output
 }
+
+export const findInPath = async (executable: string): Promise<string | undefined> => {
+  const path = process.env['PATH']?.split(':') || []
+  for (let p of path) {
+    let fullPath = `${p}/${executable}`
+    if (await exists(fullPath)) {
+      return fullPath
+    }
+  }
+  return undefined
+}

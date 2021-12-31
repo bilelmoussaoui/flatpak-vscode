@@ -4,9 +4,9 @@ import * as readline from 'readline'
 import { failure, finished } from './store'
 import { BuildOptions, FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
-import { env, getuid } from 'process'
+import { getuid } from 'process'
 import { promises as fs } from 'fs'
-import { generatePathOverride, getHostEnv } from './utils'
+import { findInPath, generatePathOverride, getHostEnv } from './utils'
 import { cpus } from 'os'
 
 export enum TaskMode {
@@ -534,21 +534,22 @@ export class Command {
     await fs.chmod(output, 0o755)
   }
 
-  run(): child_process.ChildProcessWithoutNullStreams {
+  async run(): Promise<child_process.ChildProcessWithoutNullStreams> {
     let proc
+    const bash = await findInPath('bash') || '/usr/bin/bash'
     if (this.isSandboxed) {
       proc = child_process.spawn(
         'flatpak-spawn',
         ['--host', this.name, ...this.arguments],
         {
           cwd: this.cwd,
-          shell: '/usr/bin/bash',
+          shell: bash,
         }
       )
     } else {
       proc = child_process.spawn(this.name, this.arguments, {
         cwd: this.cwd,
-        shell: '/usr/bin/bash',
+        shell: bash,
       })
     }
     return proc
@@ -576,7 +577,7 @@ export class FlatpakTaskTerminal {
     }
   }
 
-  setCommands(commands: Command[], mode: TaskMode): void {
+  async setCommands(commands: Command[], mode: TaskMode): Promise<void> {
     if (this.isRunning) {
       this.commands = [...this.commands, ...commands]
     } else {
@@ -584,7 +585,7 @@ export class FlatpakTaskTerminal {
       this.mode = mode
       this.currentCommand = 0
       this.failed = false
-      this.spawn(this.commands[0])
+      await this.spawn(this.commands[0])
     }
   }
 
@@ -609,9 +610,9 @@ export class FlatpakTaskTerminal {
     }
   }
 
-  spawn(command: Command): void {
+  async spawn(command: Command): Promise<void> {
     this.write(`> ${command.toString()} <`)
-    this.currentProcess = command.run()
+    this.currentProcess = await command.run()
     this.isRunning = true
     readline
       .createInterface({

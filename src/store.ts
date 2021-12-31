@@ -4,6 +4,10 @@ import { promises as fs } from 'fs'
 import { Command, FlatpakManifest, TaskMode } from './terminal'
 import { exists, setContext } from './utils'
 
+import { commands } from 'vscode'
+import { EXT_ID } from './extension'
+const { executeCommand } = commands
+
 // Events
 export const manifestFound = createEvent<FlatpakManifest>()
 export const manifestSelected = createEvent<FlatpakManifest>()
@@ -147,20 +151,36 @@ state
         setContext('flatpakInitialized', true)
         state.pipeline.initialized = true
         initialize()
+        if (!finishedTask.restore) {
+          executeCommand(`${EXT_ID}.${TaskMode.updateDeps}`)
+        }
         break
       case TaskMode.updateDeps:
         state.pipeline.dependencies.updated = true
         state.pipeline.dependencies.built = false
         // Assume user might want to rebuild dependencies
         setContext('flatpakDependenciesBuilt', false)
+        if (!finishedTask.restore) {
+          executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
+        }
         break
       case TaskMode.buildDeps:
         setContext('flatpakDependenciesBuilt', true)
         state.pipeline.dependencies.built = true
+        if (!finishedTask.restore) {
+          executeCommand(`${EXT_ID}.${TaskMode.buildApp}`)
+        }
         break
       case TaskMode.buildApp:
         setContext('flatpakApplicationBuilt', true)
         state.pipeline.application.built = true
+        break
+      case TaskMode.rebuild:
+        setContext('flatpakApplicationBuilt', true)
+        state.pipeline.application.built = true
+        if (!finishedTask.restore) {
+          executeCommand(`${EXT_ID}.${TaskMode.run}`)
+        }
         break
     }
     if (

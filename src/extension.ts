@@ -6,7 +6,7 @@ import { FlatpakTaskTerminal, TaskMode } from './terminal'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
-const EXT_ID = 'flatpak-vscode'
+export const EXT_ID = 'flatpak-vscode'
 
 
 export async function activate(context: ExtensionContext): Promise<void> {

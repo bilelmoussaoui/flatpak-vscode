@@ -447,7 +447,7 @@ export class FlatpakManifest {
 
     const appId = this.id()
 
-    const args = [
+    let args = [
       'build',
       '--with-appdir',
       '--allow=devel',
@@ -464,10 +464,8 @@ export class FlatpakManifest {
     }
 
     if (mountExtensions) {
-      const sdkPath = this.manifest['build-options']?.['append-path']
-      if (sdkPath) {
-        args.push(`--env=PATH=$PATH:${sdkPath}`)
-      }
+      args = args.concat(this.getPaths())
+
       // Assume we might need network access by the executable
       args.push('--share=network')
     }

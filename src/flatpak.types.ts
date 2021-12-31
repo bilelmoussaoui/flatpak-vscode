@@ -12,6 +12,12 @@ export interface FlatpakManifestSchema {
   'build-options'?: BuildOptions
 }
 
+export type BuildOptionsPathKeys = 'append-path' | 'prepend-path' |
+  'append-ld-library-path' |
+  'prepend-ld-library-path' |
+  'append-pkg-config-path' |
+  'prepend-pkg-config-path'
+
 export interface BuildOptions {
   'build-args': string[],
   'append-path'?: string,

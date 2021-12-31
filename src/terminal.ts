@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as readline from 'readline'
 import { failure, finished } from './store'
-import { BuildOptions, FlatpakManifestSchema, Module } from './flatpak.types'
+import { BuildOptionsPathKeys, FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
 import { promises as fs } from 'fs'
@@ -169,7 +169,7 @@ export class FlatpakManifest {
    * @param appendOption an array of the paths to append
    * @returns the new path
    */
-  getPathOverrides(envVariable: string, defaultValue: string, prependOption: keyof BuildOptions, appendOption: keyof BuildOptions): string {
+  getPathOverrides(envVariable: string, defaultValue: string, prependOption: BuildOptionsPathKeys, appendOption: BuildOptionsPathKeys): string {
     const module = this.module()
     const prependPaths = [
       this.manifest['build-options']?.[prependOption],
@@ -185,7 +185,7 @@ export class FlatpakManifest {
   }
 
   getPaths(): string[] {
-    let paths: string[] = []
+    const paths: string[] = []
     paths.push(
       this.getPathOverrides('PATH', '', 'prepend-path', 'append-path')
     )
@@ -200,7 +200,7 @@ export class FlatpakManifest {
 
   build(rebuild: boolean): Command[] {
     const module = this.module()
-    let buildEnv = {
+    const buildEnv = {
       ...this.manifest['build-options']?.env || {},
       ...module['build-options']?.env || {},
     }
@@ -602,7 +602,9 @@ export class FlatpakTaskTerminal {
       return
     }
     if (this.currentCommand <= this.commands.length - 1) {
-      this.spawn(this.commands[this.currentCommand])
+      this.spawn(this.commands[this.currentCommand]).finally(
+        () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+      )
     } else {
       this.currentCommand = 0
       this.isRunning = false

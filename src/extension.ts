@@ -150,14 +150,14 @@ export async function activate(context: ExtensionContext): Promise<void> {
   }
 }
 
-export function deactivate() {
+export async function deactivate(): Promise<void> {
   const manifest = store.state.getState().selectedManifest
   if (manifest) {
     switch (manifest?.sdk()) {
       case 'rust':
-        manifest.restoreWorkspaceConfig('rust-analyzer',
+        await manifest.restoreWorkspaceConfig('rust-analyzer',
           'server.path')
-        manifest.restoreWorkspaceConfig('rust-analyzer',
+        await manifest.restoreWorkspaceConfig('rust-analyzer',
           'files.excludeDirs')
         break
     }

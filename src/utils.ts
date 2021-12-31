@@ -33,8 +33,8 @@ export const parseManifest = async (
       window
         .showErrorMessage(
           'Failed to parse the manifest, please use a valid extension.'
-        )
-        .then(
+        ).
+        then(
           () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
           () => { } // eslint-disable-line @typescript-eslint/no-empty-function
         )
@@ -113,23 +113,25 @@ export const getHostEnv = (): Map<string, string> => {
   return envVars
 }
 
-export const generatePathOverride = (oldValue: string, prependValues: any[], appendValues: any[]): string => {
+export const generatePathOverride = (oldValue: string, prependValues: (string | undefined)[], appendValues: (string | undefined)[]): string => {
   let output = oldValue || ''
-  for (let path of prependValues) {
-    if (path)
+  for (const path of prependValues) {
+    if (path) {
       output = `${path}:${output}`
+    }
   }
-  for (let path of appendValues) {
-    if (path)
+  for (const path of appendValues) {
+    if (path) {
       output = `${output}:${path}`
+    }
   }
   return output
 }
 
 export const findInPath = async (executable: string): Promise<string | undefined> => {
   const path = process.env['PATH']?.split(':') || []
-  for (let p of path) {
-    let fullPath = `${p}/${executable}`
+  for (const p of path) {
+    const fullPath = `${p}/${executable}`
     if (await exists(fullPath)) {
       return fullPath
     }

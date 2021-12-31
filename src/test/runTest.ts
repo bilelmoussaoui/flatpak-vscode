@@ -20,6 +20,6 @@ async function main() {
 }
 
 main().then(
-  () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-  () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+  () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
+  () => { } // eslint-disable-line @typescript-eslint/no-empty-function
 )

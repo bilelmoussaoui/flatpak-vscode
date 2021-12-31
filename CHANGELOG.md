@@ -3,6 +3,7 @@
 ## [0.0.16]
 
 - Mark dependencies as not build after an update
+- Simplif the usage of the extensions, you can now just run a `Flatpak: build` from the command and it will do everything you need. You can followup with a `Flatpak: run` or a `Flatpak: rebuild the application`
 
 ## [0.0.15]
 

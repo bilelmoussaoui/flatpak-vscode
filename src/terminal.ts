@@ -564,6 +564,7 @@ export class FlatpakTaskTerminal {
   private mode?: TaskMode
   private output: vscode.OutputChannel
   private currentProcess?: child_process.ChildProcessWithoutNullStreams
+  public completeBuild = false
 
   constructor(outputChannel: vscode.OutputChannel) {
     this.currentCommand = 0
@@ -608,7 +609,8 @@ export class FlatpakTaskTerminal {
     } else {
       this.currentCommand = 0
       this.isRunning = false
-      finished({ mode: this.mode as TaskMode, restore: false })
+      finished({ mode: this.mode as TaskMode, restore: false, completeBuild: this.completeBuild })
+      this.completeBuild = false
     }
   }
 

@@ -16,12 +16,10 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 
 ## Commands
 
-- Initialize:  Initialize the build directory, once the task is over, it triggers a "Update Dependencies"
-- Update Dependencies: Download/Update the dependencies, once the task is over, it triggers a "Build Dependencies"
-- Build Dependencies: Build all the modules specified in the manifest except the last one
-- Build:  Build the latest module, by detecting the `buildsystem`, the extension runs the proper build commands to build the application
-- Rebuild: Rebuild the application and triggers a "Run"
+- Build: Initialize a Flatpak build, update the dependencies & build them. It also does a first build of the application.
+- Rebuild: Rebuild the application and triggers a "Run" command.
 - Run: Run the application
+- Update Dependencies: Download/Update the dependencies and builds them.
 - Clean: Clean the build directory (`.flatpak`) inside the current workspace
 - Runtime Terminal: Spawn a new terminal inside the specified Sdk
 - Build Terminal: Spawn a new terminal inside the current build repository (Note that the SDKs used are automatically mounted and enabled as well)

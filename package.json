@@ -66,16 +66,6 @@
         "category": "Flatpak"
       },
       {
-        "command": "flatpak-vscode.build-deps",
-        "title": "Build the dependencies",
-        "category": "Flatpak"
-      },
-      {
-        "command": "flatpak-vscode.build-app",
-        "title": "Build the application",
-        "category": "Flatpak"
-      },
-      {
         "command": "flatpak-vscode.run",
         "title": "Run",
         "category": "Flatpak"
@@ -91,8 +81,8 @@
         "category": "Flatpak"
       },
       {
-        "command": "flatpak-vscode.build-init",
-        "title": "Init the build",
+        "command": "flatpak-vscode.build",
+        "title": "Build",
         "category": "Flatpak"
       }
     ],
@@ -107,31 +97,23 @@
           "when": "flatpakManifestFound && flatpakInitialized"
         },
         {
-          "command": "flatpak-vscode.build-init",
-          "when": "!flatpakInitialized && flatpakManifestFound"
-        },
-        {
           "command": "flatpak-vscode.clean",
-          "when": "flatpakInitialized"
+          "when": "flatpakManifestFound"
         },
         {
           "command": "flatpak-vscode.update-deps",
           "when": "flatpakInitialized"
         },
         {
-          "command": "flatpak-vscode.build-deps",
-          "when": "!flatpakDependenciesBuilt && flatpakInitialized"
-        },
-        {
-          "command": "flatpak-vscode.build-app",
-          "when": "flatpakDependenciesBuilt"
-        },
-        {
-          "command": "flatpak-vscode.run",
-          "when": "flatpakApplicationBuilt"
+          "command": "flatpak-vscode.build",
+          "when": "flatpakManifestFound && !flatpakApplicationBuilt"
         },
         {
           "command": "flatpak-vscode.rebuild",
+          "when": "flatpakApplicationBuilt"
+        },
+        {
+          "command": "flatpak-vscode.run",
           "when": "flatpakApplicationBuilt"
         }
       ]

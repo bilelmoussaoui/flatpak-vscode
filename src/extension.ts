@@ -67,7 +67,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Init the build environment
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async (completeBuild: boolean | undefined) => {
+        terminal.completeBuild = completeBuild || false
         if (!store.state.getState().pipeline.initialized) {
           // Ensures we have a terminal to receive the output
           outputChannel.show(true)
@@ -78,7 +79,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Update the application's dependencies
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, async (completeBuild: boolean | undefined) => {
+        terminal.completeBuild = completeBuild || false
         if (store.state.getState().pipeline.initialized) {
           outputChannel.show(true)
           await terminal.setCommands(
@@ -91,7 +93,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Build the application's dependencies
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, async () => {
+      registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, async (completeBuild: boolean | undefined) => {
+        terminal.completeBuild = completeBuild || false
         if (!store.state.getState().pipeline.dependencies.built) {
           outputChannel.show(true)
           await terminal.setCommands(
@@ -144,6 +147,24 @@ export async function activate(context: ExtensionContext): Promise<void> {
         if (store.state.getState().pipeline.application.built) {
           outputChannel.show(true)
           await terminal.setCommands([manifest.run()], TaskMode.run)
+        }
+      })
+    )
+
+    // A helper command, chains up to other commands based on current pipeline state
+    context.subscriptions.push(
+      registerCommand(`${EXT_ID}.build`, async () => {
+        terminal.completeBuild = true
+        if (!store.state.getState().pipeline.initialized) {
+          await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
+        } else if (!store.state.getState().pipeline.dependencies.updated) {
+          await executeCommand(`${EXT_ID}.${TaskMode.updateDeps}`)
+        } else if (!store.state.getState().pipeline.dependencies.built) {
+          await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
+        } else if (!store.state.getState().pipeline.application.built) {
+          await executeCommand(`${EXT_ID}.${TaskMode.buildApp}`)
+        } else {
+          outputChannel.appendLine("Nothing to do")
         }
       })
     )

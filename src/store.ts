@@ -27,18 +27,19 @@ export const loadFrom = async (path: string): Promise<void> => {
     const pipeline = latestState.pipeline
     // Trigger finished task so we update the context
     if (pipeline.initialized) {
-      finished({ mode: TaskMode.buildInit, restore: true })
+      finished({ mode: TaskMode.buildInit, restore: true, completeBuild: false })
     }
     if (pipeline.dependencies.updated) {
-      finished({ mode: TaskMode.updateDeps, restore: true })
+      finished({ mode: TaskMode.updateDeps, restore: true, completeBuild: false })
     }
     if (pipeline.dependencies.built) {
-      finished({ mode: TaskMode.buildDeps, restore: true })
+      finished({ mode: TaskMode.buildDeps, restore: true, completeBuild: false })
     }
     if (pipeline.application.built) {
-      finished({ mode: TaskMode.buildApp, restore: true })
+      finished({ mode: TaskMode.buildApp, restore: true, completeBuild: false })
     }
   } catch (err) {
+    state.getState().pipeline.initialized = false
     // Most likely we didn't find the pipeline backup
   }
 }
@@ -68,7 +69,8 @@ export interface State {
 
 export interface TaskFinished {
   restore: boolean
-  mode: TaskMode
+  mode: TaskMode,
+  completeBuild: boolean,
 }
 
 export const state = createStore<State>({
@@ -152,7 +154,8 @@ state
         state.pipeline.initialized = true
         initialize()
         if (!finishedTask.restore) {
-          executeCommand(`${EXT_ID}.${TaskMode.updateDeps}`)
+          executeCommand(`${EXT_ID}.${TaskMode.updateDeps}`, finishedTask.completeBuild)
+            .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
         }
         break
       case TaskMode.updateDeps:
@@ -161,14 +164,18 @@ state
         // Assume user might want to rebuild dependencies
         setContext('flatpakDependenciesBuilt', false)
         if (!finishedTask.restore) {
-          executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
+          executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`, finishedTask.completeBuild)
+            .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
+
         }
         break
       case TaskMode.buildDeps:
         setContext('flatpakDependenciesBuilt', true)
         state.pipeline.dependencies.built = true
-        if (!finishedTask.restore) {
+        if (!finishedTask.restore && finishedTask.completeBuild) {
           executeCommand(`${EXT_ID}.${TaskMode.buildApp}`)
+            .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
+
         }
         break
       case TaskMode.buildApp:
@@ -180,6 +187,7 @@ state
         state.pipeline.application.built = true
         if (!finishedTask.restore) {
           executeCommand(`${EXT_ID}.${TaskMode.run}`)
+            .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
         }
         break
     }

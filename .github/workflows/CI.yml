@@ -23,7 +23,7 @@ jobs:
       - uses: codespell-project/actions-codespell@master
         with:
           check_filenames: true
-          skip: "yarn.lock"
+          skip: "yarn.lock,.git"
 
   tests:
     name: Tests

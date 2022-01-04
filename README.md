@@ -14,6 +14,8 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 - `flatpak`
 - `flatpak-builder`
 
+  if you're using Fedora Silverblue, you will have to layer `flatpak-builder` as it is no longer part of the base image. You can use something like `rpm-ostree install flatpak-builder
+
 ## Commands
 
 - Build: Initialize a Flatpak build, update the dependencies & build them. It also does a first build of the application.
@@ -21,7 +23,7 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 - Run: Run the application
 - Update Dependencies: Download/Update the dependencies and builds them.
 - Clean: Clean the build directory (`.flatpak`) inside the current workspace
-- Runtime Terminal: Spawn a new terminal inside the specified Sdk
+- Runtime Terminal: Spawn a new terminal inside the specified SDK
 - Build Terminal: Spawn a new terminal inside the current build repository (Note that the SDKs used are automatically mounted and enabled as well)
 
 ## Contributing

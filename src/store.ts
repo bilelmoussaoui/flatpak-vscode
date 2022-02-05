@@ -8,7 +8,7 @@ import { TaskMode, taskModeAsStatus } from './taskMode'
 import { exists, setContext } from './utils'
 import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 
-import { commands } from 'vscode'
+import { commands, workspace } from 'vscode'
 const { executeCommand } = commands
 
 // Config Values

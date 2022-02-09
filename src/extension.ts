@@ -1,6 +1,6 @@
 import * as store from './store'
 import { window, ExtensionContext, commands } from 'vscode'
-import { exists, findManifests } from './utils'
+import { exists, findManifests, ensureDocumentsPortal } from './utils'
 import { promises as fs } from 'fs'
 import { FlatpakTaskTerminal, TaskMode } from './terminal'
 const { executeCommand, registerCommand } = commands
@@ -14,6 +14,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const isSandboxed = await exists('/.flatpak-info')
   const manifests = await findManifests(isSandboxed)
   if (manifests.length > 0) {
+    // Make sures the documents portal is running
+    await ensureDocumentsPortal()
+
     manifests.forEach((manifest) => store.manifestFound(manifest))
     //TODO: allow the user to select a manifest
     const manifest = manifests[0]

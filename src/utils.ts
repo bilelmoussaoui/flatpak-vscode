@@ -1,9 +1,22 @@
+import * as dbus from 'dbus-next'
 import { promises as fs, constants as fsc } from 'fs'
 import * as path from 'path'
 import { commands, window, workspace, Uri } from 'vscode'
 import * as yaml from 'js-yaml'
 import { FlatpakManifestSchema } from './flatpak.types'
 import { FlatpakManifest } from './terminal'
+
+export const ensureDocumentsPortal = async (): Promise<void> => {
+  try {
+    const bus = dbus.sessionBus()
+    const obj = await bus.getProxyObject('org.freedesktop.portal.Documents', '/org/freedesktop/portal/documents')
+    const portal = obj.getInterface('org.freedesktop.portal.Documents')
+    await portal.GetMountPoint()
+  } catch (err) {
+    console.log('Failed to ensure documents portal')
+    console.log(err)
+  }
+}
 
 export const isFlatpak = (manifest: FlatpakManifestSchema | null): boolean => {
   if (!manifest) {

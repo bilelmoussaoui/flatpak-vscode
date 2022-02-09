@@ -3,6 +3,7 @@ import { window, ExtensionContext, commands } from 'vscode'
 import { exists, findManifests } from './utils'
 import { promises as fs } from 'fs'
 import { FlatpakTaskTerminal, TaskMode } from './terminal'
+import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
@@ -176,10 +177,7 @@ export async function deactivate(): Promise<void> {
   if (manifest) {
     switch (manifest?.sdk()) {
       case 'rust':
-        await manifest.restoreWorkspaceConfig('rust-analyzer',
-          'server.path')
-        await manifest.restoreWorkspaceConfig('rust-analyzer',
-          'files.excludeDirs')
+        await restoreRustAnalyzerConfigOverrides(manifest)
         break
     }
   }

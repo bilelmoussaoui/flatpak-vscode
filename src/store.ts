@@ -3,6 +3,7 @@ import { promises as fs } from 'fs'
 
 import { Command, FlatpakManifest, TaskMode } from './terminal'
 import { exists, setContext } from './utils'
+import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 
 import { commands } from 'vscode'
 import { EXT_ID } from './extension'
@@ -123,26 +124,8 @@ state
     switch (manifest?.sdk()) {
       case 'rust':
         {
-          manifest
-            .overrideWorkspaceCommandConfig(
-              'rust-analyzer',
-              'server.path',
-              'rust-analyzer'
-            )
-            .then(
-              () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-              () => { } // eslint-disable-line @typescript-eslint/no-empty-function
-            )
-          manifest
-            .overrideWorkspaceConfig(
-              'rust-analyzer',
-              'files.excludeDirs',
-              ['.flatpak']
-            )
-            .then(
-              () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-              () => { } // eslint-disable-line @typescript-eslint/no-empty-function
-            )
+          loadRustAnalyzerConfigOverrides(manifest)
+            .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
         }
         break
     }

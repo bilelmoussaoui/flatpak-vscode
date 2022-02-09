@@ -9,6 +9,8 @@ import { promises as fs } from 'fs'
 import { findInPath, generatePathOverride, getHostEnv } from './utils'
 import { cpus } from 'os'
 
+const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
+
 export enum TaskMode {
   buildInit = 'build-init',
   updateDeps = 'update-deps',
@@ -239,6 +241,16 @@ export class FlatpakManifest {
     throw new Error('Failed to build application')
   }
 
+  buildSystemBuildDir(): string | null {
+    const module = this.module()
+    switch (module.buildsystem) {
+      case 'meson':
+      case 'cmake':
+        return DEFAULT_BUILD_SYSTEM_BUILD_DIR
+    }
+    return null
+  }
+
   /**
   * Gets an array of commands for a autotools build
   * - If the app is being rebuilt
@@ -310,7 +322,7 @@ export class FlatpakManifest {
     configOpts: string
   ): Command[] {
     const commands: Command[] = []
-    const cmakeBuildDir = '_build'
+    const cmakeBuildDir = DEFAULT_BUILD_SYSTEM_BUILD_DIR
     buildArgs.push(`--filesystem=${this.workspace}/${cmakeBuildDir}`)
     if (!rebuild) {
       commands.push(
@@ -379,7 +391,7 @@ export class FlatpakManifest {
     configOpts: string
   ): Command[] {
     const commands: Command[] = []
-    const mesonBuildDir = '_build'
+    const mesonBuildDir = DEFAULT_BUILD_SYSTEM_BUILD_DIR
     buildArgs.push(`--filesystem=${this.workspace}/${mesonBuildDir}`)
     if (!rebuild) {
       commands.push(
@@ -442,7 +454,7 @@ export class FlatpakManifest {
     return this.runInRepo(this.manifest.command, false)
   }
 
-  runInRepo(shellCommand: string, mountExtensions: boolean): Command {
+  runInRepo(shellCommand: string, mountExtensions: boolean, additionalEnvVars?: Map<string, string>): Command {
     const uid = getuid()
 
     const appId = this.id()
@@ -458,6 +470,12 @@ export class FlatpakManifest {
     ]
 
     const envVars = getHostEnv()
+
+    if (additionalEnvVars !== undefined) {
+      for (const [key, value] of additionalEnvVars) {
+        envVars.set(key, value)
+      }
+    }
 
     for (const [key, value] of envVars) {
       args.push(`--env=${key}=${value}`)
@@ -478,10 +496,11 @@ export class FlatpakManifest {
   async overrideWorkspaceCommandConfig(
     section: string,
     configName: string,
-    command: string
+    command: string,
+    additionalEnvVars?: Map<string, string>,
   ): Promise<void> {
     const commandPath = path.join(this.buildDir, `${command}.sh`)
-    await this.runInRepo(command, true).save(commandPath)
+    await this.runInRepo(command, true, additionalEnvVars).save(commandPath)
     await this.overrideWorkspaceConfig(section, configName, commandPath)
   }
 

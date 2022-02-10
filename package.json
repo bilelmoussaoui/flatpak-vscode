@@ -51,6 +51,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "flatpak-vscode.show-output-channel",
+        "title": "Shows the output channel",
+        "category": "Flatpak"
+      },
+      {
         "command": "flatpak-vscode.runtime-terminal",
         "title": "Open a Runtime Terminal",
         "category": "Flatpak"

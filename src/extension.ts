@@ -2,15 +2,19 @@ import * as store from './store'
 import { window, ExtensionContext, commands } from 'vscode'
 import { exists, findManifests, ensureDocumentsPortal } from './utils'
 import { promises as fs } from 'fs'
-import { FlatpakTaskTerminal, TaskMode } from './terminal'
+import { StatusBarItem } from './statusBarItem'
+import { FlatpakTaskTerminal } from './terminal'
+import { TaskMode } from './taskMode'
 import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
 export const EXT_ID = 'flatpak-vscode'
-
+export let statusBarItem: StatusBarItem | undefined
 
 export async function activate(context: ExtensionContext): Promise<void> {
+  statusBarItem = new StatusBarItem(context)
+
   // Look for a flatpak manifest
   const isSandboxed = await exists('/.flatpak-info')
   const manifests = await findManifests(isSandboxed)
@@ -168,7 +172,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
         } else if (!store.state.getState().pipeline.application.built) {
           await executeCommand(`${EXT_ID}.${TaskMode.buildApp}`)
         } else {
-          outputChannel.appendLine("Nothing to do")
+          outputChannel.appendLine('Nothing to do')
         }
       })
     )

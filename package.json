@@ -163,7 +163,7 @@
         "flatpak-vscode.extensionsIntegration": {
           "type": "boolean",
           "default": true,
-          "description": "integrate flatpak-vscode with other Flatpak extensions like rust-analyzer. Enabling this will make the integrated extensions run their binaries inside the Flatpak sandbox instead of running on the host."
+          "description": "Integrate Flatpak VSCode with other extensions like rust-analyzer. Enabling this will make the integrated extensions run their binaries inside the Flatpak sandbox instead of running on the host."
         }
       }
     }

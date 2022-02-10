@@ -52,7 +52,7 @@
     "commands": [
       {
         "command": "flatpak-vscode.show-output-channel",
-        "title": "Shows the output channel",
+        "title": "Show the output channel",
         "category": "Flatpak"
       },
       {

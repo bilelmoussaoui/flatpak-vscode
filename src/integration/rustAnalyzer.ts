@@ -1,8 +1,4 @@
-import { EXT_ID } from '../extension'
 import { FlatpakManifest } from '../flatpakManifest'
-import { Settings } from '../store'
-
-import { workspace } from 'vscode'
 
 export const loadRustAnalyzerConfigOverrides = async (manifest: FlatpakManifest): Promise<void> => {
     await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer')

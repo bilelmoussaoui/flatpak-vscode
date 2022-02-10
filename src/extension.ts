@@ -5,7 +5,8 @@ import { promises as fs } from 'fs'
 import { StatusBarItem } from './statusBarItem'
 import { FlatpakTerminal } from './flatpakTerminal'
 import { TaskMode } from './taskMode'
-import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
+import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
+import { Settings } from './store'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
@@ -34,10 +35,23 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     // Watch for workspace config changes
     workspace.onDidChangeConfiguration(event => {
-      // Reinitialize when settings have changed
-      for (var folder of workspace.workspaceFolders as WorkspaceFolder[]) {
+      // Apply changed settings
+      for (const folder of workspace.workspaceFolders as WorkspaceFolder[]) {
         if (event.affectsConfiguration(`${EXT_ID}`, folder)) {
-          store.initialize()
+          switch (manifest?.sdk()) {
+            case 'rust':
+              {
+                if (workspace.getConfiguration(`${EXT_ID}`).get(Settings.extensionsIntegration)) {
+                  loadRustAnalyzerConfigOverrides(manifest)
+                    .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
+                } else {
+                  restoreRustAnalyzerConfigOverrides(manifest)
+                    .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
+                }
+              }
+              break;
+          }
+          break;
         }
       }
     })

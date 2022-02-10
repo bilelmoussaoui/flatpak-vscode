@@ -6,7 +6,7 @@ import { FlatpakManifest } from './flatpakManifest'
 import { Command } from './command'
 import { TaskMode, taskModeAsStatus } from './taskMode'
 import { exists, setContext } from './utils'
-import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
+import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 
 import { commands, workspace } from 'vscode'
 const { executeCommand } = commands
@@ -135,8 +135,6 @@ state
           if (workspace.getConfiguration(`${EXT_ID}`).get(Settings.extensionsIntegration)) {
             loadRustAnalyzerConfigOverrides(manifest)
               .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
-          } else {
-            restoreRustAnalyzerConfigOverrides(manifest)
           }
         }
         break

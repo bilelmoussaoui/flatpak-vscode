@@ -246,6 +246,7 @@ export class FlatpakManifest {
     switch (module.buildsystem) {
       case 'meson':
       case 'cmake':
+      case 'cmake-ninja':
         return DEFAULT_BUILD_SYSTEM_BUILD_DIR
     }
     return null

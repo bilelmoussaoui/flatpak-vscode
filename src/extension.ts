@@ -1,5 +1,5 @@
 import * as store from './store'
-import { window, ExtensionContext, commands } from 'vscode'
+import { window, ExtensionContext, commands, workspace, WorkspaceFolder } from 'vscode'
 import { exists, findManifests, ensureDocumentsPortal } from './utils'
 import { promises as fs } from 'fs'
 import { StatusBarItem } from './statusBarItem'
@@ -35,9 +35,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Watch for workspace config changes
     workspace.onDidChangeConfiguration(event => {
       // Reinitialize when settings have changed
-      const affected = event.affectsConfiguration(`${EXT_ID}`, (workspace.workspaceFolders as WorkspaceFolder[])[0].uri);
-      if (affected) {
-        store.initialize()
+      for (var folder of workspace.workspaceFolders as WorkspaceFolder[]) {
+        if (event.affectsConfiguration(`${EXT_ID}`, folder)) {
+          store.initialize()
+        }
       }
     })
 

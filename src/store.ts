@@ -1,18 +1,18 @@
 import { createStore, createEvent } from 'effector'
 import { promises as fs } from 'fs'
 
-import { statusBarItem } from './extension'
+import { statusBarItem, EXT_ID } from './extension'
 import { FlatpakManifest } from './flatpakManifest'
 import { Command } from './command'
 import { TaskMode, taskModeAsStatus } from './taskMode'
 import { exists, setContext } from './utils'
-import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
+import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 
 import { commands, workspace } from 'vscode'
 const { executeCommand } = commands
 
 // Available settings keys
-export enum ConfigValues {
+export enum Settings {
   extensionsIntegration = 'extensionsIntegration',
 }
 
@@ -132,8 +132,12 @@ state
     switch (manifest?.sdk()) {
       case 'rust':
         {
-          loadRustAnalyzerConfigOverrides(manifest)
-            .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
+          if (workspace.getConfiguration(`${EXT_ID}`).get(Settings.extensionsIntegration)) {
+            loadRustAnalyzerConfigOverrides(manifest)
+              .then(() => { }, () => { }) // eslint-disable-line @typescript-eslint/no-empty-function
+          } else {
+            restoreRustAnalyzerConfigOverrides(manifest)
+          }
         }
         break
     }

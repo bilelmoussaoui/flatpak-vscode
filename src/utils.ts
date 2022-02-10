@@ -18,10 +18,7 @@ export const ensureDocumentsPortal = async (): Promise<void> => {
   }
 }
 
-export const isFlatpak = (manifest: FlatpakManifestSchema | null): boolean => {
-  if (!manifest) {
-    return false
-  }
+export const isFlatpak = (manifest: FlatpakManifestSchema): boolean => {
   const hasId = (manifest.id || manifest['app-id']) !== undefined
   const hasModules = manifest.modules !== undefined
   return hasId && hasModules
@@ -53,13 +50,19 @@ export const parseManifest = async (
         )
       break
   }
+
+  if (manifest === null) {
+    return null
+  }
+
   if (isFlatpak(manifest)) {
     return new FlatpakManifest(
       uri,
-      manifest as FlatpakManifestSchema,
+      manifest,
       isSandboxed
     )
   }
+
   return null
 }
 

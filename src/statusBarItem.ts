@@ -38,13 +38,8 @@ export class StatusBarItem {
                 break
         }
 
-        if (status.clickable !== null) {
-            this.inner.command = status.clickable.command
-            this.inner.tooltip = status.clickable.tooltip
-        } else {
-            this.inner.command = undefined
-            this.inner.tooltip = undefined
-        }
+        this.inner.command = status.clickable?.command
+        this.inner.tooltip = status.clickable?.tooltip
 
         if (status.quiescent) {
             icon = '$(sync~spin) '

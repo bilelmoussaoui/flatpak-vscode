@@ -135,14 +135,10 @@ state
     }
   })
   .on(newTask, (_state, taskMode) => {
-    if (statusBarItem !== undefined) {
-      statusBarItem.setStatus(taskModeAsStatus(taskMode))
-    }
+    statusBarItem?.setStatus(taskModeAsStatus(taskMode))
   })
   .on(finished, (state, finishedTask) => {
-    if (statusBarItem !== undefined) {
-      statusBarItem.setStatus(null)
-    }
+    statusBarItem?.setStatus(null)
 
     switch (finishedTask.mode) {
       case TaskMode.buildInit:
@@ -210,22 +206,20 @@ state
   .on(failure, (state, payload: PayloadError) => {
     console.log(payload)
 
-    if (statusBarItem !== undefined) {
-      let title = 'An error occurred'
-      if (state.pipeline.latestStep !== null) {
-        title = `Failed to run ${state.pipeline.latestStep}`
-      }
-
-      statusBarItem.setStatus({
-        type: 'error',
-        quiescent: false,
-        title,
-        clickable: {
-          command: `${EXT_ID}.show-output-channel`,
-          tooltip: 'Show output'
-        },
-      })
+    let title = 'An error occurred'
+    if (state.pipeline.latestStep !== null) {
+      title = `Failed to run ${state.pipeline.latestStep}`
     }
+
+    statusBarItem?.setStatus({
+      type: 'error',
+      quiescent: false,
+      title,
+      clickable: {
+        command: `${EXT_ID}.show-output-channel`,
+        tooltip: 'Show output'
+      },
+    })
 
     state.pipeline.error = payload
   })

@@ -57,6 +57,12 @@ export async function activate(context: ExtensionContext): Promise<void> {
     }
 
     context.subscriptions.push(
+      registerCommand(`${EXT_ID}.show-output-channel`, () => {
+        outputChannel.show(true)
+      })
+    )
+
+    context.subscriptions.push(
       registerCommand(`${EXT_ID}.runtime-terminal`, () => {
         const terminal = window.createTerminal('Flatpak: Runtime Terminal')
         terminal.sendText(manifest.runtimeTerminal().toString())
@@ -67,7 +73,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.build-terminal`, () => {
         const terminal = window.createTerminal('Flatpak: Build Terminal')
-
         terminal.sendText(manifest.buildTerminal().toString())
         terminal.show()
       })

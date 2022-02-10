@@ -1,3 +1,4 @@
+import { EXT_ID } from './extension'
 import { Status } from './statusBarItem'
 
 export enum TaskMode {
@@ -44,6 +45,9 @@ export const taskModeAsStatus = (taskMode: TaskMode): Status => {
         title,
         type: 'ok',
         quiescent: true,
-        clickable: null,
+        clickable: {
+            command: `${EXT_ID}.show-output-channel`,
+            tooltip: 'Show output'
+        },
     }
 }

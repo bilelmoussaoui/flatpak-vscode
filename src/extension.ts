@@ -3,7 +3,7 @@ import { window, ExtensionContext, commands } from 'vscode'
 import { exists, findManifests, ensureDocumentsPortal } from './utils'
 import { promises as fs } from 'fs'
 import { StatusBarItem } from './statusBarItem'
-import { FlatpakTaskTerminal } from './terminal'
+import { FlatpakTerminal } from './flatpakTerminal'
 import { TaskMode } from './taskMode'
 import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 const { executeCommand, registerCommand } = commands
@@ -34,7 +34,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     const outputChannel = window.createOutputChannel('Flatpak')
     // Create a Flatpak pty
-    const terminal = new FlatpakTaskTerminal(outputChannel)
+    const terminal = new FlatpakTerminal(outputChannel)
 
     if (!store.state.getState().pipeline.initialized) {
       showInformationMessage(

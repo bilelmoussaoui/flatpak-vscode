@@ -1,4 +1,4 @@
-import { FlatpakManifest } from '../terminal'
+import { FlatpakManifest } from '../flatpakManifest'
 
 export const loadRustAnalyzerConfigOverrides = async (manifest: FlatpakManifest): Promise<void> => {
     await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer')

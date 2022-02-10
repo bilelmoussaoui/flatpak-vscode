@@ -4,7 +4,7 @@ import * as path from 'path'
 import { commands, window, workspace, Uri } from 'vscode'
 import * as yaml from 'js-yaml'
 import { FlatpakManifestSchema } from './flatpak.types'
-import { FlatpakManifest } from './terminal'
+import { FlatpakManifest } from './flatpakManifest'
 
 export const ensureDocumentsPortal = async (): Promise<void> => {
   try {

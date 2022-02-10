@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.0.17]
+- added the setting 'Extensions integration' which toggles integration for things like the rust-analyzer server path override and other settings which affect other extensions. 
+
 ## [0.0.16]
 
 - Mark dependencies as not build after an update

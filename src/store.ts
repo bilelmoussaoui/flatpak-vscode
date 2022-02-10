@@ -11,7 +11,7 @@ import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 import { commands, workspace } from 'vscode'
 const { executeCommand } = commands
 
-// Config Values
+// Available settings keys
 export enum ConfigValues {
   extensionsIntegration = 'extensionsIntegration',
 }

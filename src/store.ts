@@ -211,15 +211,6 @@ state
     console.log(payload)
 
     if (statusBarItem !== undefined) {
-      const tooltip = []
-      if (payload.message !== null) {
-        // If payload.message is just whitespace, make it null
-        if (payload.message.trim() !== '') {
-          tooltip.push(payload.message)
-        }
-      }
-      tooltip.push('Click to clean build environment')
-
       let title = 'An error occurred'
       if (state.pipeline.latestStep !== null) {
         title = `Failed to run ${state.pipeline.latestStep}`
@@ -230,9 +221,9 @@ state
         quiescent: false,
         title,
         clickable: {
-          tooltip: tooltip.join('\n\n'),
-          command: `${EXT_ID}.${TaskMode.clean}`
-        }
+          command: `${EXT_ID}.show-output-channel`,
+          tooltip: 'Show output'
+        },
       })
     }
 

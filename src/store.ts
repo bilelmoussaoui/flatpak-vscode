@@ -1,7 +1,9 @@
 import { createStore, createEvent } from 'effector'
 import { promises as fs } from 'fs'
 
-import { Command, FlatpakManifest, TaskMode } from './terminal'
+import { statusBarItem } from './extension'
+import { Command, FlatpakManifest } from './terminal'
+import { TaskMode, taskModeAsStatus } from './taskMode'
 import { exists, setContext } from './utils'
 import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 
@@ -17,6 +19,7 @@ export const initialize = createEvent()
 export const clean = createEvent()
 export const failure = createEvent<PayloadError>()
 export const finished = createEvent<TaskFinished>()
+export const newTask = createEvent<TaskMode>()
 
 export const loadFrom = async (path: string): Promise<void> => {
   try {
@@ -130,7 +133,16 @@ state
         break
     }
   })
+  .on(newTask, (_state, taskMode) => {
+    if (statusBarItem !== undefined) {
+      statusBarItem.setStatus(taskModeAsStatus(taskMode))
+    }
+  })
   .on(finished, (state, finishedTask) => {
+    if (statusBarItem !== undefined) {
+      statusBarItem.setStatus(null)
+    }
+
     switch (finishedTask.mode) {
       case TaskMode.buildInit:
         setContext('flatpakInitialized', true)
@@ -195,6 +207,34 @@ state
     state.pipeline.latestStep = null
   })
   .on(failure, (state, payload: PayloadError) => {
+    console.log(payload)
+
+    if (statusBarItem !== undefined) {
+      const tooltip = []
+      if (payload.message !== null) {
+        // If payload.message is just whitespace, make it null
+        if (payload.message.trim() !== '') {
+          tooltip.push(payload.message)
+        }
+      }
+      tooltip.push('Click to clean build environment')
+
+      let title = 'An error occurred'
+      if (state.pipeline.latestStep !== null) {
+        title = `Failed to run ${state.pipeline.latestStep}`
+      }
+
+      statusBarItem.setStatus({
+        type: 'error',
+        quiescent: false,
+        title,
+        clickable: {
+          tooltip: tooltip.join('\n\n'),
+          command: `${EXT_ID}.${TaskMode.clean}`
+        }
+      })
+    }
+
     state.pipeline.error = payload
   })
 

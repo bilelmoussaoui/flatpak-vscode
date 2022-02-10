@@ -1,26 +1,16 @@
 import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as readline from 'readline'
-import { failure, finished } from './store'
+import { failure, finished, newTask } from './store'
 import { BuildOptionsPathKeys, FlatpakManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
 import { promises as fs } from 'fs'
 import { findInPath, generatePathOverride, getHostEnv } from './utils'
 import { cpus } from 'os'
+import { TaskMode } from './taskMode'
 
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
-
-export enum TaskMode {
-  buildInit = 'build-init',
-  updateDeps = 'update-deps',
-  buildDeps = 'build-deps',
-  buildApp = 'build-app',
-  rebuild = 'rebuild',
-  run = 'run',
-  export = 'export',
-  clean = 'clean',
-}
 
 export class FlatpakManifest {
   uri: vscode.Uri
@@ -635,6 +625,10 @@ export class FlatpakTaskTerminal {
   }
 
   async spawn(command: Command): Promise<void> {
+    if (this.mode !== undefined) {
+      newTask(this.mode)
+    }
+
     this.write(`> ${command.toString()} <`)
     this.currentProcess = await command.run()
     this.isRunning = true
@@ -659,7 +653,7 @@ export class FlatpakTaskTerminal {
       .on('close', (code) => {
         console.log(code)
         if (code !== 0) {
-          this.onError('', this.current())
+          this.onError(`Child process closed all stdio with code ${code}`, this.current())
           return
         }
         this.spawnNext()

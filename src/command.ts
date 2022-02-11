@@ -5,7 +5,7 @@ import { findInPath } from './utils'
 export class Command {
     name: string
     cwd?: string
-    arguments: readonly string[]
+    arguments: string[]
     isSandboxed: boolean
 
     constructor(

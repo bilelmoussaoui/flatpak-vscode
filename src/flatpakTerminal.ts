@@ -1,113 +1,42 @@
 import * as vscode from 'vscode'
-import * as child_process from 'child_process'
-import * as readline from 'readline'
-import { failure, finished, newTask } from './store'
-import { TaskMode } from './taskMode'
-import { Command } from './command'
 
 export class FlatpakTerminal {
-  private commands: Command[] = []
-  private currentCommand: number
-  public failed: boolean
-  private isRunning = false
-  private mode?: TaskMode
-  private output: vscode.OutputChannel
-  private currentProcess?: child_process.ChildProcessWithoutNullStreams
-  public completeBuild = false
+    private inner?: vscode.Terminal
+    private pty: vscode.Pseudoterminal
+    private emitter: vscode.EventEmitter<string>
 
-  constructor(outputChannel: vscode.OutputChannel) {
-    this.currentCommand = 0
-    this.output = outputChannel
-    this.failed = false
-  }
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  close(): void {
-    if (this.currentProcess) {
-      this.currentProcess.emit('close', -1)
-    }
-  }
+    private readonly _onDidClose = new vscode.EventEmitter<void>()
+    readonly onDidClose = this._onDidClose.event
 
-  async setCommands(commands: Command[], mode: TaskMode): Promise<void> {
-    if (this.isRunning) {
-      this.commands = [...this.commands, ...commands]
-    } else {
-      this.commands = commands
-      this.mode = mode
-      this.currentCommand = 0
-      this.failed = false
-      await this.spawn(this.commands[0])
-    }
-  }
-
-  onError(message: string, command: Command): void {
-    this.writeError(message)
-    failure({ command, message })
-    this.failed = true
-    this.isRunning = false
-  }
-
-  spawnNext(): void {
-    this.currentCommand++
-    if (this.failed) {
-      return
-    }
-    if (this.currentCommand <= this.commands.length - 1) {
-      this.spawn(this.commands[this.currentCommand]).finally(
-        () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-      )
-    } else {
-      this.currentCommand = 0
-      this.isRunning = false
-      finished({ mode: this.mode as TaskMode, restore: false, completeBuild: this.completeBuild })
-      this.completeBuild = false
-    }
-  }
-
-  async spawn(command: Command): Promise<void> {
-    if (this.mode !== undefined) {
-      newTask(this.mode)
-    }
-
-    this.write(`> ${command.toString()} <`)
-    this.currentProcess = await command.run()
-    this.isRunning = true
-    readline
-      .createInterface({
-        input: this.currentProcess.stdout,
-        terminal: false,
-      })
-      .on('line', (line) => this.write(line))
-
-    readline
-      .createInterface({
-        input: this.currentProcess.stderr,
-        terminal: false,
-      })
-      .on('line', (line) => this.write(line))
-
-    this.currentProcess
-      .on('error', (error) => {
-        this.onError(error.message, this.current())
-      })
-      .on('close', (code) => {
-        console.log(code)
-        if (code !== 0) {
-          this.onError(`Child process closed all stdio with code ${code}`, this.current())
-          return
+    constructor() {
+        this.emitter = new vscode.EventEmitter<string>();
+        this.pty = {
+            open: () => console.log("Flatpak terminal opened"),
+            close: () => {
+                this._onDidClose.fire()
+                this.inner?.dispose()
+                this.inner = undefined
+            },
+            onDidWrite: this.emitter.event,
         }
-        this.spawnNext()
-      })
-  }
+    }
 
-  current(): Command {
-    return this.commands[this.currentCommand]
-  }
+    appendLine(content: string): void {
+        this.emitter.fire(`\r${content}\r\n`)
+    }
 
-  private writeError(message: string): void {
-    this.write(message)
-  }
+    show(preserveFocus?: boolean): void {
+        if (this.inner === undefined) {
+            this.inner = vscode.window.createTerminal({
+                name: 'Flatpak',
+                iconPath: new vscode.ThemeIcon('package'),
+                pty: this.pty
+            })
+        }
+        this.inner.show(preserveFocus)
+    }
 
-  private write(message: string): void {
-    this.output.appendLine(message)
-  }
+    hide(): void {
+        this.inner?.hide()
+    }
 }

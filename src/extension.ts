@@ -1,11 +1,12 @@
 import * as store from './store'
 import { window, ExtensionContext, commands } from 'vscode'
-import { exists, findManifests, ensureDocumentsPortal } from './utils'
+import { exists, ensureDocumentsPortal } from './utils'
 import { promises as fs } from 'fs'
 import { StatusBarItem } from './statusBarItem'
 import { FlatpakTerminal } from './flatpakTerminal'
 import { TaskMode } from './taskMode'
 import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
+import { FlatpakManifestFinder } from './flatpakManifestFinder'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
@@ -16,8 +17,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
   statusBarItem = new StatusBarItem(context)
 
   // Look for a flatpak manifest
-  const isSandboxed = await exists('/.flatpak-info')
-  const manifests = await findManifests(isSandboxed)
+  const manifestFinder = new FlatpakManifestFinder()
+  const manifests = await manifestFinder.find()
+
   if (manifests.length > 0) {
     // Make sures the documents portal is running
     await ensureDocumentsPortal()

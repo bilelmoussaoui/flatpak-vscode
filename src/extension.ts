@@ -3,10 +3,11 @@ import { window, ExtensionContext, commands } from 'vscode'
 import { exists, ensureDocumentsPortal } from './utils'
 import { promises as fs } from 'fs'
 import { StatusBarItem } from './statusBarItem'
-import { FlatpakTerminal } from './flatpakTerminal'
+import { FlatpakRunner } from './flatpakRunner'
 import { TaskMode } from './taskMode'
 import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 import { FlatpakManifestFinder } from './flatpakManifestFinder'
+import { FlatpakTerminal } from './flatpakTerminal'
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
@@ -34,9 +35,15 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Mark the app as already initialized
     store.manifestSelected(manifest)
 
-    const outputChannel = window.createOutputChannel('Flatpak')
-    // Create a Flatpak pty
-    const terminal = new FlatpakTerminal(outputChannel)
+    const terminal = new FlatpakTerminal()
+    const runner = new FlatpakRunner()
+
+    terminal.onDidClose(() => {
+      runner.close()
+    })
+    runner.onDidOutput((output) => {
+      terminal.appendLine(output)
+    })
 
     if (!store.state.getState().pipeline.initialized) {
       showInformationMessage(
@@ -60,7 +67,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.show-output-channel`, () => {
-        outputChannel.show(true)
+        terminal.show(true)
       })
     )
 
@@ -83,11 +90,11 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Init the build environment
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async (completeBuild: boolean | undefined) => {
-        terminal.completeBuild = completeBuild || false
+        runner.completeBuild = completeBuild || false
         if (!store.state.getState().pipeline.initialized) {
           // Ensures we have a terminal to receive the output
-          outputChannel.show(true)
-          await terminal.setCommands([manifest.initBuild()], TaskMode.buildInit)
+          terminal.show(true)
+          await runner.setCommands([manifest.initBuild()], TaskMode.buildInit)
         }
       })
     )
@@ -95,10 +102,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Update the application's dependencies
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, async (completeBuild: boolean | undefined) => {
-        terminal.completeBuild = completeBuild || false
+        runner.completeBuild = completeBuild || false
         if (store.state.getState().pipeline.initialized) {
-          outputChannel.show(true)
-          await terminal.setCommands(
+          terminal.show(true)
+          await runner.setCommands(
             [manifest.updateDependencies()],
             TaskMode.updateDeps
           )
@@ -109,10 +116,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // Build the application's dependencies
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, async (completeBuild: boolean | undefined) => {
-        terminal.completeBuild = completeBuild || false
+        runner.completeBuild = completeBuild || false
         if (!store.state.getState().pipeline.dependencies.built) {
-          outputChannel.show(true)
-          await terminal.setCommands(
+          terminal.show(true)
+          await runner.setCommands(
             [manifest.buildDependencies()],
             TaskMode.buildDeps
           )
@@ -124,8 +131,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, async () => {
         if (store.state.getState().pipeline.dependencies.built) {
-          outputChannel.show(true)
-          await terminal.setCommands(manifest.build(false), TaskMode.buildApp)
+          terminal.show(true)
+          await runner.setCommands(manifest.build(false), TaskMode.buildApp)
         }
       })
     )
@@ -136,8 +143,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, async () => {
         if (store.state.getState().pipeline.application.built) {
-          outputChannel.show(true)
-          await terminal.setCommands(manifest.build(true), TaskMode.rebuild)
+          terminal.show(true)
+          await runner.setCommands(manifest.build(true), TaskMode.rebuild)
         }
       })
     )
@@ -146,7 +153,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.clean}`, async () => {
         if (store.state.getState().pipeline.initialized) {
-          outputChannel.show(true)
+          terminal.show(true)
           await fs.rmdir(manifest.buildDir, {
             recursive: true,
           })
@@ -160,8 +167,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.${TaskMode.run}`, async () => {
         if (store.state.getState().pipeline.application.built) {
-          outputChannel.show(true)
-          await terminal.setCommands([manifest.run()], TaskMode.run)
+          terminal.show(true)
+          await runner.setCommands([manifest.run()], TaskMode.run)
         }
       })
     )
@@ -169,7 +176,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     // A helper command, chains up to other commands based on current pipeline state
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.build`, async () => {
-        terminal.completeBuild = true
+        runner.completeBuild = true
         if (!store.state.getState().pipeline.initialized) {
           await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
         } else if (!store.state.getState().pipeline.dependencies.updated) {
@@ -179,7 +186,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
         } else if (!store.state.getState().pipeline.application.built) {
           await executeCommand(`${EXT_ID}.${TaskMode.buildApp}`)
         } else {
-          outputChannel.appendLine('Nothing to do')
+          terminal.appendLine('Nothing to do')
         }
       })
     )

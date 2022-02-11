@@ -7,6 +7,8 @@ import { FlatpakTerminal } from './flatpakTerminal'
 import { TaskMode } from './taskMode'
 import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 import { Settings } from './store'
+import { FlatpakManifestFinder } from './flatpakManifestFinder'
+
 const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
@@ -17,8 +19,9 @@ export async function activate(context: ExtensionContext): Promise<void> {
   statusBarItem = new StatusBarItem(context)
 
   // Look for a flatpak manifest
-  const isSandboxed = await exists('/.flatpak-info')
-  const manifests = await findManifests(isSandboxed)
+  const manifestFinder = new FlatpakManifestFinder()
+  const manifests = await manifestFinder.find()
+
   if (manifests.length > 0) {
     // Make sures the documents portal is running
     await ensureDocumentsPortal()
@@ -88,16 +91,16 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.runtime-terminal`, () => {
-        const terminal = window.createTerminal('Flatpak: Runtime Terminal')
-        terminal.sendText(manifest.runtimeTerminal().toString())
+        const command = manifest.runtimeTerminal()
+        const terminal = window.createTerminal('Flatpak: Runtime Terminal', command.name, command.arguments)
         terminal.show()
       })
     )
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.build-terminal`, () => {
-        const terminal = window.createTerminal('Flatpak: Build Terminal')
-        terminal.sendText(manifest.buildTerminal().toString())
+        const command = manifest.buildTerminal()
+        const terminal = window.createTerminal('Flatpak: Build Terminal', command.name, command.arguments)
         terminal.show()
       })
     )

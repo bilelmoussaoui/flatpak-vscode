@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs'
-import * as childProcess from 'child_process'
-import { findInPath } from './utils'
+import * as pty from './nodePty'
 
 export class Command {
     name: string
@@ -35,24 +34,19 @@ export class Command {
         await fs.chmod(output, 0o755)
     }
 
-    async run(): Promise<childProcess.ChildProcessWithoutNullStreams> {
-        let proc
-        const bash = await findInPath('bash') || '/usr/bin/bash'
+    run(): pty.IPty {
         if (this.isSandboxed) {
-            proc = childProcess.spawn(
+            return pty.spawn(
                 'flatpak-spawn',
                 ['--host', this.name, ...this.arguments],
                 {
                     cwd: this.cwd,
-                    shell: bash,
                 }
             )
         } else {
-            proc = childProcess.spawn(this.name, this.arguments, {
+            return pty.spawn(this.name, this.arguments, {
                 cwd: this.cwd,
-                shell: bash,
             })
         }
-        return proc
     }
 }

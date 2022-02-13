@@ -1,9 +1,9 @@
 import * as vscode from 'vscode'
-import * as child_process from 'child_process'
-import * as readline from 'readline'
 import { failure, finished, newTask } from './store'
 import { TaskMode } from './taskMode'
 import { Command } from './command'
+import * as pty from './nodePty'
+import { FlatpakTerminal } from './flatpakTerminal'
 
 export class FlatpakRunner {
   private commands: Command[] = []
@@ -11,24 +11,26 @@ export class FlatpakRunner {
   public failed: boolean
   private isRunning = false
   private mode?: TaskMode
-  private currentProcess?: child_process.ChildProcessWithoutNullStreams
+  private currentProcess?: pty.IPty
+  private terminal: FlatpakTerminal
   public completeBuild = false
 
   private readonly _onDidOutput = new vscode.EventEmitter<string>()
   readonly onDidOutput = this._onDidOutput.event
 
-  constructor() {
+  constructor(terminal: FlatpakTerminal) {
+    terminal.onDidClose(() => this.close())
+
     this.currentCommand = 0
     this.failed = false
+    this.terminal = terminal
   }
 
   close(): void {
-    if (this.currentProcess) {
-      this.currentProcess.emit('close', -1)
-    }
+    this.currentProcess?.kill()
   }
 
-  async setCommands(commands: Command[], mode: TaskMode): Promise<void> {
+  setCommands(commands: Command[], mode: TaskMode): void {
     if (this.isRunning) {
       this.commands = [...this.commands, ...commands]
     } else {
@@ -36,12 +38,12 @@ export class FlatpakRunner {
       this.mode = mode
       this.currentCommand = 0
       this.failed = false
-      await this.spawn(this.commands[0])
+      this.spawn(this.commands[0])
     }
   }
 
   onError(message: string, command: Command): void {
-    this._onDidOutput.fire(`ERROR: ${message}`)
+    this.terminal.appendMessage(message, true)
     failure({ command, message })
     this.failed = true
     this.isRunning = false
@@ -53,9 +55,7 @@ export class FlatpakRunner {
       return
     }
     if (this.currentCommand <= this.commands.length - 1) {
-      this.spawn(this.commands[this.currentCommand]).finally(
-        () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-      )
+      this.spawn(this.commands[this.currentCommand])
     } else {
       this.currentCommand = 0
       this.isRunning = false
@@ -64,36 +64,24 @@ export class FlatpakRunner {
     }
   }
 
-  async spawn(command: Command): Promise<void> {
+  spawn(command: Command): void {
     if (this.mode !== undefined) {
       newTask(this.mode)
     }
 
-    this._onDidOutput.fire(`> ${command.toString()} <`)
-    this.currentProcess = await command.run()
+    this.terminal.appendMessage(command.toString(), false)
+    this.currentProcess = command.run()
     this.isRunning = true
-    readline
-      .createInterface({
-        input: this.currentProcess.stdout,
-        terminal: true,
-      })
-      .on('line', (line) => this._onDidOutput.fire(line))
 
-    readline
-      .createInterface({
-        input: this.currentProcess.stderr,
-        terminal: true,
-      })
-      .on('line', (line) => this._onDidOutput.fire(line))
+    this.currentProcess.onData((data) => {
+      this.terminal.append(data)
+    })
 
     this.currentProcess
-      .on('error', (error) => {
-        this.onError(error.message, this.current())
-      })
-      .on('close', (code) => {
-        console.log(code)
-        if (code !== 0) {
-          this.onError(`Child process closed all stdio with code ${code}`, this.current())
+      .onExit(({ exitCode }) => {
+        console.log(exitCode)
+        if (exitCode !== 0) {
+          this.onError(`Child process closed all stdio with code ${exitCode}`, this.current())
           return
         }
         this.spawnNext()

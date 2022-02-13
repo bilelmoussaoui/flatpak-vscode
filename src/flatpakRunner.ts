@@ -81,7 +81,7 @@ export class FlatpakRunner {
       .onExit(({ exitCode }) => {
         console.log(exitCode)
         if (exitCode !== 0) {
-          this.onError(`Child process closed all stdio with code ${exitCode}`, this.current())
+          this.onError(`Child process exited with code ${exitCode}`, this.current())
           return
         }
         this.spawnNext()

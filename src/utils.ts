@@ -9,8 +9,7 @@ export const ensureDocumentsPortal = async (): Promise<void> => {
     const portal = obj.getInterface('org.freedesktop.portal.Documents')
     await portal.GetMountPoint()
   } catch (err) {
-    console.warn('Failed to ensure documents portal')
-    console.warn(err)
+    console.warn(`Failed to ensure documents portal: ${err as string}`)
   }
 }
 

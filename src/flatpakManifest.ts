@@ -452,7 +452,7 @@ export class FlatpakManifest {
             '--allow=devel',
             `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
             ...this.finishArgs(),
-            "--talk-name=org.freedesktop.portal.*",
+            '--talk-name=org.freedesktop.portal.*',
             '--talk-name=org.a11y.Bus',
         ]
 

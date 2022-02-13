@@ -11,7 +11,7 @@ export class FlatpakTerminal {
     constructor() {
         this.emitter = new vscode.EventEmitter<string>();
         this.pty = {
-            open: () => console.log("Flatpak terminal opened"),
+            open: () => console.log('Flatpak terminal opened'),
             close: () => {
                 this._onDidClose.fire()
                 this.inner?.dispose()
@@ -28,7 +28,7 @@ export class FlatpakTerminal {
     appendMessage(message: string, isErr: boolean): void {
         const boldRed = '\x1b[1;31m'
         const boldWhite = '\x1b[1;37m'
-        const resetColor = `\x1b[0m`
+        const resetColor = '\x1b[0m'
 
         let color
         if (isErr) {

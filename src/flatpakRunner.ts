@@ -70,7 +70,7 @@ export class FlatpakRunner {
     }
 
     this.terminal.appendMessage(command.toString())
-    this.currentProcess = command.run()
+    this.currentProcess = command.spawn()
     this.isRunning = true
 
     this.currentProcess.onData((data) => {

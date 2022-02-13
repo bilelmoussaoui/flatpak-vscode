@@ -1,7 +1,7 @@
 import * as store from './store'
 import { window, ExtensionContext, commands } from 'vscode'
 import { exists, ensureDocumentsPortal } from './utils'
-import { promises as fs } from 'fs'
+import { existsSync, promises as fs } from 'fs'
 import { StatusBarItem } from './statusBarItem'
 import { FlatpakRunner } from './flatpakRunner'
 import { TaskMode } from './taskMode'
@@ -12,10 +12,16 @@ const { executeCommand, registerCommand } = commands
 const { showInformationMessage } = window
 
 export const EXT_ID = 'flatpak-vscode'
+
+// whether VSCode is installed in a sandbox
+export const IS_SANDBOXED = existsSync('/.flatpak-info')
+
 export let statusBarItem: StatusBarItem | undefined
 
 export async function activate(context: ExtensionContext): Promise<void> {
   statusBarItem = new StatusBarItem(context)
+
+  console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
   // Look for a flatpak manifest
   const manifestFinder = new FlatpakManifestFinder()
@@ -67,7 +73,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.runtime-terminal`, () => {
         const command = manifest.runtimeTerminal()
-        const terminal = window.createTerminal('Flatpak: Runtime Terminal', command.name, command.arguments)
+        const terminal = window.createTerminal('Flatpak: Runtime Terminal', command.program, command.args)
         terminal.show()
       })
     )
@@ -75,7 +81,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.build-terminal`, () => {
         const command = manifest.buildTerminal()
-        const terminal = window.createTerminal('Flatpak: Build Terminal', command.name, command.arguments)
+        const terminal = window.createTerminal('Flatpak: Build Terminal', command.program, command.args)
         terminal.show()
       })
     )

@@ -16,12 +16,10 @@ export class FlatpakManifest {
     workspace: string
     stateFile: string // A on disk copy of the pipeline state
     stateDir: string
-    isSandboxed: boolean
 
     constructor(
         uri: vscode.Uri,
         manifest: FlatpakManifestSchema,
-        isSandboxed: boolean
     ) {
         this.uri = uri
         this.manifest = manifest
@@ -30,7 +28,6 @@ export class FlatpakManifest {
         this.repoDir = path.join(this.buildDir, 'repo')
         this.stateDir = path.join(this.buildDir, 'flatpak-builder')
         this.stateFile = path.join(this.buildDir, 'pipeline.json')
-        this.isSandboxed = isSandboxed
     }
 
     id(): string {
@@ -83,7 +80,6 @@ export class FlatpakManifest {
                 `${this.manifest.sdk}//${this.manifest['runtime-version']}`,
             ],
             this.workspace,
-            this.isSandboxed
         )
     }
 
@@ -103,7 +99,6 @@ export class FlatpakManifest {
                 this.manifest['runtime-version'],
             ],
             this.workspace,
-            this.isSandboxed
         )
     }
 
@@ -123,7 +118,6 @@ export class FlatpakManifest {
             'flatpak-builder',
             args,
             this.workspace,
-            this.isSandboxed
         )
     }
 
@@ -145,7 +139,6 @@ export class FlatpakManifest {
             'flatpak-builder',
             args,
             this.workspace,
-            this.isSandboxed
         )
     }
 
@@ -268,7 +261,6 @@ export class FlatpakManifest {
                         configOpts,
                     ],
                     path.join(this.workspace),
-                    this.isSandboxed
                 )
             )
         }
@@ -277,7 +269,6 @@ export class FlatpakManifest {
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'make', '-p', '-n', '-s'],
                 path.join(this.workspace),
-                this.isSandboxed
             )
         )
 
@@ -286,7 +277,6 @@ export class FlatpakManifest {
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'make', 'V=0', `-j${numCPUs}`, 'install'],
                 path.join(this.workspace),
-                this.isSandboxed
             )
         )
         return commands
@@ -317,7 +307,6 @@ export class FlatpakManifest {
                     'mkdir',
                     ['-p', cmakeBuildDir],
                     this.workspace,
-                    this.isSandboxed
                 )
             )
             commands.push(
@@ -338,7 +327,6 @@ export class FlatpakManifest {
                         configOpts,
                     ],
                     path.join(this.workspace, cmakeBuildDir),
-                    this.isSandboxed
                 )
             )
         }
@@ -347,7 +335,6 @@ export class FlatpakManifest {
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'ninja'],
                 path.join(this.workspace, cmakeBuildDir),
-                this.isSandboxed
             )
         )
 
@@ -356,7 +343,6 @@ export class FlatpakManifest {
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'ninja', 'install'],
                 path.join(this.workspace, cmakeBuildDir),
-                this.isSandboxed
             )
         )
         return commands
@@ -395,7 +381,6 @@ export class FlatpakManifest {
                         configOpts,
                     ],
                     this.workspace,
-                    this.isSandboxed
                 )
             )
         }
@@ -404,7 +389,6 @@ export class FlatpakManifest {
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'ninja', '-C', mesonBuildDir],
                 this.workspace,
-                this.isSandboxed
             )
         )
         commands.push(
@@ -420,7 +404,6 @@ export class FlatpakManifest {
                     mesonBuildDir,
                 ],
                 this.workspace,
-                this.isSandboxed
             )
         )
         return commands
@@ -432,7 +415,6 @@ export class FlatpakManifest {
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, command],
                 this.workspace,
-                this.isSandboxed
             )
         })
     }
@@ -477,7 +459,7 @@ export class FlatpakManifest {
 
         args.push(this.repoDir)
         args.push(shellCommand)
-        return new Command('flatpak', args, this.workspace, this.isSandboxed)
+        return new Command('flatpak', args, this.workspace)
     }
 
     async overrideWorkspaceCommandConfig(
@@ -487,7 +469,7 @@ export class FlatpakManifest {
         additionalEnvVars?: Map<string, string>,
     ): Promise<void> {
         const commandPath = path.join(this.buildDir, `${command}.sh`)
-        await this.runInRepo(command, true, additionalEnvVars).save(commandPath)
+        await this.runInRepo(command, true, additionalEnvVars).saveAsScript(commandPath)
         await this.overrideWorkspaceConfig(section, configName, commandPath)
     }
 

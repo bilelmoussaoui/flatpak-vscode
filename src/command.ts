@@ -1,50 +1,52 @@
+import { IS_SANDBOXED } from './extension'
 import { promises as fs } from 'fs'
 import * as pty from './nodePty'
 
 export class Command {
-    name: string
-    cwd?: string
-    arguments: string[]
-    isSandboxed: boolean
+    readonly program: string
+    readonly args: string[]
+    private readonly cwd?: string
 
-    constructor(
-        name: string,
-        args: string[],
-        cwd?: string,
-        isSandboxed?: boolean
-    ) {
-        this.name = name
+    constructor(program: string, args: string[], cwd?: string) {
+        this.program = program
+        this.args = args
         this.cwd = cwd
-        this.arguments = args
-        this.isSandboxed = isSandboxed || false
     }
 
     toString(): string {
-        const cmd = `${this.name} ${this.arguments.join(' ')}`
-        if (this.isSandboxed) {
-            return `flatpak-spawn --host ${cmd}`
+        const cmd = []
+
+        if (IS_SANDBOXED) {
+            cmd.push('flatpak-spawn --host')
         }
-        return cmd
+
+        cmd.push(this.program)
+        cmd.push(...this.args)
+
+        return cmd.join(' ')
     }
 
-    // Store the command as a bash script and returns it path
-    async save(output: string): Promise<void> {
+    /**
+     * Store the command as a bash script
+     * @param path save location
+     */
+    async saveAsScript(path: string): Promise<void> {
         const cmd = ['#!/bin/sh', '', `${this.toString()} "$@"`].join('\n')
-        await fs.writeFile(output, cmd)
-        await fs.chmod(output, 0o755)
+        await fs.writeFile(path, cmd)
+        await fs.chmod(path, 0o755)
     }
 
-    run(): pty.IPty {
-        if (this.isSandboxed) {
+    spawn(): pty.IPty {
+        if (IS_SANDBOXED) {
             return pty.spawn(
                 'flatpak-spawn',
-                ['--host', this.name, ...this.arguments],
+                ['--host', this.program, ...this.args],
                 {
                     cwd: this.cwd,
                 }
             )
         } else {
-            return pty.spawn(this.name, this.arguments, {
+            return pty.spawn(this.program, this.args, {
                 cwd: this.cwd,
             })
         }

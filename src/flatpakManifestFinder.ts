@@ -2,7 +2,6 @@ import { FlatpakManifest } from './flatpakManifest';
 import { FlatpakManifestSchema } from './flatpak.types'
 import { Uri, workspace } from 'vscode';
 import * as yaml from 'js-yaml'
-import { exists } from './utils';
 
 export class FlatpakManifestFinder {
     async find(): Promise<FlatpakManifest[]> {
@@ -51,18 +50,10 @@ export class FlatpakManifestFinder {
             return new FlatpakManifest(
                 uri,
                 manifest,
-                await this.isSandboxed()
             )
         }
 
         return null
-    }
-
-    /**
-     * Checks whether VSCode is installed in a sandbox
-     */
-    private async isSandboxed(): Promise<boolean> {
-        return await exists('/.flatpak-info')
     }
 
     private isValidManifest(manifest: FlatpakManifestSchema): boolean {

@@ -21,8 +21,23 @@ export class FlatpakTerminal {
         }
     }
 
-    appendLine(content: string): void {
-        this.emitter.fire(`\r${content}\r\n`)
+    append(content: string): void {
+        this.emitter.fire(content)
+    }
+
+    appendMessage(message: string, isErr: boolean): void {
+        const boldRed = '\x1b[1;31m'
+        const boldWhite = '\x1b[1;37m'
+        const resetColor = `\x1b[0m`
+
+        let color
+        if (isErr) {
+            color = boldRed
+        } else {
+            color = boldWhite
+        }
+
+        this.append(`\r${color}>>> ${message}${resetColor}\r\n`)
     }
 
     show(preserveFocus?: boolean): void {

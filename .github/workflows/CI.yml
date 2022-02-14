@@ -2,9 +2,9 @@ on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
   release:
-    types:
-    - created
+    types: [published]
 
 name: CI
 jobs:
@@ -31,8 +31,15 @@ jobs:
       - run: yarn install
       - run: yarn run pretest
       # - run: yarn run test
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
       - name: Publish
-        if: success() && startsWith( github.ref, 'refs/tags/releases/') && ${{ matrix.node-version }} == '14.x'
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'release' }}
         run: |
           yarn install --dev
           yarn run deploy-vs -p ${{ secrets.VSCE_PAT }}

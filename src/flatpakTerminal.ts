@@ -4,27 +4,36 @@ const RESET_COLOR = '\x1b[0m'
 
 export class FlatpakTerminal {
     private inner?: vscode.Terminal
-    private pty: vscode.Pseudoterminal
-    private emitter: vscode.EventEmitter<string>
+    private isOpen: boolean
+    private readonly pty: vscode.Pseudoterminal
+    private readonly writeEmitter: vscode.EventEmitter<string>
+
+    private readonly _onDidOpen = new vscode.EventEmitter<void>()
+    private readonly onDidOpen = this._onDidOpen.event
 
     private readonly _onDidClose = new vscode.EventEmitter<void>()
     readonly onDidClose = this._onDidClose.event
 
     constructor() {
-        this.emitter = new vscode.EventEmitter<string>();
+        this.isOpen = false
+        this.writeEmitter = new vscode.EventEmitter<string>();
         this.pty = {
-            open: () => console.log('Flatpak terminal opened'),
+            open: () => {
+                this.isOpen = true
+                this._onDidOpen.fire()
+            },
             close: () => {
+                this.isOpen = false
                 this._onDidClose.fire()
                 this.inner?.dispose()
                 this.inner = undefined
             },
-            onDidWrite: this.emitter.event,
+            onDidWrite: this.writeEmitter.event,
         }
     }
 
     append(content: string): void {
-        this.emitter.fire(content)
+        this.writeEmitter.fire(content)
     }
 
     appendError(message: string): void {
@@ -37,7 +46,7 @@ export class FlatpakTerminal {
         this.append(`\r${boldWhite}>>> ${message}${RESET_COLOR}\r\n`)
     }
 
-    show(preserveFocus?: boolean): void {
+    async show(preserveFocus?: boolean): Promise<void> {
         if (this.inner === undefined) {
             this.inner = vscode.window.createTerminal({
                 name: 'Flatpak',
@@ -46,9 +55,21 @@ export class FlatpakTerminal {
             })
         }
         this.inner.show(preserveFocus)
+
+        await this.waitToOpen()
     }
 
     hide(): void {
         this.inner?.hide()
+    }
+
+    private async waitToOpen(): Promise<void> {
+        return new Promise((resolve) => {
+            if (this.isOpen) {
+                resolve()
+                return
+            }
+            this.onDidOpen(() => resolve())
+        })
     }
 }

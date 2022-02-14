@@ -1,14 +1,23 @@
 # Change Log
 
+## [0.0.17]
+
+- New output terminal for less output delay and working terminal colors
+- New status bar item for current build and run status
+- New rust-analyzer integration to run runnables within the sandbox
+- Improved build and runtime terminal integration
+- Trigger documents portal in activate (May still be problematic when other extensions, like-rust-analyzer, startups earlier)
+- Code cleanup
+
 ## [0.0.16]
 
 - Mark dependencies as not build after an update
-- Simplif the usage of the extensions, you can now just run a `Flatpak: build` from the command and it will do everything you need. You can followup with a `Flatpak: run` or a `Flatpak: rebuild the application`
+- Simplify the usage of the extensions, you can now just run a `Flatpak: build` from the command and it will do everything you need. You can followup with a `Flatpak: run` or a `Flatpak: rebuild the application`
 
 ## [0.0.15]
 
 - Don't hardcode the path to `/usr/bin/bash`
-- Code cleanup 
+- Code cleanup
 
 ## [0.0.14]
 

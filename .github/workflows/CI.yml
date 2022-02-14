@@ -32,7 +32,7 @@ jobs:
       - run: yarn run pretest
       # - run: yarn run test
       - name: Publish
-        if: success() && startsWith( github.ref, 'refs/tags/releases/')
+        if: success() && startsWith( github.ref, 'refs/tags/releases/') && matrix.node-version == '14.x'
         run: |
           yarn install --dev
           yarn run deploy-vs -p ${{ secrets.VSCE_PAT }}

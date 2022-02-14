@@ -1,5 +1,7 @@
 import * as vscode from 'vscode'
 
+const RESET_COLOR = '\x1b[0m'
+
 export class FlatpakTerminal {
     private inner?: vscode.Terminal
     private pty: vscode.Pseudoterminal
@@ -25,19 +27,14 @@ export class FlatpakTerminal {
         this.emitter.fire(content)
     }
 
-    appendMessage(message: string, isErr: boolean): void {
+    appendError(message: string): void {
         const boldRed = '\x1b[1;31m'
+        this.append(`\r${boldRed}>>> ${message}${RESET_COLOR}\r\n`)
+    }
+
+    appendMessage(message: string): void {
         const boldWhite = '\x1b[1;37m'
-        const resetColor = '\x1b[0m'
-
-        let color
-        if (isErr) {
-            color = boldRed
-        } else {
-            color = boldWhite
-        }
-
-        this.append(`\r${color}>>> ${message}${resetColor}\r\n`)
+        this.append(`\r${boldWhite}>>> ${message}${RESET_COLOR}\r\n`)
     }
 
     show(preserveFocus?: boolean): void {

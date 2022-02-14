@@ -43,7 +43,7 @@ export class FlatpakRunner {
   }
 
   onError(message: string, command: Command): void {
-    this.terminal.appendMessage(message, true)
+    this.terminal.appendError(message)
     failure({ command, message })
     this.failed = true
     this.isRunning = false
@@ -69,7 +69,7 @@ export class FlatpakRunner {
       newTask(this.mode)
     }
 
-    this.terminal.appendMessage(command.toString(), false)
+    this.terminal.appendMessage(command.toString())
     this.currentProcess = command.run()
     this.isRunning = true
 

@@ -179,7 +179,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
         } else if (!store.state.getState().pipeline.application.built) {
           await executeCommand(`${EXT_ID}.${TaskMode.buildApp}`)
         } else {
-          terminal.appendMessage('Nothing to do', false)
+          terminal.appendMessage('Nothing to do')
         }
       })
     )

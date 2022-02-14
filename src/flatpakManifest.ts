@@ -465,11 +465,12 @@ export class FlatpakManifest {
     async overrideWorkspaceCommandConfig(
         section: string,
         configName: string,
-        command: string,
+        program: string,
+        binaryPath?: string,
         additionalEnvVars?: Map<string, string>,
     ): Promise<void> {
-        const commandPath = path.join(this.buildDir, `${command}.sh`)
-        await this.runInRepo(command, true, additionalEnvVars).saveAsScript(commandPath)
+        const commandPath = path.join(this.buildDir, `${program}.sh`)
+        await this.runInRepo(`${binaryPath || ''}${program}`, true, additionalEnvVars).saveAsScript(commandPath)
         await this.overrideWorkspaceConfig(section, configName, commandPath)
     }
 
@@ -486,7 +487,6 @@ export class FlatpakManifest {
         section: string,
         configName: string,
     ): Promise<void> {
-        const config = vscode.workspace.getConfiguration(section)
-        await config.update(configName, undefined)
+        await this.overrideWorkspaceConfig(section, configName, undefined)
     }
 }

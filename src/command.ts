@@ -1,7 +1,6 @@
 import { IS_SANDBOXED } from './extension'
 import { promises as fs } from 'fs'
 import * as pty from './nodePty'
-import { getHostEnv } from './utils'
 
 export class Command {
     readonly program: string

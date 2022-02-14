@@ -1,12 +1,12 @@
 import { FlatpakManifest } from '../flatpakManifest'
 
 export const loadRustAnalyzerConfigOverrides = async (manifest: FlatpakManifest): Promise<void> => {
-    await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer')
+    await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer', '/usr/lib/sdk/rust-stable/bin/')
 
     const buildSystemBuildDir = manifest.buildSystemBuildDir()
     if (buildSystemBuildDir !== null) {
         const envArgs = new Map([['CARGO_HOME', `${buildSystemBuildDir}/cargo-home`]])
-        await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'runnables.overrideCargo', 'cargo', envArgs)
+        await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'runnables.overrideCargo', 'cargo', '/usr/lib/sdk/rust-stable/bin/', envArgs)
 
         const cargoExtraArgs = [`--target-dir=${buildSystemBuildDir}/src`]
         await manifest.overrideWorkspaceConfig('rust-analyzer', 'runnables.cargoExtraArgs', cargoExtraArgs)

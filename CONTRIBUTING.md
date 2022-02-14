@@ -2,15 +2,15 @@
 
 ## Flatpaked VSCodium / Visual Studio Code
 
-1. Install the node12 extension by executing
+1. Install the node14 extension by executing
 ```
-flatpak install flathub org.freedesktop.Sdk.Extension.node12
+flatpak install flathub org.freedesktop.Sdk.Extension.node14
 ```
 Note: It will suggest multiple versions. To be sure which one to use, check the manifest in the flathub repo of [VSCodium](https://github.com/flathub/com.vscodium.codium/blob/master/com.vscodium.codium.yaml) / [Visual Studio Code](https://github.com/flathub/com.visualstudio.code/blob/master/com.visualstudio.code.yaml).
 
 2. Enable it by adding the following line to ~/.bash_profile
 ```
-export FLATPAK_ENABLE_SDK_EXT=node12
+export FLATPAK_ENABLE_SDK_EXT=node14
 ```
 
 3. Log out and in again

@@ -51,8 +51,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "flatpak-vscode.show-output-channel",
-        "title": "Show the output channel",
+        "command": "flatpak-vscode.show-output-terminal",
+        "title": "Show the output terminal",
         "category": "Flatpak"
       },
       {

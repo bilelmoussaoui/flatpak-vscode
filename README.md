@@ -22,10 +22,10 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 - Rebuild: Rebuild the application and triggers a "Run" command.
 - Run: Run the application
 - Update Dependencies: Download/Update the dependencies and builds them.
-- Clean: Clean the build directory (`.flatpak`) inside the current workspace
-- Runtime Terminal: Spawn a new terminal inside the specified SDK
-- Build Terminal: Spawn a new terminal inside the current build repository (Note that the SDKs used are automatically mounted and enabled as well)
-- Show Output Channel: Shows the output channel for build and run commands
+- Clean: Clean the build directory (`.flatpak`) inside the current workspace.
+- Runtime Terminal: Spawn a new terminal inside the specified SDK.
+- Build Terminal: Spawn a new terminal inside the current build repository (Note that the SDKs used are automatically mounted and enabled as well).
+- Show Output Terminal: Show the output terminal of the build and run commands.
 
 ## Integrations
 

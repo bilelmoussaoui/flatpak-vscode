@@ -9,7 +9,6 @@ import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 import { FlatpakManifestFinder } from './flatpakManifestFinder'
 import { FlatpakTerminal } from './flatpakTerminal'
 const { executeCommand, registerCommand } = commands
-const { showInformationMessage } = window
 
 export const EXT_ID = 'flatpak-vscode'
 
@@ -43,26 +42,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
     const terminal = new FlatpakTerminal()
     const runner = new FlatpakRunner(terminal)
-
-    if (!store.state.getState().pipeline.initialized) {
-      showInformationMessage(
-        'Flatpak manifest detected, would you like VS Code to init a build ?',
-        ...['No', 'Yes']
-      ).then(
-        async (response) => {
-          if (response === 'Yes') {
-            // If the build repository wasn't initialized yet
-            if (!store.state.getState().pipeline.initialized) {
-              await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
-            } else {
-              // We assume that the dependencies were already downloaded here
-              await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
-            }
-          }
-        },
-        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
-      )
-    }
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.show-output-terminal`, () => {

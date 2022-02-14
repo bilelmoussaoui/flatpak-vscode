@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.18]
+
+- Fix colored outputs in sandboxed VSCode
+- Prevent terminal output from getting cut off in first launch
+
 ## [0.0.17]
 
 - New output terminal for less output delay and working terminal colors

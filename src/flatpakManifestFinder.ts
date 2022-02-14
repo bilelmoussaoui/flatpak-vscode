@@ -34,7 +34,7 @@ export class FlatpakManifestFinder {
                 manifest = JSON.parse(data) as FlatpakManifestSchema
                 break
             case 'yaml':
-                manifest = yaml.safeLoad(data) as FlatpakManifestSchema
+                manifest = yaml.load(data) as FlatpakManifestSchema
                 break
             default:
                 // This should not be triggered since only json,yaml,yml are passed in findFiles

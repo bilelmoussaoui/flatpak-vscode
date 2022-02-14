@@ -2,6 +2,9 @@ on:
   push:
     branches: [master]
   pull_request:
+  release:
+    types:
+    - created
 
 name: CI
 jobs:
@@ -14,18 +17,23 @@ jobs:
           check_filenames: true
           skip: "yarn.lock,.git"
 
-  tests:
-    name: Tests
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [12.x, 14.x]
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Tests with Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
       - run: yarn install
       - run: yarn run pretest
       # - run: yarn run test
+  - name: Publish
+    if: success() && startsWith( github.ref, 'refs/tags/releases/')
+    run: |
+      yarn install --dev
+      yarn run deploy-vs -p ${{ secrets.VSCE_PAT }}
+      yarn run deploy-ovsx -p ${{ secrets.OPEN_VSX_PAT }}

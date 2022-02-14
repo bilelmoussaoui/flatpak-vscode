@@ -1,6 +1,7 @@
 import { IS_SANDBOXED } from './extension'
 import { promises as fs } from 'fs'
 import * as pty from './nodePty'
+import { getHostEnv } from './utils'
 
 export class Command {
     readonly program: string
@@ -40,7 +41,7 @@ export class Command {
         if (IS_SANDBOXED) {
             return pty.spawn(
                 'flatpak-spawn',
-                ['--host', this.program, ...this.args],
+                ['--host', '--env=TERM=xterm-256color', this.program, ...this.args],
                 {
                     cwd: this.cwd,
                 }

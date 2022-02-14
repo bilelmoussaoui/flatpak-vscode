@@ -7,6 +7,7 @@
 - New rust-analyzer integration to run runnables within the sandbox
 - Improved build and runtime terminal integration
 - Trigger documents portal in activate (May still be problematic when other extensions, like-rust-analyzer, startups earlier)
+- Display the "Flatpak manifest detected" dialog only once
 - Code cleanup
 
 ## [0.0.16]

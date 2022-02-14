@@ -59,7 +59,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     }
 
     context.subscriptions.push(
-      registerCommand(`${EXT_ID}.show-output-channel`, () => {
+      registerCommand(`${EXT_ID}.show-output-terminal`, () => {
         terminal.show(true)
       })
     )

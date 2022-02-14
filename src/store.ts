@@ -216,7 +216,7 @@ state
       quiescent: false,
       title,
       clickable: {
-        command: `${EXT_ID}.show-output-channel`,
+        command: `${EXT_ID}.show-output-terminal`,
         tooltip: 'Show output'
       },
     })

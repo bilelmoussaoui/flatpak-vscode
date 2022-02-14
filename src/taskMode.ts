@@ -46,7 +46,7 @@ export const taskModeAsStatus = (taskMode: TaskMode): Status => {
         type: 'ok',
         quiescent: true,
         clickable: {
-            command: `${EXT_ID}.show-output-channel`,
+            command: `${EXT_ID}.show-output-terminal`,
             tooltip: 'Show output'
         },
     }

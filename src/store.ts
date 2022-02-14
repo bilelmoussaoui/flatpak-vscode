@@ -8,7 +8,7 @@ import { TaskMode, taskModeAsStatus } from './taskMode'
 import { exists, setContext } from './utils'
 import { loadRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 
-import { commands } from 'vscode'
+import { commands, window } from 'vscode'
 import { EXT_ID } from './extension'
 const { executeCommand } = commands
 
@@ -17,6 +17,8 @@ export const manifestFound = createEvent<FlatpakManifest>()
 export const manifestSelected = createEvent<FlatpakManifest>()
 export const manifestRemoved = createEvent<FlatpakManifest>()
 export const initialize = createEvent()
+// Whether the state file has been loaded.
+export const loaded = createEvent<boolean>()
 export const clean = createEvent()
 export const failure = createEvent<PayloadError>()
 export const finished = createEvent<TaskFinished>()
@@ -56,6 +58,7 @@ export const dumpInto = async (path: string): Promise<void> => {
 
 // The extension state
 export interface State {
+  loaded: boolean | null,
   selectedManifest: FlatpakManifest | null
   manifests: FlatpakManifest[]
   pipeline: {
@@ -79,6 +82,7 @@ export interface TaskFinished {
 }
 
 export const state = createStore<State>({
+  loaded: null,
   selectedManifest: null,
   manifests: [],
   pipeline: {
@@ -114,13 +118,32 @@ state
           initialize()
           // Reload the pipeline state from the on-disk save
           loadFrom(manifest.stateFile).then(
-            () => { },// eslint-disable-line @typescript-eslint/no-empty-function
-            () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+            () => { loaded(true) },
+            () => { loaded(false) }
           )
+        } else {
+          loaded(false)
         }
       },
       () => { } // eslint-disable-line @typescript-eslint/no-empty-function
     )
+  })
+  .on(loaded, (state, wasLoaded) => {
+    state.loaded = wasLoaded
+    if (!wasLoaded) {
+      window.showInformationMessage(
+        'Flatpak manifest detected, would you like VS Code to init a build ?',
+        ...['No', 'Yes']
+      ).then(
+        async (response) => {
+          if (response === 'Yes') {
+            await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
+          }
+        },
+        () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+      )
+    }
+
   })
   .on(initialize, (state) => {
     const manifest = state.selectedManifest

@@ -97,7 +97,7 @@ class Extension {
             }
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
                 await this.outputTerminal.show(true)
-                this.runner.setCommands([activeManifest.initBuild()], TaskMode.buildInit)
+                await this.runner.setCommands([activeManifest.initBuild()], TaskMode.buildInit)
             })
         })
 
@@ -109,7 +109,7 @@ class Extension {
             }
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
                 await this.outputTerminal.show(true)
-                this.runner.setCommands(
+                await this.runner.setCommands(
                     [activeManifest.updateDependencies()],
                     TaskMode.updateDeps
                 )
@@ -124,7 +124,7 @@ class Extension {
             }
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
                 await this.outputTerminal.show(true)
-                this.runner.setCommands(
+                await this.runner.setCommands(
                     [activeManifest.buildDependencies()],
                     TaskMode.buildDeps
                 )
@@ -138,7 +138,7 @@ class Extension {
             }
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
                 await this.outputTerminal.show(true)
-                this.runner.setCommands(activeManifest.build(false), TaskMode.buildApp)
+                await this.runner.setCommands(activeManifest.build(false), TaskMode.buildApp)
             })
         })
 
@@ -151,8 +151,13 @@ class Extension {
             }
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
                 await this.outputTerminal.show(true)
-                this.runner.setCommands(activeManifest.build(true), TaskMode.rebuild)
+                await this.runner.setCommands(activeManifest.build(true), TaskMode.rebuild)
             })
+        })
+
+        this.registerCommand(TaskMode.stop, async () => {
+            await this.outputTerminal.show(true)
+            this.runner.close()
         })
 
         // Clean build environment
@@ -175,7 +180,7 @@ class Extension {
             }
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
                 await this.outputTerminal.show(true)
-                this.runner.setCommands([activeManifest.run()], TaskMode.run)
+                await this.runner.setCommands([activeManifest.run()], TaskMode.run)
             })
         })
 
@@ -269,10 +274,10 @@ class Extension {
                 await this.workspaceState.setInitialized(true)
                 const activeManifest = this.manifestManager.getActiveManifest()
                 if (activeManifest) {
-                    void this.loadIntegrations(activeManifest)
+                    await this.loadIntegrations(activeManifest)
                 }
                 if (!finishedTask.restore) {
-                    void this.executeCommand(TaskMode.updateDeps, finishedTask.completeBuild)
+                    await this.executeCommand(TaskMode.updateDeps, finishedTask.completeBuild)
                 }
                 break
             }
@@ -281,13 +286,13 @@ class Extension {
                 // Assume user might want to rebuild dependencies
                 await this.workspaceState.setDependenciesBuilt(false)
                 if (!finishedTask.restore) {
-                    void this.executeCommand(TaskMode.buildDeps, finishedTask.completeBuild)
+                    await this.executeCommand(TaskMode.buildDeps, finishedTask.completeBuild)
                 }
                 break
             case TaskMode.buildDeps:
                 await this.workspaceState.setDependenciesBuilt(true)
                 if (!finishedTask.restore && finishedTask.completeBuild) {
-                    void this.executeCommand(TaskMode.buildApp)
+                    await this.executeCommand(TaskMode.buildApp)
                 }
                 break
             case TaskMode.buildApp:
@@ -296,7 +301,7 @@ class Extension {
             case TaskMode.rebuild:
                 await this.workspaceState.setApplicationBuilt(true)
                 if (!finishedTask.restore) {
-                    void this.executeCommand(TaskMode.run)
+                    await this.executeCommand(TaskMode.run)
                 }
                 break
         }

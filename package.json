@@ -86,6 +86,13 @@
       {
         "command": "flatpak-vscode.rebuild",
         "title": "Rebuild the application",
+        "icon": "$(play)",
+        "category": "Flatpak"
+      },
+      {
+        "command": "flatpak-vscode.stop",
+        "title": "Stop current command",
+        "icon": "$(debug-stop)",
         "category": "Flatpak"
       },
       {
@@ -115,11 +122,15 @@
         },
         {
           "command": "flatpak-vscode.run",
-          "when": "flatpakHasActiveManifest && flatpakApplicationBuilt"
+          "when": "flatpakHasActiveManifest && flatpakApplicationBuilt && !flatpakRunnerActive"
         },
         {
           "command": "flatpak-vscode.rebuild",
-          "when": "flatpakHasActiveManifest && flatpakApplicationBuilt"
+          "when": "flatpakHasActiveManifest && flatpakApplicationBuilt && !flatpakRunnerActive"
+        },
+        {
+          "command": "flatpak-vscode.stop",
+          "when": "flatpakRunnerActive"
         },
         {
           "command": "flatpak-vscode.clean",
@@ -129,16 +140,33 @@
           "command": "flatpak-vscode.build",
           "when": "flatpakHasActiveManifest && !flatpakApplicationBuilt"
         }
+      ],
+      "editor/title/run": [
+        {
+          "command": "flatpak-vscode.rebuild",
+          "when": "!flatpakRunnerActive"
+        },
+        {
+          "command": "flatpak-vscode.stop",
+          "when": "flatpakRunnerActive"
+        }
       ]
     },
     "keybindings": [
       {
         "command": "flatpak-vscode.rebuild",
-        "linux": "ctrl+alt+B"
+        "linux": "ctrl+alt+B",
+        "when": "!flatpakRunnerActive"
+      },
+      {
+        "command": "flatpak-vscode.stop",
+        "linux": "ctrl+alt+B",
+        "when": "flatpakRunnerActive"
       },
       {
         "command": "flatpak-vscode.run",
-        "linux": "ctrl+alt+R"
+        "linux": "ctrl+alt+R",
+        "when": "!flatpakRunnerActive"
       }
     ],
     "terminal": {

@@ -21,6 +21,7 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 
 - Build: Initialize a Flatpak build, update the dependencies & build them. It also does a first build of the application.
 - Rebuild: Rebuild the application and triggers a "Run" command.
+- Stop: Stop the currently running task.
 - Run: Run the application
 - Update Dependencies: Download/Update the dependencies and builds them.
 - Clean: Clean the Flatpak repo directory (`.flatpak/repo`) inside the current workspace.

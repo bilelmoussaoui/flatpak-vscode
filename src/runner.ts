@@ -35,10 +35,17 @@ export class Runner implements vscode.Disposable {
     }
 
     close(): void {
+        this.terminal.appendMessage('Child process exited')
+
         this.currentProcess?.kill()
+        this.currentProcess = undefined
+        this.commands = []
+        this.currentCommand = 0
+        this.failed = false
+        this.isRunning = false
     }
 
-    setCommands(commands: Command[], mode: TaskMode): void {
+    async setCommands(commands: Command[], mode: TaskMode): Promise<void> {
         if (this.isRunning) {
             this.commands = [...this.commands, ...commands]
         } else {
@@ -46,7 +53,7 @@ export class Runner implements vscode.Disposable {
             this.mode = mode
             this.currentCommand = 0
             this.failed = false
-            this.spawn(this.commands[0])
+            await this.spawn(this.commands[0])
         }
     }
 
@@ -70,24 +77,26 @@ export class Runner implements vscode.Disposable {
         })
     }
 
-    spawnNext(): void {
+    async spawnNext(): Promise<void> {
         this.currentCommand++
         if (this.failed) {
             return
         }
         if (this.currentCommand <= this.commands.length - 1) {
-            this.spawn(this.commands[this.currentCommand])
+            await this.spawn(this.commands[this.currentCommand])
         } else {
             this.currentCommand = 0
             this.isRunning = false
             this._onDidFinishedTask.fire({ mode: this.mode as TaskMode, restore: false, completeBuild: this.completeBuild })
+            await this.setActiveContext(false)
             this.statusItem?.setStatus(null)
             this.completeBuild = false
         }
     }
 
-    spawn(command: Command): void {
+    async spawn(command: Command): Promise<void> {
         if (this.mode !== undefined) {
+            await this.setActiveContext(true)
             this.statusItem.setStatus(taskModeAsStatus(this.mode))
         }
 
@@ -100,12 +109,13 @@ export class Runner implements vscode.Disposable {
         })
 
         this.currentProcess
-            .onExit(({ exitCode }) => {
+            .onExit(async ({ exitCode }) => {
                 if (exitCode !== 0) {
                     this.onError(`Child process exited with code ${exitCode}`)
+                    await this.setActiveContext(false)
                     return
                 }
-                this.spawnNext()
+                await this.spawnNext()
             })
     }
 
@@ -115,5 +125,9 @@ export class Runner implements vscode.Disposable {
 
     dispose(): void {
         this.statusItem.dispose()
+    }
+
+    private async setActiveContext(value: boolean): Promise<void> {
+        await vscode.commands.executeCommand('setContext', 'flatpakRunnerActive', value)
     }
 }

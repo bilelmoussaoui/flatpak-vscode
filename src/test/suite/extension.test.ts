@@ -144,7 +144,7 @@ suite('manifestUtils', () => {
     })
 })
 
-suite('flatpakVersion', (): void => {
+suite('flatpakVersion', () => {
     test('versionCompare', () => {
         assert(versionCompare('1.12.5', '1.12.0'))
         assert(versionCompare('1.8.5', '1.2.0'))

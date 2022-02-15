@@ -136,6 +136,18 @@
         "linux": "ctrl+alt+R"
       }
     ],
+    "terminal": {
+      "profiles": [
+        {
+          "id": "flatpak-vscode.runtime-terminal-provider",
+          "title": "Flatpak Runtime Terminal"
+        },
+        {
+          "id": "flatpak-vscode.build-terminal-provider",
+          "title": "Flatpak Build Terminal"
+        }
+      ]
+    },
     "jsonValidation": [
       {
         "fileMatch": [

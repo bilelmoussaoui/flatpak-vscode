@@ -1,5 +1,5 @@
 import * as store from './store'
-import { window, ExtensionContext, commands } from 'vscode'
+import { window, ExtensionContext, commands, TerminalProfile } from 'vscode'
 import { exists, ensureDocumentsPortal } from './utils'
 import { existsSync, promises as fs } from 'fs'
 import { StatusBarItem } from './statusBarItem'
@@ -43,25 +43,35 @@ export async function activate(context: ExtensionContext): Promise<void> {
     const terminal = new FlatpakTerminal()
     const runner = new FlatpakRunner(terminal)
 
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.show-output-terminal`, async () => {
-        await terminal.show(true)
-      })
-    )
+    window.registerTerminalProfileProvider(`${EXT_ID}.runtime-terminal-provider`, {
+      provideTerminalProfile: () => {
+        return new TerminalProfile(manifest.runtimeTerminal())
+      }
+    })
+
+    window.registerTerminalProfileProvider(`${EXT_ID}.build-terminal-provider`, {
+      provideTerminalProfile: () => {
+        return new TerminalProfile(manifest.buildTerminal())
+      }
+    })
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.runtime-terminal`, () => {
-        const command = manifest.runtimeTerminal()
-        const terminal = window.createTerminal('Flatpak: Runtime Terminal', command.program, command.args)
-        terminal.show()
+        const runtimeTerminal = window.createTerminal(manifest.runtimeTerminal())
+        runtimeTerminal.show()
       })
     )
 
     context.subscriptions.push(
       registerCommand(`${EXT_ID}.build-terminal`, () => {
-        const command = manifest.buildTerminal()
-        const terminal = window.createTerminal('Flatpak: Build Terminal', command.program, command.args)
-        terminal.show()
+        const buildTerminal = window.createTerminal(manifest.buildTerminal())
+        buildTerminal.show()
+      })
+    )
+
+    context.subscriptions.push(
+      registerCommand(`${EXT_ID}.show-output-terminal`, async () => {
+        await terminal.show(true)
       })
     )
 

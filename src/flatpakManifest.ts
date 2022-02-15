@@ -71,20 +71,25 @@ export class FlatpakManifest {
             })
     }
 
-    runtimeTerminal(): Command {
-        return new Command(
-            'flatpak',
-            [
+    runtimeTerminal(): vscode.TerminalOptions {
+        return {
+            name: 'Flatpak Runtime Terminal',
+            shellPath: 'flatpak',
+            shellArgs: [
                 'run',
                 '--command=bash',
                 `${this.manifest.sdk}//${this.manifest['runtime-version']}`,
             ],
-            this.workspace,
-        )
+        }
     }
 
-    buildTerminal(): Command {
-        return this.runInRepo('bash', true)
+    buildTerminal(): vscode.TerminalOptions {
+        const command = this.runInRepo('bash', true)
+        return {
+            name: 'Flatpak Build Terminal',
+            shellPath: command.program,
+            shellArgs: command.args,
+        }
     }
 
     initBuild(): Command {

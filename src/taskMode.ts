@@ -7,6 +7,7 @@ export enum TaskMode {
     buildDeps = 'build-deps',
     buildApp = 'build-app',
     rebuild = 'rebuild',
+    stop = 'stop',
     run = 'run',
     export = 'export',
     clean = 'clean',
@@ -29,6 +30,9 @@ export function taskModeAsStatus(taskMode: TaskMode): Status {
             break
         case TaskMode.rebuild:
             title = 'Rebuilding application'
+            break
+        case TaskMode.stop:
+            title = 'Stopping'
             break
         case TaskMode.run:
             title = 'Running application'

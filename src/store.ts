@@ -101,6 +101,7 @@ export const state = createStore<State>({
 
 // A typical error
 export interface PayloadError {
+  mode?: TaskMode,
   command: Command | null
   message: string | null
 }
@@ -230,8 +231,8 @@ state
     console.log(payload)
 
     let title = 'An error occurred'
-    if (state.pipeline.latestStep !== null) {
-      title = `Failed to run ${state.pipeline.latestStep}`
+    if (payload.mode !== undefined) {
+      title = `Failed to execute ${payload.mode}`
     }
 
     statusBarItem?.setStatus({

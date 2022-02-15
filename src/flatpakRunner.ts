@@ -44,7 +44,7 @@ export class FlatpakRunner {
 
   onError(message: string, command: Command): void {
     this.terminal.appendError(message)
-    failure({ command, message })
+    failure({ mode: this.mode, command, message })
     this.failed = true
     this.isRunning = false
   }

@@ -64,11 +64,11 @@ export class FlatpakTerminal {
     }
 
     private async waitToOpen(): Promise<void> {
+        if (this.isOpen) {
+            return
+        }
+
         return new Promise((resolve) => {
-            if (this.isOpen) {
-                resolve()
-                return
-            }
             this.onDidOpen(() => resolve())
         })
     }

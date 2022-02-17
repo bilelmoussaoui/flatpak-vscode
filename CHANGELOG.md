@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.19]
+
+- Fix Build/Runtime terminal when sandboxed
+
 ## [0.0.18]
 
 - Fix colored outputs in sandboxed VSCode

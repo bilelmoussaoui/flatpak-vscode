@@ -8,20 +8,22 @@ export class Command {
     private readonly cwd?: string
 
     constructor(program: string, args: string[], cwd?: string) {
-        this.program = program
+        if (IS_SANDBOXED) {
+            this.program = 'flatpak-spawn'
+            args.unshift(...['--host', '--env=TERM=xterm-256color', program])
+        } else {
+            this.program = program
+        }
         this.args = args
         this.cwd = cwd
     }
 
     toString(): string {
         const cmd = []
-
-        if (IS_SANDBOXED) {
-            cmd.push('flatpak-spawn --host')
-        }
-
         cmd.push(this.program)
-        cmd.push(...this.args)
+        cmd.push(...this.args.filter((arg) => {
+            return arg !== '--env=TERM=xterm-256color'
+        }))
 
         return cmd.join(' ')
     }
@@ -37,18 +39,8 @@ export class Command {
     }
 
     spawn(): pty.IPty {
-        if (IS_SANDBOXED) {
-            return pty.spawn(
-                'flatpak-spawn',
-                ['--host', '--env=TERM=xterm-256color', this.program, ...this.args],
-                {
-                    cwd: this.cwd,
-                }
-            )
-        } else {
-            return pty.spawn(this.program, this.args, {
-                cwd: this.cwd,
-            })
-        }
+        return pty.spawn(this.program, this.args, {
+            cwd: this.cwd,
+        })
     }
 }

@@ -5,7 +5,6 @@ import { getuid } from 'process'
 import { cpus } from 'os'
 import { Command } from './command'
 import { generatePathOverride, getHostEnv } from './utils'
-import { IS_SANDBOXED } from './extension'
 
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 
@@ -73,29 +72,15 @@ export class FlatpakManifest {
     }
 
     runtimeTerminal(): vscode.TerminalOptions {
-        if (IS_SANDBOXED) {
-            return {
-                name: 'Flatpak Runtime Terminal',
-                shellPath: 'flatpak-spawn',
-                shellArgs: [
-                    '--host',
-                    '--env=TERM=xterm-256color',
-                    'flatpak',
-                    'run',
-                    '--command=bash',
-                    `${this.manifest.sdk}//${this.manifest['runtime-version']}`,
-                ],
-            }
-        } else {
-            return {
-                name: 'Flatpak Runtime Terminal',
-                shellPath: 'flatpak',
-                shellArgs: [
-                    'run',
-                    '--command=bash',
-                    `${this.manifest.sdk}//${this.manifest['runtime-version']}`,
-                ],
-            }
+        const command = new Command('flatpak', [
+            'run',
+            '--command=bash',
+            `${this.manifest.sdk}//${this.manifest['runtime-version']}`,
+        ])
+        return {
+            name: 'Flatpak Runtime Terminal',
+            shellPath: command.program,
+            shellArgs: command.args
         }
     }
 

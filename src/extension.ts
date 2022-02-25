@@ -6,7 +6,7 @@ import { StatusBarItem } from './statusBarItem'
 import { FlatpakRunner } from './flatpakRunner'
 import { TaskMode } from './taskMode'
 import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
-import { FlatpakManifestFinder } from './flatpakManifestFinder'
+import { findManifests } from './flatpakManifestUtils'
 import { FlatpakTerminal } from './flatpakTerminal'
 const { executeCommand, registerCommand } = commands
 
@@ -23,8 +23,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
   // Look for a flatpak manifest
-  const manifestFinder = new FlatpakManifestFinder()
-  const manifests = await manifestFinder.find()
+  const manifests = await findManifests()
 
   if (manifests.length > 0) {
     // Make sures the documents portal is running

@@ -29,8 +29,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: yarn install
-      - run: yarn run pretest
-      # - run: yarn run test
+      - name: Run tests
+        run: |
+          yarn run pretest
+          xvfb-run yarn run test
+
   publish:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'release' }}

@@ -142,11 +142,12 @@ suite('flatpakManifestUtils', (): void => {
 
   test('flatpakVersionComparaison', () => {
     assert(versionCompare('1.12.5', '1.12.0'))
-    assert(!versionCompare('1.12.5', '1.19.0'))
     assert(versionCompare('1.8.5', '1.2.0'))
-    assert(!versionCompare('1.0.0', '1.2.0'))
-    assert(!versionCompare('0.9.2', '1.2.0'))
     assert(versionCompare('0.9.2', '0.9.2'))
     assert(versionCompare('0.9.2', undefined))
+
+    assert(!versionCompare('1.12.5', '1.19.0'))
+    assert(!versionCompare('1.0.0', '1.2.0'))
+    assert(!versionCompare('0.9.2', '1.2.0'))
   })
 })

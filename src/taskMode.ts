@@ -1,5 +1,5 @@
 import { EXT_ID } from './extension'
-import { Status } from './statusBarItem'
+import { Status } from './flatpakRunnerStatusItem'
 
 export enum TaskMode {
     buildInit = 'build-init',

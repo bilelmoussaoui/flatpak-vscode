@@ -1,11 +1,24 @@
 import * as vscode from 'vscode'
-import { failure, finished, newTask } from './store'
-import { TaskMode } from './taskMode'
+import { TaskMode, taskModeAsStatus } from './taskMode'
 import { Command } from './command'
 import * as pty from './nodePty'
 import { FlatpakTerminal } from './flatpakTerminal'
+import { FlatpakRunnerStatusItem } from './flatpakRunnerStatusItem'
+import { EXT_ID } from './extension'
 
-export class FlatpakRunner {
+export interface FinishedTask {
+  mode: TaskMode
+  restore: boolean
+  completeBuild: boolean
+}
+
+export interface FailedTask {
+  mode: TaskMode
+  command: Command
+  message: string
+}
+
+export class FlatpakRunner implements vscode.Disposable {
   private commands: Command[] = []
   private currentCommand: number
   public failed: boolean
@@ -14,16 +27,17 @@ export class FlatpakRunner {
   private currentProcess?: pty.IPty
   private terminal: FlatpakTerminal
   public completeBuild = false
+  private readonly statusItem: FlatpakRunnerStatusItem
 
-  private readonly _onDidOutput = new vscode.EventEmitter<string>()
-  readonly onDidOutput = this._onDidOutput.event
+  private readonly _onDidFinishedTask = new vscode.EventEmitter<FinishedTask>()
+  readonly onDidFinishedTask = this._onDidFinishedTask.event
 
   constructor(terminal: FlatpakTerminal) {
-    terminal.onDidClose(() => this.close())
-
+    this.statusItem = new FlatpakRunnerStatusItem()
     this.currentCommand = 0
     this.failed = false
     this.terminal = terminal
+    this.terminal.onDidClose(() => this.close())
   }
 
   close(): void {
@@ -42,11 +56,24 @@ export class FlatpakRunner {
     }
   }
 
-  onError(message: string, command: Command): void {
+  onError(message: string): void {
     this.terminal.appendError(message)
-    failure({ mode: this.mode, command, message })
     this.failed = true
     this.isRunning = false
+
+    let title = 'An error occurred'
+    if (this.mode !== undefined) {
+      title = `Failed to execute ${this.mode}`
+    }
+    this.statusItem?.setStatus({
+      type: 'error',
+      quiescent: false,
+      title,
+      clickable: {
+        command: `${EXT_ID}.show-output-terminal`,
+        tooltip: 'Show output'
+      },
+    })
   }
 
   spawnNext(): void {
@@ -59,14 +86,15 @@ export class FlatpakRunner {
     } else {
       this.currentCommand = 0
       this.isRunning = false
-      finished({ mode: this.mode as TaskMode, restore: false, completeBuild: this.completeBuild })
+      this._onDidFinishedTask.fire({ mode: this.mode as TaskMode, restore: false, completeBuild: this.completeBuild })
+      this.statusItem?.setStatus(null)
       this.completeBuild = false
     }
   }
 
   spawn(command: Command): void {
     if (this.mode !== undefined) {
-      newTask(this.mode)
+      this.statusItem.setStatus(taskModeAsStatus(this.mode))
     }
 
     this.terminal.appendMessage(command.toString())
@@ -79,9 +107,8 @@ export class FlatpakRunner {
 
     this.currentProcess
       .onExit(({ exitCode }) => {
-        console.log(exitCode)
         if (exitCode !== 0) {
-          this.onError(`Child process exited with code ${exitCode}`, this.current())
+          this.onError(`Child process exited with code ${exitCode}`)
           return
         }
         this.spawnNext()
@@ -90,5 +117,9 @@ export class FlatpakRunner {
 
   current(): Command {
     return this.commands[this.currentCommand]
+  }
+
+  dispose(): void {
+    this.statusItem.dispose()
   }
 }

@@ -19,6 +19,9 @@ suite('flatpakManifestUtils', (): void => {
       assert.equal(manifest?.manifest.command, 'app')
       assert.equal(manifest?.manifest.modules[0].name, 'app')
       assert.equal(manifest?.manifest.modules[0].buildsystem, 'meson')
+      assert.equal(manifest?.requiredVersion, '1.12.5')
+      assert(!manifest?.finishArgs().map((arg) => arg.split('=')[0]).includes('--require-version'))
+      assert(!manifest?.finishArgs().map((arg) => arg.split('=')[0]).includes('--metadata'))
     }
 
     async function assertInvalidManifest(path: string): Promise<void> {

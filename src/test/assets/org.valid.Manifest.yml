@@ -8,6 +8,8 @@ finish-args:
     - "--socket=fallback-x11"
     - "--socket=wayland"
     - "--device=dri"
+    - "--require-version=1.12.5"
+    - "--metadata==X-DConf=migrate-path=/org/valid/Manifest/"
 cleanup:
     - "/include"
     - "/lib/pkgconfig"

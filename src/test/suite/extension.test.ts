@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { Uri } from 'vscode'
 import { resolve } from 'path'
-import { isValidDbusName, parseManifest } from '../../flatpakManifestUtils'
+import { isValidDbusName, parseManifest, versionCompare } from '../../flatpakManifestUtils'
 
 suite('flatpakManifestUtils', (): void => {
   test('parseManifest', async () => {
@@ -19,6 +19,9 @@ suite('flatpakManifestUtils', (): void => {
       assert.equal(manifest?.manifest.command, 'app')
       assert.equal(manifest?.manifest.modules[0].name, 'app')
       assert.equal(manifest?.manifest.modules[0].buildsystem, 'meson')
+      assert.equal(manifest?.requiredVersion, '1.12.5')
+      assert(!manifest?.finishArgs().map((arg) => arg.split('=')[0]).includes('--require-version'))
+      assert(!manifest?.finishArgs().map((arg) => arg.split('=')[0]).includes('--metadata'))
     }
 
     async function assertInvalidManifest(path: string): Promise<void> {
@@ -135,5 +138,15 @@ suite('flatpakManifestUtils', (): void => {
       !isValidDbusName('contæins.inva_å_lid.characters'),
       'The characters must only contain a-z, A-Z, periods, or underscores'
     )
+  })
+
+  test('flatpakVersionComparaison', () => {
+    assert(versionCompare('1.12.5', '1.12.0'))
+    assert(!versionCompare('1.12.5', '1.19.0'))
+    assert(versionCompare('1.8.5', '1.2.0'))
+    assert(!versionCompare('1.0.0', '1.2.0'))
+    assert(!versionCompare('0.9.2', '1.2.0'))
+    assert(versionCompare('0.9.2', '0.9.2'))
+    assert(versionCompare('0.9.2', undefined))
   })
 })

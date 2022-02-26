@@ -16,6 +16,7 @@ export class FlatpakManifest {
     workspace: string
     stateFile: string // A on disk copy of the pipeline state
     stateDir: string
+    requiredVersion?: string
 
     constructor(
         uri: vscode.Uri,
@@ -28,6 +29,9 @@ export class FlatpakManifest {
         this.repoDir = path.join(this.buildDir, 'repo')
         this.stateDir = path.join(this.buildDir, 'flatpak-builder')
         this.stateFile = path.join(this.buildDir, 'pipeline.json')
+        this.requiredVersion = manifest['finish-args'].map((val) => val.split('=')).find((value) => {
+            return value[0] === '--require-version'
+        })?.[1]
     }
 
     id(): string {
@@ -60,7 +64,8 @@ export class FlatpakManifest {
         return this.manifest['finish-args']
             .filter((arg) => {
                 // --metadata causes a weird issue
-                return arg.split('=')[0] !== '--metadata'
+                // --require-version is not supported by flatpak-builder, so filter it out
+                return !['--metadata', '--require-version'].includes(arg.split('=')[0])
             })
             .map((arg) => {
                 if (arg.endsWith('*')) {

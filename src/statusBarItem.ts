@@ -8,8 +8,8 @@ export interface Clickable {
 export interface Status {
     type: 'ok' | 'error'
     title: string
-    quiescent: boolean,
-    clickable: Clickable | null
+    quiescent?: boolean,
+    clickable?: Clickable | null
 }
 
 export class StatusBarItem {

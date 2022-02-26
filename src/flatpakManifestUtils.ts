@@ -1,6 +1,7 @@
 import { FlatpakManifest } from './flatpakManifest';
 import { FlatpakManifestSchema } from './flatpak.types'
 import { Uri, workspace } from 'vscode';
+import * as JSONC from 'jsonc-parser'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 
@@ -33,7 +34,7 @@ export async function findManifests(): Promise<FlatpakManifest[]> {
  * @param uri Path to the manifest
  * @returns A valid FlatpakManifest, otherwise null
  */
-async function parseManifest(uri: Uri): Promise<FlatpakManifest | null> {
+export async function parseManifest(uri: Uri): Promise<FlatpakManifest | null> {
     const applicationId = path.parse(uri.fsPath).name
     if (!isValidDbusName(applicationId)) {
         return null
@@ -46,6 +47,9 @@ async function parseManifest(uri: Uri): Promise<FlatpakManifest | null> {
     switch (textDocument.languageId) {
         case 'json':
             manifest = JSON.parse(data) as FlatpakManifestSchema
+            break
+        case 'jsonc':
+            manifest = JSONC.parse(data) as FlatpakManifestSchema
             break
         case 'yaml':
             manifest = yaml.load(data) as FlatpakManifestSchema

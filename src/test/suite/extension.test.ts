@@ -1,7 +1,41 @@
 import * as assert from 'assert'
-import { isValidDbusName } from '../../flatpakManifestUtils'
+import { Uri } from 'vscode'
+import { resolve } from 'path'
+import { isValidDbusName, parseManifest } from '../../flatpakManifestUtils'
 
 suite('flatpakManifestUtils', (): void => {
+  test('parseManifest', async () => {
+    function intoUri(path: string): Uri {
+      return Uri.file(resolve(__dirname, path))
+    }
+
+    async function assertValidManifest(path: string): Promise<void> {
+      const manifest = await parseManifest(intoUri(path))
+      assert.notEqual(manifest, null)
+      assert.equal(manifest?.manifest['app-id'], 'org.valid.Manifest')
+      assert.equal(manifest?.manifest.runtime, 'org.gnome.Platform')
+      assert.equal(manifest?.manifest['runtime-version'], '41')
+      assert.equal(manifest?.manifest.sdk, 'org.gnome.Sdk')
+      assert.equal(manifest?.manifest.command, 'app')
+      assert.equal(manifest?.manifest.modules[0].name, 'app')
+      assert.equal(manifest?.manifest.modules[0].buildsystem, 'meson')
+    }
+
+    async function assertInvalidManifest(path: string): Promise<void> {
+      const manifest = await parseManifest(intoUri(path))
+      assert.equal(manifest, null)
+    }
+
+    await assertValidManifest('../assets/org.valid.Manifest.json')
+    await assertValidManifest('../assets/org.valid.Manifest.jsonc')
+    await assertValidManifest('../assets/org.valid.Manifest.yaml')
+    await assertValidManifest('../assets/org.valid.Manifest.yml')
+
+    await assertInvalidManifest('../assets/.has.invalid.AppId.yml')
+    await assertInvalidManifest('../assets/has.missing.Modules.json')
+    await assertInvalidManifest('../assets/has.missing.AppId.json')
+  })
+
   test('isValidDbusName', () => {
     assert(
       isValidDbusName('_org.SomeApp'),

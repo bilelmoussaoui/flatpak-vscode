@@ -6,7 +6,7 @@ import { StatusBarItem } from './statusBarItem'
 import { FlatpakRunner } from './flatpakRunner'
 import { TaskMode } from './taskMode'
 import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
-import { findManifests } from './flatpakManifestUtils'
+import { findManifests, versionCompare } from './flatpakManifestUtils'
 import { FlatpakTerminal } from './flatpakTerminal'
 import { execSync } from 'child_process'
 import { Command } from './command'
@@ -39,6 +39,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
     manifests.forEach((manifest) => store.manifestFound(manifest))
     //TODO: allow the user to select a manifest
     const manifest = manifests[0]
+    if (!versionCompare(FLATPAK_VERSION, manifest.requiredVersion)) {
+      // TODO: replace with the build status bar instead of a notification
+      void window.showErrorMessage(
+        `Manifest requires ${manifest.requiredVersion as string} but ${FLATPAK_VERSION} is available`,
+      )
+    }
+
     // Create the build directory if it doesn't exists
     if (!(await exists(manifest.buildDir))) {
       await fs.mkdir(manifest.buildDir)

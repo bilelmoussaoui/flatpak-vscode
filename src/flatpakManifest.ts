@@ -16,7 +16,7 @@ export class FlatpakManifest {
     workspace: string
     stateFile: string // A on disk copy of the pipeline state
     stateDir: string
-    requiredVersion: string | undefined
+    requiredVersion?: string
 
     constructor(
         uri: vscode.Uri,

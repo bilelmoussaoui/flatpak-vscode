@@ -1,6 +1,7 @@
 # VSCode + Flatpak integration
 
-![CI](https://github.com/bilelmoussaoui/flatpak-vscode/workflows/CI/badge.svg)
+![CI](https://github.com/bilelmoussaoui/flatpak-vscode/workflows/CI/badge.svg) ![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/bilelmoussaoui.flatpak-vscode)
+[![Matrix Chat](https://img.shields.io/badge/Matrix-Chat-green)](https://matrix.to/#/#flatpak-vscode:gnome.org)
 
 A very simple VSCode extension that detects a Flatpak manifest and offers various commands to build, run & export a bundle.
 

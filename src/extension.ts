@@ -8,18 +8,25 @@ import { TaskMode } from './taskMode'
 import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 import { findManifests } from './flatpakManifestUtils'
 import { FlatpakTerminal } from './flatpakTerminal'
+import { execSync } from 'child_process'
+import { Command } from './command'
 const { executeCommand, registerCommand } = commands
 
 export const EXT_ID = 'flatpak-vscode'
 
 // whether VSCode is installed in a sandbox
 export const IS_SANDBOXED = existsSync('/.flatpak-info')
+// Currently installed Flatpak version
+export let FLATPAK_VERSION: string
 
 export let statusBarItem: StatusBarItem | undefined
 
 export async function activate(context: ExtensionContext): Promise<void> {
   statusBarItem = new StatusBarItem(context)
+  FLATPAK_VERSION = execSync((new Command('flatpak', ['--version'])).toString()).
+    toString().trim().replace('Flatpak', '').trim()
 
+  console.log(`Flatpak version: ${FLATPAK_VERSION}`)
   console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
   // Look for a flatpak manifest

@@ -98,6 +98,7 @@ export class FlatpakManifest {
         ])
         return {
             name: 'Flatpak Runtime Terminal',
+            iconPath: new vscode.ThemeIcon('package'),
             shellPath: command.program,
             shellArgs: command.args
         }
@@ -107,6 +108,7 @@ export class FlatpakManifest {
         const command = this.runInRepo('bash', true)
         return {
             name: 'Flatpak Build Terminal',
+            iconPath: new vscode.ThemeIcon('package'),
             shellPath: command.program,
             shellArgs: command.args,
         }

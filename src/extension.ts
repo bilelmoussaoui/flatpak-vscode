@@ -15,9 +15,14 @@ import { Command } from './command'
 import { migrateStateToMemento } from './migration'
 
 export const EXTENSION_ID = 'flatpak-vscode'
-// whether VSCode is installed in a sandbox
+
+/**
+ * Whether VSCode is installed in a sandbox
+ */
 export const IS_SANDBOXED = existsSync('/.flatpak-info')
-// Currently installed Flatpak version
+/**
+ * Currently installed Flatpak version
+ */
 export let FLATPAK_VERSION: string
 
 class Extension {

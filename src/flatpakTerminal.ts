@@ -49,7 +49,7 @@ export class FlatpakTerminal implements vscode.Disposable {
     async show(preserveFocus?: boolean): Promise<void> {
         if (this.inner === undefined) {
             this.inner = vscode.window.createTerminal({
-                name: 'Flatpak',
+                name: 'Flatpak Output Terminal',
                 iconPath: new vscode.ThemeIcon('package'),
                 pty: this.pty
             })

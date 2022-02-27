@@ -1,5 +1,5 @@
-import { EXT_ID } from './extension'
-import { Status } from './flatpakRunnerStatusItem'
+import { EXTENSION_ID } from './extension'
+import { Status } from './runnerStatusItem'
 
 export enum TaskMode {
     buildInit = 'build-init',
@@ -44,9 +44,9 @@ export const taskModeAsStatus = (taskMode: TaskMode): Status => {
     return {
         title,
         type: 'ok',
-        quiescent: true,
+        isOperation: true,
         clickable: {
-            command: `${EXT_ID}.show-output-terminal`,
+            command: `${EXTENSION_ID}.show-output-terminal`,
             tooltip: 'Show output'
         },
     }

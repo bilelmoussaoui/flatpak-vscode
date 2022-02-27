@@ -8,11 +8,14 @@ export interface Clickable {
 export interface Status {
     type: 'ok' | 'error'
     title: string
-    quiescent: boolean,
+    /**
+     * Whether to shown a spinning icon
+     */
+    isOperation: boolean,
     clickable: Clickable | null
 }
 
-export class FlatpakRunnerStatusItem implements vscode.Disposable {
+export class RunnerStatusItem implements vscode.Disposable {
     private inner: vscode.StatusBarItem
 
     constructor() {
@@ -40,7 +43,7 @@ export class FlatpakRunnerStatusItem implements vscode.Disposable {
         this.inner.command = status.clickable?.command
         this.inner.tooltip = status.clickable?.tooltip
 
-        if (status.quiescent) {
+        if (status.isOperation) {
             icon = '$(sync~spin) '
         }
 

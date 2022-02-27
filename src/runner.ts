@@ -2,9 +2,9 @@ import * as vscode from 'vscode'
 import { TaskMode, taskModeAsStatus } from './taskMode'
 import { Command } from './command'
 import * as pty from './nodePty'
-import { FlatpakTerminal } from './flatpakTerminal'
-import { FlatpakRunnerStatusItem } from './flatpakRunnerStatusItem'
-import { EXT_ID } from './extension'
+import { OutputTerminal } from './outputTerminal'
+import { RunnerStatusItem } from './runnerStatusItem'
+import { EXTENSION_ID } from './extension'
 
 export interface FinishedTask {
   mode: TaskMode
@@ -18,22 +18,22 @@ export interface FailedTask {
   message: string
 }
 
-export class FlatpakRunner implements vscode.Disposable {
+export class Runner implements vscode.Disposable {
   private commands: Command[] = []
   private currentCommand: number
   public failed: boolean
   private isRunning = false
   private mode?: TaskMode
   private currentProcess?: pty.IPty
-  private terminal: FlatpakTerminal
+  private terminal: OutputTerminal
   public completeBuild = false
-  private readonly statusItem: FlatpakRunnerStatusItem
+  private readonly statusItem: RunnerStatusItem
 
   private readonly _onDidFinishedTask = new vscode.EventEmitter<FinishedTask>()
   readonly onDidFinishedTask = this._onDidFinishedTask.event
 
-  constructor(terminal: FlatpakTerminal) {
-    this.statusItem = new FlatpakRunnerStatusItem()
+  constructor(terminal: OutputTerminal) {
+    this.statusItem = new RunnerStatusItem()
     this.currentCommand = 0
     this.failed = false
     this.terminal = terminal
@@ -67,10 +67,10 @@ export class FlatpakRunner implements vscode.Disposable {
     }
     this.statusItem?.setStatus({
       type: 'error',
-      quiescent: false,
+      isOperation: false,
       title,
       clickable: {
-        command: `${EXT_ID}.show-output-terminal`,
+        command: `${EXTENSION_ID}.show-output-terminal`,
         tooltip: 'Show output'
       },
     })

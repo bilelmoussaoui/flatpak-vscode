@@ -1,6 +1,6 @@
-import { FlatpakManifest } from './flatpakManifest'
-import { FlatpakManifestSchema } from './flatpak.types'
-import { FlatpakManifestMap } from './flatpakManifestMap';
+import { Manifest } from './manifest'
+import { ManifestSchema } from './flatpak.types'
+import { ManifestMap } from './manifestMap';
 import * as JSONC from 'jsonc-parser'
 import { Uri, workspace } from 'vscode';
 import * as yaml from 'js-yaml'
@@ -16,13 +16,13 @@ export const MANIFEST_PATH_GLOB_PATTERN = '**/*.{json,yaml,yml}'
  * Finds possible manifests in workspace then deserialize them.
  * @returns List of Flatpak Manifest
  */
-export async function findManifests(): Promise<FlatpakManifestMap> {
+export async function findManifests(): Promise<ManifestMap> {
     const uris: Uri[] = await workspace.findFiles(
         MANIFEST_PATH_GLOB_PATTERN,
         '**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak}/*',
         1000
     )
-    const manifests = new FlatpakManifestMap()
+    const manifests = new ManifestMap()
     for (const uri of uris) {
         try {
             const manifest = await parseManifest(uri)
@@ -41,7 +41,7 @@ export async function findManifests(): Promise<FlatpakManifestMap> {
  * @param uri Path to the manifest
  * @returns A valid FlatpakManifest, otherwise null
  */
-export async function parseManifest(uri: Uri): Promise<FlatpakManifest | null> {
+export async function parseManifest(uri: Uri): Promise<Manifest | null> {
     const applicationId = path.parse(uri.fsPath).name
     if (!isValidDbusName(applicationId)) {
         return null
@@ -53,13 +53,13 @@ export async function parseManifest(uri: Uri): Promise<FlatpakManifest | null> {
     let manifest = null
     switch (textDocument.languageId) {
         case 'json':
-            manifest = JSON.parse(data) as FlatpakManifestSchema
+            manifest = JSON.parse(data) as ManifestSchema
             break
         case 'jsonc':
-            manifest = JSONC.parse(data) as FlatpakManifestSchema
+            manifest = JSONC.parse(data) as ManifestSchema
             break
         case 'yaml':
-            manifest = yaml.load(data) as FlatpakManifestSchema
+            manifest = yaml.load(data) as ManifestSchema
             break
         default:
             // This should not be triggered since only json,yaml,yml are passed in findFiles
@@ -72,7 +72,7 @@ export async function parseManifest(uri: Uri): Promise<FlatpakManifest | null> {
     }
 
     if (isValidManifest(manifest)) {
-        return new FlatpakManifest(
+        return new Manifest(
             uri,
             manifest,
         )
@@ -138,7 +138,7 @@ function isNumber(char: string): boolean {
     return char >= '0' && char <= '9'
 }
 
-function isValidManifest(manifest: FlatpakManifestSchema): boolean {
+function isValidManifest(manifest: ManifestSchema): boolean {
     const hasId = (manifest.id || manifest['app-id']) !== undefined
     const hasModules = manifest.modules !== undefined
     return hasId && hasModules

@@ -1,6 +1,6 @@
-import { FlatpakManifest } from '../flatpakManifest'
+import { Manifest } from '../manifest'
 
-export const loadRustAnalyzerConfigOverrides = async (manifest: FlatpakManifest): Promise<void> => {
+export const loadRustAnalyzerConfigOverrides = async (manifest: Manifest): Promise<void> => {
     await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer', '/usr/lib/sdk/rust-stable/bin/')
 
     const buildSystemBuildDir = manifest.buildSystemBuildDir()
@@ -15,7 +15,7 @@ export const loadRustAnalyzerConfigOverrides = async (manifest: FlatpakManifest)
     await manifest.overrideWorkspaceConfig('rust-analyzer', 'files.excludeDirs', ['.flatpak'])
 }
 
-export const restoreRustAnalyzerConfigOverrides = async (manifest: FlatpakManifest): Promise<void> => {
+export const restoreRustAnalyzerConfigOverrides = async (manifest: Manifest): Promise<void> => {
     await manifest.restoreWorkspaceConfig('rust-analyzer', 'server.path')
     await manifest.restoreWorkspaceConfig('rust-analyzer', 'runnables.overrideCargo')
     await manifest.restoreWorkspaceConfig('rust-analyzer', 'runnables.cargoExtraArgs')

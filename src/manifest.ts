@@ -1,19 +1,19 @@
 import * as vscode from 'vscode'
-import { BuildOptionsPathKeys, FlatpakManifestSchema, Module } from './flatpak.types'
+import { BuildOptionsPathKeys, ManifestSchema, Module } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
 import { cpus } from 'os'
 import { promises as fs } from 'fs'
 import { Command } from './command'
 import { generatePathOverride, getHostEnv } from './utils'
-import { versionCompare } from './flatpakManifestUtils'
+import { versionCompare } from './manifestUtils'
 import { FLATPAK_VERSION } from './extension'
 
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 
-export class FlatpakManifest {
+export class Manifest {
     uri: vscode.Uri
-    manifest: FlatpakManifestSchema
+    manifest: ManifestSchema
     repoDir: string
     buildDir: string
     workspace: string
@@ -22,7 +22,7 @@ export class FlatpakManifest {
 
     constructor(
         uri: vscode.Uri,
-        manifest: FlatpakManifestSchema,
+        manifest: ManifestSchema,
     ) {
         this.uri = uri
         this.manifest = manifest

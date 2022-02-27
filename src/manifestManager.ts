@@ -1,30 +1,30 @@
-import { FlatpakManifest } from './flatpakManifest'
+import { Manifest } from './manifest'
 import { exists } from './utils'
 import { promises as fs } from 'fs'
 import * as vscode from 'vscode'
 import { WorkspaceState } from './workspaceState'
-import { EXT_ID } from './extension'
+import { EXTENSION_ID } from './extension'
 import { isDeepStrictEqual } from 'util'
-import { FlatpakManifestMap } from './flatpakManifestMap'
-import { findManifests, MANIFEST_PATH_GLOB_PATTERN, parseManifest } from './flatpakManifestUtils'
+import { ManifestMap } from './manifestMap'
+import { findManifests, MANIFEST_PATH_GLOB_PATTERN, parseManifest } from './manifestUtils'
 
 export interface ManifestQuickPickItem {
     label: string,
     detail: string,
-    manifest: FlatpakManifest
+    manifest: Manifest
 }
 
-export class FlatpakManifestManager implements vscode.Disposable {
+export class ManifestManager implements vscode.Disposable {
     private readonly statusItem: vscode.StatusBarItem
     private readonly workspaceState: WorkspaceState
     private readonly manifestWatcher: vscode.FileSystemWatcher
-    private manifests?: FlatpakManifestMap
-    private activeManifest: FlatpakManifest | null
+    private manifests?: ManifestMap
+    private activeManifest: Manifest | null
 
-    private readonly _onDidActiveManifestChanged = new vscode.EventEmitter<[FlatpakManifest | null, boolean]>()
+    private readonly _onDidActiveManifestChanged = new vscode.EventEmitter<[Manifest | null, boolean]>()
     readonly onDidActiveManifestChanged = this._onDidActiveManifestChanged.event
 
-    private readonly _onDidRequestRebuild = new vscode.EventEmitter<FlatpakManifest>()
+    private readonly _onDidRequestRebuild = new vscode.EventEmitter<Manifest>()
     readonly onDidRequestRebuild = this._onDidRequestRebuild.event
 
     constructor(workspaceState: WorkspaceState) {
@@ -101,7 +101,7 @@ export class FlatpakManifestManager implements vscode.Disposable {
         await this.setActiveManifest(lastActiveManifest, true)
     }
 
-    async getManifests(): Promise<FlatpakManifestMap> {
+    async getManifests(): Promise<ManifestMap> {
         if (this.manifests === undefined) {
             this.manifests = await findManifests()
         }
@@ -109,7 +109,7 @@ export class FlatpakManifestManager implements vscode.Disposable {
         return this.manifests
     }
 
-    getActiveManifest(): FlatpakManifest | null {
+    getActiveManifest(): Manifest | null {
         return this.activeManifest
     }
 
@@ -118,7 +118,7 @@ export class FlatpakManifestManager implements vscode.Disposable {
      * @param manifest Manifest to be set
      * @param isLastActive Whether if the manifest was loaded from stored ActiveManifestUri
      */
-    private async setActiveManifest(manifest: FlatpakManifest | null, isLastActive: boolean): Promise<void> {
+    private async setActiveManifest(manifest: Manifest | null, isLastActive: boolean): Promise<void> {
         if (isDeepStrictEqual(this.getActiveManifest(), manifest)) {
             return
         }
@@ -183,7 +183,7 @@ export class FlatpakManifestManager implements vscode.Disposable {
      * Update the stored active manifest if user selects something and return the selected manifest.
      * @returns the selected manifest
      */
-    async selectManifest(): Promise<FlatpakManifest | null> {
+    async selectManifest(): Promise<Manifest | null> {
         const quickPickItems: ManifestQuickPickItem[] = []
         const manifests = await this.getManifests()
         manifests.forEach((manifest) => {
@@ -213,7 +213,7 @@ export class FlatpakManifestManager implements vscode.Disposable {
      * If it doesn't exist. Show manifests picker, or show messages.
      * @param func Callback function where the active manifest can be handled
      */
-    async doWithActiveManifest(func: (manifest: FlatpakManifest) => Promise<void> | void): Promise<void> {
+    async doWithActiveManifest(func: (manifest: Manifest) => Promise<void> | void): Promise<void> {
         let activeManifest = this.getActiveManifest()
 
         if (activeManifest === null) {
@@ -239,17 +239,17 @@ export class FlatpakManifestManager implements vscode.Disposable {
 
         if (activeManifest === null) {
             this.statusItem.text = 'No active manifest'
-            this.statusItem.command = `${EXT_ID}.select-manifest`
+            this.statusItem.command = `${EXTENSION_ID}.select-manifest`
             this.statusItem.tooltip = 'Select manifest'
             this.statusItem.color = undefined
         } else if (manifestError !== null) {
             this.statusItem.text = activeManifest.id()
-            this.statusItem.command = `${EXT_ID}.show-active-manifest`
+            this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
             this.statusItem.tooltip = manifestError
             this.statusItem.color = new vscode.ThemeColor('notificationsErrorIcon.foreground')
         } else {
             this.statusItem.text = activeManifest.id()
-            this.statusItem.command = `${EXT_ID}.show-active-manifest`
+            this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
             this.statusItem.tooltip = activeManifest.uri.fsPath
             this.statusItem.color = undefined
         }

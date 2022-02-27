@@ -3,8 +3,11 @@ import { BuildOptionsPathKeys, FlatpakManifestSchema, Module } from './flatpak.t
 import * as path from 'path'
 import { getuid } from 'process'
 import { cpus } from 'os'
+import { promises as fs } from 'fs'
 import { Command } from './command'
 import { generatePathOverride, getHostEnv } from './utils'
+import { versionCompare } from './flatpakManifestUtils'
+import { FLATPAK_VERSION } from './extension'
 
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 
@@ -14,7 +17,6 @@ export class FlatpakManifest {
     repoDir: string
     buildDir: string
     workspace: string
-    stateFile: string // A on disk copy of the pipeline state
     stateDir: string
     requiredVersion?: string
 
@@ -28,11 +30,23 @@ export class FlatpakManifest {
         this.buildDir = path.join(this.workspace, '.flatpak')
         this.repoDir = path.join(this.buildDir, 'repo')
         this.stateDir = path.join(this.buildDir, 'flatpak-builder')
-        this.stateFile = path.join(this.buildDir, 'pipeline.json')
         this.requiredVersion = manifest['finish-args'].map((val) => val.split('=')).find((value) => {
             return value[0] === '--require-version'
         })?.[1]
     }
+
+    /**
+     * Check for invalidity in the manifest
+     * @returns a message if there is an error otherwise null
+     */
+    checkForError(): string | null {
+        if (!versionCompare(FLATPAK_VERSION, this.requiredVersion)) {
+            return `Manifest requires ${this.requiredVersion as string} but ${FLATPAK_VERSION} is available`
+        }
+
+        return null
+    }
+
 
     id(): string {
         return this.manifest['app-id'] || this.manifest.id || 'org.flatpak.Test'
@@ -471,6 +485,12 @@ export class FlatpakManifest {
         args.push(this.repoDir)
         args.push(shellCommand)
         return new Command('flatpak', args, this.workspace)
+    }
+
+    async deleteRepoDir(): Promise<void> {
+        await fs.rmdir(this.repoDir, {
+            recursive: true,
+        })
     }
 
     async overrideWorkspaceCommandConfig(

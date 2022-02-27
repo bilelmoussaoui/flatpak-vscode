@@ -8,16 +8,15 @@ export interface Clickable {
 export interface Status {
     type: 'ok' | 'error'
     title: string
-    quiescent?: boolean,
-    clickable?: Clickable | null
+    quiescent: boolean,
+    clickable: Clickable | null
 }
 
-export class StatusBarItem {
+export class FlatpakRunnerStatusItem implements vscode.Disposable {
     private inner: vscode.StatusBarItem
 
-    constructor(extCtx: vscode.ExtensionContext) {
+    constructor() {
         this.inner = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
-        extCtx.subscriptions.push(this.inner)
     }
 
     setStatus(status: Status | null): void {
@@ -47,5 +46,9 @@ export class StatusBarItem {
 
         this.inner.text = `${icon} ${status.title}`
         this.inner.show()
+    }
+
+    dispose(): void {
+        this.inner.dispose()
     }
 }

@@ -1,7 +1,9 @@
 import * as dbus from 'dbus-next'
 import { promises as fs, constants as fsc } from 'fs'
-import { commands } from 'vscode'
 
+/**
+ * Make sures the documents portal is running
+ */
 export const ensureDocumentsPortal = async (): Promise<void> => {
   try {
     const bus = dbus.sessionBus()
@@ -11,13 +13,6 @@ export const ensureDocumentsPortal = async (): Promise<void> => {
   } catch (err) {
     console.warn(`Failed to ensure documents portal: ${err as string}`)
   }
-}
-
-export const setContext = (ctx: string, state: boolean | string): void => {
-  commands.executeCommand('setContext', ctx, state).then(
-    () => { }, // eslint-disable-line @typescript-eslint/no-empty-function
-    () => { } // eslint-disable-line @typescript-eslint/no-empty-function
-  )
 }
 
 export const exists = async (path: string): Promise<boolean> => {

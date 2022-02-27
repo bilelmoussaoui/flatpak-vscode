@@ -1,26 +1,33 @@
 import { FlatpakManifest } from './flatpakManifest'
 import { FlatpakManifestSchema } from './flatpak.types'
-import { Uri, workspace } from 'vscode'
+import { FlatpakManifestMap } from './flatpakManifestMap';
 import * as JSONC from 'jsonc-parser'
+import { Uri, workspace } from 'vscode';
 import * as yaml from 'js-yaml'
 import * as path from 'path'
+
+/**
+ * VSCode specification compliant glob pattern to look up for
+ * possible Flatpak manifests.
+ */
+export const MANIFEST_PATH_GLOB_PATTERN = '**/*.{json,yaml,yml}'
 
 /**
  * Finds possible manifests in workspace then deserialize them.
  * @returns List of Flatpak Manifest
  */
-export async function findManifests(): Promise<FlatpakManifest[]> {
+export async function findManifests(): Promise<FlatpakManifestMap> {
     const uris: Uri[] = await workspace.findFiles(
-        '**/*.{json,yaml,yml}',
+        MANIFEST_PATH_GLOB_PATTERN,
         '**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak}/*',
         1000
     )
-    const manifests = []
+    const manifests = new FlatpakManifestMap()
     for (const uri of uris) {
         try {
             const manifest = await parseManifest(uri)
             if (manifest) {
-                manifests.push(manifest)
+                manifests.add(manifest)
             }
         } catch (err) {
             console.warn(`Failed to parse the manifest at ${uri.fsPath}`)

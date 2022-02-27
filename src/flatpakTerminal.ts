@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 
 const RESET_COLOR = '\x1b[0m'
 
-export class FlatpakTerminal {
+export class FlatpakTerminal implements vscode.Disposable {
     private inner?: vscode.Terminal
     private isOpen: boolean
     private readonly pty: vscode.Pseudoterminal
@@ -61,6 +61,10 @@ export class FlatpakTerminal {
 
     hide(): void {
         this.inner?.hide()
+    }
+
+    dispose() {
+        this.inner?.dispose()
     }
 
     private async waitToOpen(): Promise<void> {

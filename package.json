@@ -54,6 +54,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "flatpak-vscode.select-manifest",
+        "title": "Change active manifest",
+        "category": "Flatpak"
+      },
+      {
         "command": "flatpak-vscode.show-output-terminal",
         "title": "Show the output terminal",
         "category": "Flatpak"
@@ -203,7 +208,6 @@
   "dependencies": {
     "@types/js-yaml": "^4.0.5",
     "dbus-next": "^0.10.2",
-    "effector": "^22.2.0",
     "js-yaml": "^4.1.0",
     "jsonc-parser": "^3.0.0"
   }

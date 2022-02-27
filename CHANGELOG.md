@@ -1,5 +1,10 @@
 # Change Log
 
+## [Unreleased]
+
+- New Flatpak manifest selector
+- Watch for Flatpak manifests changes and modify state accordingly
+
 ## [0.0.20]
 
 - Actually fix Runtime terminal when sandboxed

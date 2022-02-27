@@ -1,206 +1,346 @@
-import * as store from './store'
-import { window, ExtensionContext, commands, TerminalProfile } from 'vscode'
-import { exists, ensureDocumentsPortal } from './utils'
-import { existsSync, promises as fs } from 'fs'
-import { StatusBarItem } from './statusBarItem'
-import { FlatpakRunner } from './flatpakRunner'
+import * as vscode from 'vscode'
+import { window, ExtensionContext, commands } from 'vscode'
+import { existsSync } from 'fs'
+import { ensureDocumentsPortal } from './utils'
+import { FinishedTask, FlatpakRunner } from './flatpakRunner'
 import { TaskMode } from './taskMode'
-import { restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
-import { findManifests, versionCompare } from './flatpakManifestUtils'
+import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
 import { FlatpakTerminal } from './flatpakTerminal'
+import { FlatpakManifestManager } from './flatpakManifestManager'
+import { FlatpakManifest } from './flatpakManifest'
+import { WorkspaceState } from './workspaceState'
+import { TerminalProvider } from './terminalProvider'
 import { execSync } from 'child_process'
 import { Command } from './command'
-const { executeCommand, registerCommand } = commands
 
 export const EXT_ID = 'flatpak-vscode'
-
 // whether VSCode is installed in a sandbox
 export const IS_SANDBOXED = existsSync('/.flatpak-info')
 // Currently installed Flatpak version
 export let FLATPAK_VERSION: string
 
-export let statusBarItem: StatusBarItem | undefined
+class Extension {
+  private readonly extCtx: vscode.ExtensionContext
+  private readonly workspaceState: WorkspaceState
+  private readonly outputTerminal: FlatpakTerminal
+  private readonly runner: FlatpakRunner
+  private readonly manifestManager: FlatpakManifestManager
+  private terminalProvider?: TerminalProvider
+  private activeTerminals: vscode.Terminal[] = []
 
-export async function activate(context: ExtensionContext): Promise<void> {
-  statusBarItem = new StatusBarItem(context)
-  FLATPAK_VERSION = execSync((new Command('flatpak', ['--version'])).toString()).
-    toString().trim().replace('Flatpak', '').trim()
+  constructor(extCtx: vscode.ExtensionContext) {
+    this.extCtx = extCtx
+    this.workspaceState = new WorkspaceState(extCtx)
 
-  console.log(`Flatpak version: ${FLATPAK_VERSION}`)
-  console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
+    this.manifestManager = new FlatpakManifestManager(this.workspaceState)
+    this.extCtx.subscriptions.push(this.manifestManager)
+    this.manifestManager.onDidActiveManifestChanged(async ([manifest, isLastActive]) => {
+      await this.handleActiveManifestChanged(manifest, isLastActive)
+    })
+    this.manifestManager.onDidRequestRebuild(async (manifest) => {
+      if (manifest === this.manifestManager.getActiveManifest()) {
+        console.log(`Manifest at ${manifest.uri.fsPath} requested a rebuild`)
+        await this.executeCommand(TaskMode.clean)
+      }
+    })
 
-  // Look for a flatpak manifest
-  const manifests = await findManifests()
+    this.outputTerminal = new FlatpakTerminal()
+    this.extCtx.subscriptions.push(this.outputTerminal)
 
-  if (manifests.length > 0) {
-    // Make sures the documents portal is running
+    this.runner = new FlatpakRunner(this.outputTerminal)
+    this.extCtx.subscriptions.push(this.runner)
+    this.runner.onDidFinishedTask(async (finishedTask) => {
+      await this.handleFinishedTask(finishedTask)
+    })
+  }
+
+  async activate() {
     await ensureDocumentsPortal()
+    await this.manifestManager.loadLastActiveManifest()
 
-    manifests.forEach((manifest) => store.manifestFound(manifest))
-    //TODO: allow the user to select a manifest
-    const manifest = manifests[0]
-    if (!versionCompare(FLATPAK_VERSION, manifest.requiredVersion)) {
-      // TODO: replace with the build status bar instead of a notification
-      void window.showErrorMessage(
-        `Manifest requires ${manifest.requiredVersion as string} but ${FLATPAK_VERSION} is available`,
-      )
-    }
+    console.log(`Flatpak version: ${FLATPAK_VERSION}`)
+    console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
-    // Create the build directory if it doesn't exists
-    if (!(await exists(manifest.buildDir))) {
-      await fs.mkdir(manifest.buildDir)
-    }
-    // Mark the app as already initialized
-    store.manifestSelected(manifest)
-
-    const terminal = new FlatpakTerminal()
-    const runner = new FlatpakRunner(terminal)
-
-    window.registerTerminalProfileProvider(`${EXT_ID}.runtime-terminal-provider`, {
-      provideTerminalProfile: () => {
-        return new TerminalProfile(manifest.runtimeTerminal())
-      }
+    // Private commands
+    this.registerCommand('show-active-manifest', async () => {
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await vscode.window.showTextDocument(activeManifest.uri)
+      })
     })
 
-    window.registerTerminalProfileProvider(`${EXT_ID}.build-terminal-provider`, {
-      provideTerminalProfile: () => {
-        return new TerminalProfile(manifest.buildTerminal())
-      }
+    // Public commands
+    this.registerCommand('select-manifest', async () => {
+      await this.manifestManager.selectManifest()
     })
 
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.runtime-terminal`, () => {
-        const runtimeTerminal = window.createTerminal(manifest.runtimeTerminal())
+    this.registerCommand('runtime-terminal', async () => {
+      await this.manifestManager.doWithActiveManifest((activeManifest) => {
+        const runtimeTerminal = window.createTerminal(activeManifest.runtimeTerminal())
+        this.extCtx.subscriptions.push(runtimeTerminal)
+        this.activeTerminals.push(runtimeTerminal)
         runtimeTerminal.show()
       })
-    )
+    })
 
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.build-terminal`, () => {
-        const buildTerminal = window.createTerminal(manifest.buildTerminal())
+    this.registerCommand('build-terminal', async () => {
+      await this.manifestManager.doWithActiveManifest((activeManifest) => {
+        const buildTerminal = window.createTerminal(activeManifest.buildTerminal())
+        this.extCtx.subscriptions.push(buildTerminal)
+        this.activeTerminals.push(buildTerminal)
         buildTerminal.show()
       })
-    )
+    })
 
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.show-output-terminal`, async () => {
-        await terminal.show(true)
-      })
-    )
+    this.registerCommand('show-output-terminal', async () => {
+      await this.outputTerminal.show(true)
+    })
 
     // Init the build environment
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildInit}`, async (completeBuild: boolean | undefined) => {
-        runner.completeBuild = completeBuild || false
-        if (!store.state.getState().pipeline.initialized) {
-          // Ensures we have a terminal to receive the output
-          await terminal.show(true)
-          runner.setCommands([manifest.initBuild()], TaskMode.buildInit)
-        }
+    this.registerCommand(TaskMode.buildInit, async (completeBuild: boolean | undefined) => {
+      this.runner.completeBuild = completeBuild || false
+      if (this.workspaceState.getInitialized()) {
+        return
+      }
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await this.outputTerminal.show(true)
+        this.runner.setCommands([activeManifest.initBuild()], TaskMode.buildInit)
       })
-    )
+    })
 
     // Update the application's dependencies
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.updateDeps}`, async (completeBuild: boolean | undefined) => {
-        runner.completeBuild = completeBuild || false
-        if (store.state.getState().pipeline.initialized) {
-          await terminal.show(true)
-          runner.setCommands(
-            [manifest.updateDependencies()],
-            TaskMode.updateDeps
-          )
-        }
+    this.registerCommand(TaskMode.updateDeps, async (completeBuild: boolean | undefined) => {
+      this.runner.completeBuild = completeBuild || false
+      if (!this.workspaceState.getInitialized()) {
+        return
+      }
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await this.outputTerminal.show(true)
+        this.runner.setCommands(
+          [activeManifest.updateDependencies()],
+          TaskMode.updateDeps
+        )
       })
-    )
+    })
 
     // Build the application's dependencies
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildDeps}`, async (completeBuild: boolean | undefined) => {
-        runner.completeBuild = completeBuild || false
-        if (!store.state.getState().pipeline.dependencies.built) {
-          await terminal.show(true)
-          runner.setCommands(
-            [manifest.buildDependencies()],
-            TaskMode.buildDeps
-          )
-        }
+    this.registerCommand(TaskMode.buildDeps, async (completeBuild: boolean | undefined) => {
+      this.runner.completeBuild = completeBuild || false
+      if (this.workspaceState.getDependenciesBuilt()) {
+        return
+      }
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await this.outputTerminal.show(true)
+        this.runner.setCommands(
+          [activeManifest.buildDependencies()],
+          TaskMode.buildDeps
+        )
       })
-    )
+    })
 
     // Build the application
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.buildApp}`, async () => {
-        if (store.state.getState().pipeline.dependencies.built) {
-          await terminal.show(true)
-          runner.setCommands(manifest.build(false), TaskMode.buildApp)
-        }
+    this.registerCommand(TaskMode.buildApp, async () => {
+      if (!this.workspaceState.getDependenciesBuilt()) {
+        return
+      }
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await this.outputTerminal.show(true)
+        this.runner.setCommands(activeManifest.build(false), TaskMode.buildApp)
       })
-    )
+    })
 
     // Rebuild the application
     // If a buildsystem is set on the latest module, the build/rebuild commands
     // could be different, the rebuild also triggers a run command afterwards
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.rebuild}`, async () => {
-        if (store.state.getState().pipeline.application.built) {
-          await terminal.show(true)
-          runner.setCommands(manifest.build(true), TaskMode.rebuild)
-        }
+    this.registerCommand(TaskMode.rebuild, async () => {
+      if (!this.workspaceState.getApplicationBuilt()) {
+        return
+      }
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await this.outputTerminal.show(true)
+        this.runner.setCommands(activeManifest.build(true), TaskMode.rebuild)
       })
-    )
+    })
 
     // Clean build environment
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.clean}`, async () => {
-        if (store.state.getState().pipeline.initialized) {
-          await terminal.show(true)
-          await fs.rmdir(manifest.buildDir, {
-            recursive: true,
-          })
-          store.clean()
-          await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
-        }
+    this.registerCommand(TaskMode.clean, async () => {
+      if (!this.workspaceState.getInitialized()) {
+        return
+      }
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await this.outputTerminal.show(true)
+        await activeManifest.deleteRepoDir()
+        await this.resetPipelineState()
+        await this.executeCommand(TaskMode.buildInit)
       })
-    )
+    })
 
     // Run the application, only if it was already built
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.${TaskMode.run}`, async () => {
-        if (store.state.getState().pipeline.application.built) {
-          await terminal.show(true)
-          runner.setCommands([manifest.run()], TaskMode.run)
-        }
+    this.registerCommand(TaskMode.run, async () => {
+      if (!this.workspaceState.getApplicationBuilt()) {
+        return
+      }
+      await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+        await this.outputTerminal.show(true)
+        this.runner.setCommands([activeManifest.run()], TaskMode.run)
       })
-    )
+    })
 
     // A helper command, chains up to other commands based on current pipeline state
-    context.subscriptions.push(
-      registerCommand(`${EXT_ID}.build`, async () => {
-        runner.completeBuild = true
-        if (!store.state.getState().pipeline.initialized) {
-          await executeCommand(`${EXT_ID}.${TaskMode.buildInit}`)
-        } else if (!store.state.getState().pipeline.dependencies.updated) {
-          await executeCommand(`${EXT_ID}.${TaskMode.updateDeps}`)
-        } else if (!store.state.getState().pipeline.dependencies.built) {
-          await executeCommand(`${EXT_ID}.${TaskMode.buildDeps}`)
-        } else if (!store.state.getState().pipeline.application.built) {
-          await executeCommand(`${EXT_ID}.${TaskMode.buildApp}`)
-        } else {
-          terminal.appendMessage('Nothing to do')
-        }
-      })
+    this.registerCommand('build', async () => {
+      this.runner.completeBuild = true
+      if (!this.workspaceState.getInitialized()) {
+        await this.executeCommand(TaskMode.buildInit)
+      } else if (!this.workspaceState.getDependenciesUpdated()) {
+        await this.executeCommand(TaskMode.updateDeps)
+      } else if (!this.workspaceState.getDependenciesBuilt()) {
+        await this.executeCommand(TaskMode.buildDeps)
+      } else if (!this.workspaceState.getApplicationBuilt()) {
+        await this.executeCommand(TaskMode.buildApp)
+      } else {
+        this.outputTerminal.appendMessage('Nothing to do')
+      }
+    })
+  }
+
+  async deactivate() {
+    const activeManifest = this.manifestManager.getActiveManifest()
+    if (activeManifest) {
+      await this.deactivateIntegrations(activeManifest)
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private registerCommand(name: string, callback: (...args: any) => any | Promise<void>) {
+    this.extCtx.subscriptions.push(
+      commands.registerCommand(`${EXT_ID}.${name}`, callback)
     )
   }
-}
 
-export async function deactivate(): Promise<void> {
-  const manifest = store.state.getState().selectedManifest
-  if (manifest) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private executeCommand(name: string, ...args: any[]): Thenable<unknown> {
+    return commands.executeCommand(`${EXT_ID}.${name}`, args)
+  }
+
+  private async handleActiveManifestChanged(manifest: FlatpakManifest | null, isLastActive: boolean) {
+    if (manifest === null) {
+      return
+    }
+
+    if (!isLastActive) {
+      this.runner.close()
+      await this.resetPipelineState()
+
+      this.terminalProvider?.dispose()
+      this.terminalProvider = undefined
+
+      for (const terminal of this.activeTerminals) {
+        terminal.dispose()
+      }
+
+      await manifest.deleteRepoDir()
+      await this.deactivateIntegrations(manifest)
+    }
+
+    this.terminalProvider = new TerminalProvider(manifest)
+
+    await this.ensurePipelineState()
+  }
+
+  private async resetPipelineState(): Promise<void> {
+    await this.workspaceState.setInitialized(false)
+    await this.workspaceState.setDependenciesUpdated(false)
+    await this.workspaceState.setDependenciesBuilt(false)
+    await this.workspaceState.setApplicationBuilt(false)
+  }
+
+  private async ensurePipelineState(): Promise<void> {
+    // Trigger finished task so we update the context
+    if (this.workspaceState.getInitialized()) {
+      await this.handleFinishedTask({ mode: TaskMode.buildInit, restore: true, completeBuild: false })
+    }
+    if (this.workspaceState.getDependenciesUpdated()) {
+      await this.handleFinishedTask({ mode: TaskMode.updateDeps, restore: true, completeBuild: false })
+    }
+    if (this.workspaceState.getDependenciesBuilt()) {
+      await this.handleFinishedTask({ mode: TaskMode.buildDeps, restore: true, completeBuild: false })
+    }
+    if (this.workspaceState.getApplicationBuilt()) {
+      await this.handleFinishedTask({ mode: TaskMode.buildApp, restore: true, completeBuild: false })
+    }
+  }
+
+  private async handleFinishedTask(finishedTask: FinishedTask): Promise<void> {
+    switch (finishedTask.mode) {
+      case TaskMode.buildInit: {
+        await this.workspaceState.setInitialized(true)
+        const activeManifest = this.manifestManager.getActiveManifest()
+        if (activeManifest) {
+          void this.loadIntegrations(activeManifest)
+        }
+        if (!finishedTask.restore) {
+          void this.executeCommand(TaskMode.updateDeps, finishedTask.completeBuild)
+        }
+        break
+      }
+      case TaskMode.updateDeps:
+        await this.workspaceState.setDependenciesUpdated(true)
+        // Assume user might want to rebuild dependencies
+        await this.workspaceState.setDependenciesBuilt(false)
+        if (!finishedTask.restore) {
+          void this.executeCommand(TaskMode.buildDeps, finishedTask.completeBuild)
+        }
+        break
+      case TaskMode.buildDeps:
+        await this.workspaceState.setDependenciesBuilt(true)
+        if (!finishedTask.restore && finishedTask.completeBuild) {
+          void this.executeCommand(TaskMode.buildApp)
+        }
+        break
+      case TaskMode.buildApp:
+        await this.workspaceState.setApplicationBuilt(true)
+        break
+      case TaskMode.rebuild:
+        await this.workspaceState.setApplicationBuilt(true)
+        if (!finishedTask.restore) {
+          void this.executeCommand(TaskMode.run)
+        }
+        break
+    }
+  }
+
+  private async loadIntegrations(manifest: FlatpakManifest) {
+    // Exclude ./flatpak in watcher
+    const config = vscode.workspace.getConfiguration('files')
+    const value: Record<string, boolean> = config.get('watcherExclude') || {}
+    value['**/.flatpak'] = true
+    await config.update('watcherExclude', value)
+
+    switch (manifest?.sdk()) {
+      case 'rust':
+        await loadRustAnalyzerConfigOverrides(manifest)
+        break
+    }
+  }
+
+  private async deactivateIntegrations(manifest: FlatpakManifest) {
     switch (manifest?.sdk()) {
       case 'rust':
         await restoreRustAnalyzerConfigOverrides(manifest)
         break
     }
   }
+}
+
+let extension: Extension
+
+export async function activate(extCtx: ExtensionContext): Promise<void> {
+  // TODO cleaner way to set FLATPAK_VERSION
+  FLATPAK_VERSION = execSync((new Command('flatpak', ['--version'])).toString()).toString().trim().replace('Flatpak', '').trim()
+
+  extension = new Extension(extCtx)
+  await extension.activate()
+}
+
+export async function deactivate(): Promise<void> {
+  await extension.deactivate()
 }

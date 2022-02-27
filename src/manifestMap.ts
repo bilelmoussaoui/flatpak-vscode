@@ -1,14 +1,14 @@
-import { FlatpakManifest } from './flatpakManifest'
+import { Manifest } from './manifest'
 import * as vscode from 'vscode'
 
-export class FlatpakManifestMap {
-    private readonly inner: Map<string, FlatpakManifest>
+export class ManifestMap {
+    private readonly inner: Map<string, Manifest>
 
     constructor() {
         this.inner = new Map()
     }
 
-    add(manifest: FlatpakManifest): void {
+    add(manifest: Manifest): void {
         this.inner.set(manifest.uri.fsPath, manifest)
     }
 
@@ -16,11 +16,11 @@ export class FlatpakManifestMap {
         return this.inner.delete(uri.fsPath)
     }
 
-    get(uri: vscode.Uri): FlatpakManifest | undefined {
+    get(uri: vscode.Uri): Manifest | undefined {
         return this.inner.get(uri.fsPath)
     }
 
-    getFirstItem(): FlatpakManifest | undefined {
+    getFirstItem(): Manifest | undefined {
         return Array.from(this.inner.values())[0]
     }
 
@@ -32,7 +32,7 @@ export class FlatpakManifestMap {
         return this.size() === 0
     }
 
-    forEach(callbackFn: (manifest: FlatpakManifest) => void): void {
+    forEach(callbackFn: (manifest: Manifest) => void): void {
         this.inner.forEach((value) => callbackFn(value))
     }
 }

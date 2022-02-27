@@ -2,18 +2,18 @@ import * as vscode from 'vscode'
 import { window, ExtensionContext, commands } from 'vscode'
 import { existsSync } from 'fs'
 import { ensureDocumentsPortal } from './utils'
-import { FinishedTask, FlatpakRunner } from './flatpakRunner'
+import { FinishedTask, Runner } from './runner'
 import { TaskMode } from './taskMode'
 import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
-import { FlatpakTerminal } from './flatpakTerminal'
-import { FlatpakManifestManager } from './flatpakManifestManager'
-import { FlatpakManifest } from './flatpakManifest'
+import { OutputTerminal } from './outputTerminal'
+import { ManifestManager } from './manifestManager'
+import { Manifest } from './manifest'
 import { WorkspaceState } from './workspaceState'
 import { TerminalProvider } from './terminalProvider'
 import { execSync } from 'child_process'
 import { Command } from './command'
 
-export const EXT_ID = 'flatpak-vscode'
+export const EXTENSION_ID = 'flatpak-vscode'
 // whether VSCode is installed in a sandbox
 export const IS_SANDBOXED = existsSync('/.flatpak-info')
 // Currently installed Flatpak version
@@ -22,9 +22,9 @@ export let FLATPAK_VERSION: string
 class Extension {
   private readonly extCtx: vscode.ExtensionContext
   private readonly workspaceState: WorkspaceState
-  private readonly outputTerminal: FlatpakTerminal
-  private readonly runner: FlatpakRunner
-  private readonly manifestManager: FlatpakManifestManager
+  private readonly outputTerminal: OutputTerminal
+  private readonly runner: Runner
+  private readonly manifestManager: ManifestManager
   private terminalProvider?: TerminalProvider
   private activeTerminals: vscode.Terminal[] = []
 
@@ -32,7 +32,7 @@ class Extension {
     this.extCtx = extCtx
     this.workspaceState = new WorkspaceState(extCtx)
 
-    this.manifestManager = new FlatpakManifestManager(this.workspaceState)
+    this.manifestManager = new ManifestManager(this.workspaceState)
     this.extCtx.subscriptions.push(this.manifestManager)
     this.manifestManager.onDidActiveManifestChanged(async ([manifest, isLastActive]) => {
       await this.handleActiveManifestChanged(manifest, isLastActive)
@@ -44,10 +44,10 @@ class Extension {
       }
     })
 
-    this.outputTerminal = new FlatpakTerminal()
+    this.outputTerminal = new OutputTerminal()
     this.extCtx.subscriptions.push(this.outputTerminal)
 
-    this.runner = new FlatpakRunner(this.outputTerminal)
+    this.runner = new Runner(this.outputTerminal)
     this.extCtx.subscriptions.push(this.runner)
     this.runner.onDidFinishedTask(async (finishedTask) => {
       await this.handleFinishedTask(finishedTask)
@@ -205,23 +205,23 @@ class Extension {
   async deactivate() {
     const activeManifest = this.manifestManager.getActiveManifest()
     if (activeManifest) {
-      await this.deactivateIntegrations(activeManifest)
+      await this.unloadIntegrations(activeManifest)
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private registerCommand(name: string, callback: (...args: any) => any | Promise<void>) {
     this.extCtx.subscriptions.push(
-      commands.registerCommand(`${EXT_ID}.${name}`, callback)
+      commands.registerCommand(`${EXTENSION_ID}.${name}`, callback)
     )
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private executeCommand(name: string, ...args: any[]): Thenable<unknown> {
-    return commands.executeCommand(`${EXT_ID}.${name}`, args)
+    return commands.executeCommand(`${EXTENSION_ID}.${name}`, args)
   }
 
-  private async handleActiveManifestChanged(manifest: FlatpakManifest | null, isLastActive: boolean) {
+  private async handleActiveManifestChanged(manifest: Manifest | null, isLastActive: boolean) {
     if (manifest === null) {
       return
     }
@@ -238,7 +238,7 @@ class Extension {
       }
 
       await manifest.deleteRepoDir()
-      await this.deactivateIntegrations(manifest)
+      await this.unloadIntegrations(manifest)
     }
 
     this.terminalProvider = new TerminalProvider(manifest)
@@ -308,7 +308,7 @@ class Extension {
     }
   }
 
-  private async loadIntegrations(manifest: FlatpakManifest) {
+  private async loadIntegrations(manifest: Manifest) {
     // Exclude ./flatpak in watcher
     const config = vscode.workspace.getConfiguration('files')
     const value: Record<string, boolean> = config.get('watcherExclude') || {}
@@ -322,7 +322,7 @@ class Extension {
     }
   }
 
-  private async deactivateIntegrations(manifest: FlatpakManifest) {
+  private async unloadIntegrations(manifest: Manifest) {
     switch (manifest?.sdk()) {
       case 'rust':
         await restoreRustAnalyzerConfigOverrides(manifest)

@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { Uri } from 'vscode'
 import { resolve } from 'path'
-import { isValidDbusName, parseManifest, versionCompare } from '../../flatpakManifestUtils'
+import { isValidDbusName, parseManifest, versionCompare } from '../../manifestUtils'
 
 suite('flatpakManifestUtils', (): void => {
   test('parseManifest', async () => {
@@ -140,7 +140,7 @@ suite('flatpakManifestUtils', (): void => {
     )
   })
 
-  test('flatpakVersionComparaison', () => {
+  test('versionCompare', () => {
     assert(versionCompare('1.12.5', '1.12.0'))
     assert(versionCompare('1.8.5', '1.2.0'))
     assert(versionCompare('0.9.2', '0.9.2'))

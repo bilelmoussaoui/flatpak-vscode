@@ -37,9 +37,17 @@ export class ManifestManager implements vscode.Disposable {
 
             try {
                 const newManifest = await parseManifest(newUri)
-                if (newManifest !== null) {
-                    const manifests = await this.getManifests()
-                    manifests.add(newManifest)
+                if (newManifest === null) {
+                    return
+                }
+
+                const manifests = await this.getManifests()
+                manifests.add(newManifest)
+
+                // If that manifest is the first valid manifest, select it automatically.
+                if (manifests.size() === 1) {
+                    console.log(`Found the first valid manifest at ${newManifest.uri.fsPath}. Setting it as active.`)
+                    await this.setActiveManifest(newManifest, true)
                 }
             } catch (err) {
                 console.warn(`Failed to parse manifest at ${newUri.fsPath}`)
@@ -57,7 +65,7 @@ export class ManifestManager implements vscode.Disposable {
 
             if (deletedUri.fsPath === this.getActiveManifest()?.uri.fsPath) {
                 // If current active manifest is deleted and there is only one manifest
-                // left. Select that manifest automatically.
+                // left, select that manifest automatically.
                 const firstManifest = manifests.getFirstItem()
                 if (manifests.size() === 1 && firstManifest) {
                     console.log(`Found only one valid manifest. Setting active manifest to ${firstManifest.uri.fsPath}`)
@@ -83,7 +91,7 @@ export class ManifestManager implements vscode.Disposable {
         const manifests = await this.getManifests()
 
         if (lastActiveManifestUri === undefined) {
-            // If there is only one manifest to select. Select it automatically.
+            // If there is only one manifest to select, select it automatically.
             const firstManifest = manifests.getFirstItem()
             if (manifests.size() === 1 && firstManifest) {
                 console.log(`Found only one valid manifest. Setting active manifest to ${firstManifest.uri.fsPath}`)

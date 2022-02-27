@@ -186,9 +186,14 @@ export class ManifestManager implements vscode.Disposable {
     async selectManifest(): Promise<Manifest | null> {
         const quickPickItems: ManifestQuickPickItem[] = []
         const manifests = await this.getManifests()
+        const activeManifest = this.getActiveManifest()
+
         manifests.forEach((manifest) => {
+            const labelPrefix = manifest.uri.fsPath === activeManifest?.uri.fsPath
+                ? '$(pass-filled)' : '$(circle-large-outline)'
+
             quickPickItems.push({
-                label: manifest.id(),
+                label: `${labelPrefix}  ${manifest.id()}`,
                 detail: manifest.uri.fsPath,
                 manifest: manifest,
             })

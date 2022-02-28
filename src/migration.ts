@@ -57,7 +57,7 @@ export async function migrateStateToMemento(workspaceState: WorkspaceState): Pro
         await workspaceState.setDependenciesBuilt(legacyState.pipeline.dependencies.built)
         await workspaceState.setApplicationBuilt(legacyState.pipeline.application.built)
 
-        await fs.rmdir(stateFileUri.fsPath)
+        await fs.rm(stateFileUri.fsPath)
 
         console.info("Successfully migrated from `pipeline.json` to `Memento`")
     } catch (err) {

@@ -12,6 +12,7 @@ import { WorkspaceState } from './workspaceState'
 import { TerminalProvider } from './terminalProvider'
 import { execSync } from 'child_process'
 import { Command } from './command'
+import { migrateStateToMemento } from './migration'
 
 export const EXTENSION_ID = 'flatpak-vscode'
 // whether VSCode is installed in a sandbox
@@ -55,6 +56,7 @@ class Extension {
   }
 
   async activate() {
+    await migrateStateToMemento(this.workspaceState)
     await ensureDocumentsPortal()
     await this.manifestManager.loadLastActiveManifest()
 

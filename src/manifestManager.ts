@@ -1,6 +1,6 @@
 import { Manifest } from './manifest'
 import { exists } from './utils'
-import { promises as fs } from 'fs'
+import * as fs from 'fs/promises'
 import * as vscode from 'vscode'
 import { WorkspaceState } from './workspaceState'
 import { EXTENSION_ID } from './extension'

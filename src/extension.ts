@@ -32,7 +32,6 @@ class Extension {
   private readonly runner: Runner
   private readonly manifestManager: ManifestManager
   private terminalProvider?: TerminalProvider
-  private activeTerminals: vscode.Terminal[] = []
 
   constructor(extCtx: vscode.ExtensionContext) {
     this.extCtx = extCtx
@@ -84,7 +83,6 @@ class Extension {
       await this.manifestManager.doWithActiveManifest((activeManifest) => {
         const runtimeTerminal = window.createTerminal(activeManifest.runtimeTerminal())
         this.extCtx.subscriptions.push(runtimeTerminal)
-        this.activeTerminals.push(runtimeTerminal)
         runtimeTerminal.show()
       })
     })
@@ -93,7 +91,6 @@ class Extension {
       await this.manifestManager.doWithActiveManifest((activeManifest) => {
         const buildTerminal = window.createTerminal(activeManifest.buildTerminal())
         this.extCtx.subscriptions.push(buildTerminal)
-        this.activeTerminals.push(buildTerminal)
         buildTerminal.show()
       })
     })
@@ -239,10 +236,6 @@ class Extension {
 
       this.terminalProvider?.dispose()
       this.terminalProvider = undefined
-
-      for (const terminal of this.activeTerminals) {
-        terminal.dispose()
-      }
 
       await manifest.deleteRepoDir()
       await this.unloadIntegrations(manifest)

@@ -1,5 +1,5 @@
 import { IS_SANDBOXED } from './extension'
-import { promises as fs } from 'fs'
+import * as fs from 'fs/promises'
 import * as pty from './nodePty'
 
 export class Command {

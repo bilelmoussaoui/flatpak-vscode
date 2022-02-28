@@ -192,10 +192,15 @@ export class ManifestManager implements vscode.Disposable {
      * @returns the selected manifest
      */
     async selectManifest(): Promise<Manifest | null> {
-        const quickPickItems: ManifestQuickPickItem[] = []
         const manifests = await this.getManifests()
-        const activeManifest = this.getActiveManifest()
 
+        if (manifests.isEmpty()) {
+            void vscode.window.showInformationMessage('No Flatpak manifest found in this workspace.')
+            return null
+        }
+
+        const quickPickItems: ManifestQuickPickItem[] = []
+        const activeManifest = this.getActiveManifest()
         manifests.forEach((manifest) => {
             const labelPrefix = manifest.uri.fsPath === activeManifest?.uri.fsPath
                 ? '$(pass-filled)' : '$(circle-large-outline)'
@@ -230,14 +235,9 @@ export class ManifestManager implements vscode.Disposable {
         let activeManifest = this.getActiveManifest()
 
         if (activeManifest === null) {
-            const manifests = await this.getManifests()
-            if (manifests.isEmpty()) {
-                void vscode.window.showInformationMessage('No manifest found in this workspace.')
-                return
-            }
             const selectedManifest = await this.selectManifest()
             if (selectedManifest === null) {
-                void vscode.window.showInformationMessage('Selected no manifest.')
+                void vscode.window.showInformationMessage('No Flatpak manifest was selected.')
                 return
             }
             activeManifest = selectedManifest

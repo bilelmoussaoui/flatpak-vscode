@@ -195,7 +195,7 @@ export class ManifestManager implements vscode.Disposable {
         const manifests = await this.getManifests()
 
         if (manifests.isEmpty()) {
-            void vscode.window.showInformationMessage('No manifest found in this workspace.')
+            void vscode.window.showInformationMessage('No Flatpak manifest found in this workspace.')
             return null
         }
 
@@ -237,7 +237,7 @@ export class ManifestManager implements vscode.Disposable {
         if (activeManifest === null) {
             const selectedManifest = await this.selectManifest()
             if (selectedManifest === null) {
-                void vscode.window.showInformationMessage('Selected no manifest.')
+                void vscode.window.showInformationMessage('No Flatpak manifest was selected.')
                 return
             }
             activeManifest = selectedManifest

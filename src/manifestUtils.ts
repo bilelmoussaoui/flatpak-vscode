@@ -19,7 +19,7 @@ export const MANIFEST_PATH_GLOB_PATTERN = '**/*.{json,yaml,yml}'
 export async function findManifests(): Promise<ManifestMap> {
     const uris: Uri[] = await workspace.findFiles(
         MANIFEST_PATH_GLOB_PATTERN,
-        '**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak}/*',
+        '**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak,_build,.github}/*',
         1000
     )
     const manifests = new ManifestMap()
@@ -42,6 +42,7 @@ export async function findManifests(): Promise<ManifestMap> {
  * @returns A valid FlatpakManifest, otherwise null
  */
 export async function parseManifest(uri: Uri): Promise<Manifest | null> {
+    console.log(`Trying to parse potential Flatpak manifest ${uri.fsPath}`)
     const applicationId = path.parse(uri.fsPath).name
     if (!isValidDbusName(applicationId)) {
         return null
@@ -52,9 +53,9 @@ export async function parseManifest(uri: Uri): Promise<Manifest | null> {
 
     let manifest = null
     switch (textDocument.languageId) {
+        // We assume json files might be commented
+        // because flatpak-builder uses json-glib which accepts commented json files
         case 'json':
-            manifest = JSON.parse(data) as ManifestSchema
-            break
         case 'jsonc':
             manifest = JSONC.parse(data) as ManifestSchema
             break

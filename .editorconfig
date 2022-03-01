@@ -8,6 +8,9 @@ charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
 
+[*.ts]
+indent_size = 4
+
 [*.json]
 insert_final_newline = ignore
 

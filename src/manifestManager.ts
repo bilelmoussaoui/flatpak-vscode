@@ -272,7 +272,7 @@ export class ManifestManager implements vscode.Disposable {
             this.statusItem.tooltip = manifestError
             this.statusItem.color = new vscode.ThemeColor('notificationsErrorIcon.foreground')
         } else {
-            this.statusItem.text = activeManifest.id()
+            this.statusItem.text = `$(package) ${activeManifest.id()}`
             this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
             this.statusItem.tooltip = activeManifest.uri.fsPath
             this.statusItem.color = undefined

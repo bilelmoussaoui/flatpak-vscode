@@ -262,17 +262,17 @@ export class ManifestManager implements vscode.Disposable {
         const manifestError = activeManifest?.checkForError() || null
 
         if (activeManifest === null) {
-            this.statusItem.text = 'No active manifest'
+            this.statusItem.text = '$(package)  No active manifest'
             this.statusItem.command = `${EXTENSION_ID}.select-manifest`
             this.statusItem.tooltip = 'Select manifest'
             this.statusItem.color = undefined
         } else if (manifestError !== null) {
-            this.statusItem.text = activeManifest.id()
+            this.statusItem.text = `$(package)  ${activeManifest.id()}`
             this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
             this.statusItem.tooltip = manifestError
             this.statusItem.color = new vscode.ThemeColor('notificationsErrorIcon.foreground')
         } else {
-            this.statusItem.text = activeManifest.id()
+            this.statusItem.text = `$(package)  ${activeManifest.id()}`
             this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
             this.statusItem.tooltip = activeManifest.uri.fsPath
             this.statusItem.color = undefined

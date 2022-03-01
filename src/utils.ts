@@ -1,5 +1,5 @@
 import * as dbus from 'dbus-next'
-import { promises as fs, constants as fsc } from 'fs'
+import { promises as fs, constants as fsc, PathLike } from 'fs'
 
 /**
  * Make sures the documents portal is running
@@ -15,7 +15,7 @@ export async function ensureDocumentsPortal(): Promise<void> {
     }
 }
 
-export async function exists(path: string): Promise<boolean> {
+export async function exists(path: PathLike): Promise<boolean> {
     try {
         await fs.access(path, fsc.F_OK)
         return true
@@ -49,16 +49,16 @@ export function getHostEnv(): Map<string, string> {
     return envVars
 }
 
-export function generatePathOverride(oldValue: string, prependValues: (string | undefined)[], appendValues: (string | undefined)[]): string {
+export function generatePathOverride(oldValue: string, prependValues: (PathLike | undefined)[], appendValues: (PathLike | undefined)[]): string {
     let output = oldValue || ''
     for (const path of prependValues) {
         if (path) {
-            output = `${path}:${output}`
+            output = `${path.toString()}:${output}`
         }
     }
     for (const path of appendValues) {
         if (path) {
-            output = `${output}:${path}`
+            output = `${output}:${path.toString()}`
         }
     }
     return output

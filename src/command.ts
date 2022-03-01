@@ -1,6 +1,7 @@
 import { IS_SANDBOXED } from './extension'
 import * as fs from 'fs/promises'
 import * as pty from './nodePty'
+import { PathLike } from 'fs'
 
 export class Command {
     readonly program: string
@@ -32,7 +33,7 @@ export class Command {
      * Store the command as a bash script
      * @param path save location
      */
-    async saveAsScript(path: string): Promise<void> {
+    async saveAsScript(path: PathLike): Promise<void> {
         const cmd = ['#!/bin/sh', '', `${this.toString()} "$@"`].join('\n')
         await fs.writeFile(path, cmd)
         await fs.chmod(path, 0o755)

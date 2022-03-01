@@ -49,14 +49,13 @@ export class Manifest {
         return null
     }
 
-
     id(): string {
         return this.manifest['app-id'] || this.manifest.id || 'org.flatpak.Test'
     }
 
     sdk(): string | null {
         const sdkPath = this.manifest['build-options']?.['append-path']
-        if (sdkPath?.includes('rust')) {
+        if (sdkPath?.toString().includes('rust')) {
             return 'rust'
         }
         return null

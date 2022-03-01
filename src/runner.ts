@@ -12,12 +12,6 @@ export interface FinishedTask {
   completeBuild: boolean
 }
 
-export interface FailedTask {
-  mode: TaskMode
-  command: Command
-  message: string
-}
-
 export class Runner implements vscode.Disposable {
   private commands: Command[] = []
   private currentCommand: number

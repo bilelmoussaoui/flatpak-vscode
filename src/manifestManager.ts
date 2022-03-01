@@ -8,7 +8,7 @@ import { isDeepStrictEqual } from 'util'
 import { ManifestMap } from './manifestMap'
 import { findManifests, MANIFEST_PATH_GLOB_PATTERN, parseManifest } from './manifestUtils'
 
-export interface ManifestQuickPickItem {
+interface ManifestQuickPickItem {
     label: string,
     detail: string,
     manifest: Manifest

@@ -1,8 +1,8 @@
 import { Manifest } from './manifest'
 import { ManifestSchema } from './flatpak.types'
-import { ManifestMap } from './manifestMap';
+import { ManifestMap } from './manifestMap'
 import * as JSONC from 'jsonc-parser'
-import { Uri, workspace } from 'vscode';
+import { Uri, workspace } from 'vscode'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 
@@ -105,7 +105,7 @@ export function isValidDbusName(name: string): boolean {
         return element.length !== 0
             // Must also not have a number as first character
             && !isNumber(element.charAt(0))
-            // Element characters must only contain a-z, A-Z, hyphens, or underscores
+            // Element characters must only contain 0-9, a-z, A-Z, hyphens, or underscores
             && [...element].every((char) => isValidDbusNameCharacter(char))
     })
 

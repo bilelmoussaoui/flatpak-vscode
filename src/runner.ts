@@ -12,21 +12,15 @@ export interface FinishedTask {
   completeBuild: boolean
 }
 
-export interface FailedTask {
-  mode: TaskMode
-  command: Command
-  message: string
-}
-
 export class Runner implements vscode.Disposable {
   private commands: Command[] = []
   private currentCommand: number
-  public failed: boolean
+  private failed: boolean
   private isRunning = false
   private mode?: TaskMode
   private currentProcess?: pty.IPty
-  private terminal: OutputTerminal
   public completeBuild = false
+  private readonly terminal: OutputTerminal
   private readonly statusItem: RunnerStatusItem
 
   private readonly _onDidFinishedTask = new vscode.EventEmitter<FinishedTask>()

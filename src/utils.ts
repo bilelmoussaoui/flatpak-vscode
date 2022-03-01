@@ -4,7 +4,7 @@ import { promises as fs, constants as fsc } from 'fs'
 /**
  * Make sures the documents portal is running
  */
-export const ensureDocumentsPortal = async (): Promise<void> => {
+export async function ensureDocumentsPortal(): Promise<void> {
   try {
     const bus = dbus.sessionBus()
     const obj = await bus.getProxyObject('org.freedesktop.portal.Documents', '/org/freedesktop/portal/documents')
@@ -15,7 +15,7 @@ export const ensureDocumentsPortal = async (): Promise<void> => {
   }
 }
 
-export const exists = async (path: string): Promise<boolean> => {
+export async function exists(path: string): Promise<boolean> {
   try {
     await fs.access(path, fsc.F_OK)
     return true
@@ -24,7 +24,7 @@ export const exists = async (path: string): Promise<boolean> => {
   }
 }
 
-export const getHostEnv = (): Map<string, string> => {
+export function getHostEnv(): Map<string, string> {
   const forwardedEnvKeys: string[] = [
     'COLORTERM',
     'DESKTOP_SESSION',
@@ -49,7 +49,7 @@ export const getHostEnv = (): Map<string, string> => {
   return envVars
 }
 
-export const generatePathOverride = (oldValue: string, prependValues: (string | undefined)[], appendValues: (string | undefined)[]): string => {
+export function generatePathOverride(oldValue: string, prependValues: (string | undefined)[], appendValues: (string | undefined)[]): string {
   let output = oldValue || ''
   for (const path of prependValues) {
     if (path) {

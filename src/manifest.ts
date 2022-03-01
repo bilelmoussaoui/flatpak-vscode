@@ -12,13 +12,13 @@ import { FLATPAK_VERSION } from './extension'
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 
 export class Manifest {
-    uri: vscode.Uri
-    manifest: ManifestSchema
-    repoDir: string
-    buildDir: string
-    workspace: string
-    stateDir: string
-    requiredVersion?: string
+    readonly uri: vscode.Uri
+    readonly manifest: ManifestSchema
+    readonly repoDir: string
+    readonly buildDir: string
+    readonly workspace: string
+    readonly stateDir: string
+    readonly requiredVersion?: string
 
     constructor(
         uri: vscode.Uri,

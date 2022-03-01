@@ -12,7 +12,7 @@ export enum TaskMode {
     clean = 'clean',
 }
 
-export const taskModeAsStatus = (taskMode: TaskMode): Status => {
+export function taskModeAsStatus(taskMode: TaskMode): Status {
     let title
     switch (taskMode) {
         case TaskMode.buildInit:

@@ -16,7 +16,7 @@ export class OutputTerminal implements vscode.Disposable {
 
     constructor() {
         this.isOpen = false
-        this.writeEmitter = new vscode.EventEmitter<string>();
+        this.writeEmitter = new vscode.EventEmitter<string>()
         this.pty = {
             open: () => {
                 this.isOpen = true

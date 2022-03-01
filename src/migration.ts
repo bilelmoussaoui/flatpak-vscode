@@ -45,7 +45,7 @@ export async function migrateStateToMemento(workspaceState: WorkspaceState): Pro
             return
         }
 
-        if (!await exists(legacyState.selectedManifest.uri.fsPath)) {
+        if (!await exists(legacyState.selectedManifest.uri.path)) {
             // If the old selected manifest doesn't exist anymore, it doesn't make
             // sense either to restore state.
             return

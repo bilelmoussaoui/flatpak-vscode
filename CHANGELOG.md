@@ -1,9 +1,11 @@
 # Change Log
 
-## [Unreleased]
+## [0.0.21]
 
 - New Flatpak manifest selector
 - Watch for Flatpak manifests changes and modify state accordingly
+- Support JSON manifests with comments
+- Better state management
 
 ## [0.0.20]
 

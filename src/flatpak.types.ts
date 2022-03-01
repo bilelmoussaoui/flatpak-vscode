@@ -9,7 +9,8 @@ export interface ManifestSchema {
   'sdk-extensions'?: string[]
   command: string
   'finish-args': string[]
-  'build-options'?: BuildOptions
+  'build-options'?: BuildOptions,
+  'x-run-args'?: string[],
 }
 
 export type BuildOptionsPathKeys = 'append-path' | 'prepend-path' |

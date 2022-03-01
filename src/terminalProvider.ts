@@ -1,9 +1,9 @@
-import { Disposable, TerminalProfile, window } from 'vscode';
-import { EXTENSION_ID } from './extension';
-import { Manifest } from './manifest';
+import { Disposable, TerminalProfile, window } from 'vscode'
+import { EXTENSION_ID } from './extension'
+import { Manifest } from './manifest'
 
 export class TerminalProvider implements Disposable {
-    private providers: Array<Disposable> = []
+    private readonly providers: Array<Disposable> = []
 
     constructor(manifest: Manifest) {
         this.providers.push(window.registerTerminalProfileProvider(`${EXTENSION_ID}.runtime-terminal-provider`, {

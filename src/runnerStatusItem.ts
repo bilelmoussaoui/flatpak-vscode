@@ -9,14 +9,14 @@ export interface Status {
     type: 'ok' | 'error'
     title: string
     /**
-     * Whether to shown a spinning icon
+     * Whether to show a spinning icon
      */
     isOperation: boolean,
     clickable: Clickable | null
 }
 
 export class RunnerStatusItem implements vscode.Disposable {
-    private inner: vscode.StatusBarItem
+    private readonly inner: vscode.StatusBarItem
 
     constructor() {
         this.inner = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)

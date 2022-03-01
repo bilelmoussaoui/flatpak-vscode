@@ -447,7 +447,7 @@ export class Manifest {
     }
 
     run(): Command {
-        return this.runInRepo(this.manifest.command, false)
+        return this.runInRepo([this.manifest.command, ...(this.manifest['x-run-args'] || [])].join(' '), false)
     }
 
     runInRepo(shellCommand: string, mountExtensions: boolean, additionalEnvVars?: Map<string, string>): Command {

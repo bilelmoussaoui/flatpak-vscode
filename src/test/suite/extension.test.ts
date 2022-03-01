@@ -3,11 +3,12 @@ import { Uri } from 'vscode'
 import { resolve } from 'path'
 import { isValidDbusName, parseManifest, versionCompare } from '../../manifestUtils'
 
-suite('flatpakManifestUtils', (): void => {
+function intoUri(path: string): Uri {
+  return Uri.file(resolve(__dirname, path))
+}
+
+suite('flatpakManifestUtils', () => {
   test('parseManifest', async () => {
-    function intoUri(path: string): Uri {
-      return Uri.file(resolve(__dirname, path))
-    }
 
     async function assertValidManifest(path: string): Promise<void> {
       const manifest = await parseManifest(intoUri(path))
@@ -149,5 +150,15 @@ suite('flatpakManifestUtils', (): void => {
     assert(!versionCompare('1.12.5', '1.19.0'))
     assert(!versionCompare('1.0.0', '1.2.0'))
     assert(!versionCompare('0.9.2', '1.2.0'))
+  })
+})
+
+suite('flatpakManifest', () => {
+  test('x-run-args', async () => {
+    const manifest = await parseManifest(intoUri('../assets/org.gnome.Screenshot.json'))
+    assert.deepEqual(manifest?.manifest['x-run-args'], ['--interactive'])
+
+    const runCommand = manifest?.run()
+    assert(runCommand?.toString().endsWith('gnome-screenshot --interactive'))
   })
 })

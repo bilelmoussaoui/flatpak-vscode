@@ -38,7 +38,7 @@
   "bugs": {
     "url": "https://github.com/bilelmoussaoui/flatpak-vscode/issues"
   },
-  "version": "0.0.21",
+  "version": "0.0.22",
   "engines": {
     "vscode": "^1.50.0"
   },

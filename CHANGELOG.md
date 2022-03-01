@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.0.22]
+
+- Support `x-run-args`
+- Fix state migration to the new format
+- Lazily load the Flatpak version (only needed when checking if --require-version is used)
+
 ## [0.0.21]
 
 - New Flatpak manifest selector

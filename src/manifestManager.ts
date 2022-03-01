@@ -110,6 +110,7 @@ export class ManifestManager implements vscode.Disposable {
 
     async getManifests(): Promise<ManifestMap> {
         if (this.manifests === undefined) {
+            console.log('Looking for potential Flatpak manifests')
             this.manifests = await findManifests()
 
             this.tryShowStatusItem()

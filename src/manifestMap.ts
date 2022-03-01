@@ -4,16 +4,26 @@ import * as vscode from 'vscode'
 export class ManifestMap {
     private readonly inner: Map<string, Manifest>
 
+    private readonly _onDidItemsChanged = new vscode.EventEmitter<void>()
+    readonly onDidItemsChanged = this._onDidItemsChanged.event
+
     constructor() {
         this.inner = new Map()
     }
 
     add(manifest: Manifest): void {
         this.inner.set(manifest.uri.fsPath, manifest)
+        this._onDidItemsChanged.fire()
     }
 
     delete(uri: vscode.Uri): boolean {
-        return this.inner.delete(uri.fsPath)
+        const isDeleted = this.inner.delete(uri.fsPath)
+
+        if (isDeleted) {
+            this._onDidItemsChanged.fire()
+        }
+
+        return isDeleted
     }
 
     get(uri: vscode.Uri): Manifest | undefined {

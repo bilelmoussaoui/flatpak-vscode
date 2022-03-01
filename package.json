@@ -103,31 +103,31 @@
       "commandPalette": [
         {
           "command": "flatpak-vscode.runtime-terminal",
-          "when": "flatpakManifestFound"
+          "when": "flatpakHasActiveManifest"
         },
         {
           "command": "flatpak-vscode.build-terminal",
-          "when": "flatpakManifestFound && flatpakInitialized"
-        },
-        {
-          "command": "flatpak-vscode.clean",
-          "when": "flatpakManifestFound"
+          "when": "flatpakHasActiveManifest && flatpakInitialized"
         },
         {
           "command": "flatpak-vscode.update-deps",
-          "when": "flatpakInitialized"
-        },
-        {
-          "command": "flatpak-vscode.build",
-          "when": "flatpakManifestFound && !flatpakApplicationBuilt"
-        },
-        {
-          "command": "flatpak-vscode.rebuild",
-          "when": "flatpakApplicationBuilt"
+          "when": "flatpakHasActiveManifest && flatpakInitialized"
         },
         {
           "command": "flatpak-vscode.run",
-          "when": "flatpakApplicationBuilt"
+          "when": "flatpakHasActiveManifest && flatpakApplicationBuilt"
+        },
+        {
+          "command": "flatpak-vscode.rebuild",
+          "when": "flatpakHasActiveManifest && flatpakApplicationBuilt"
+        },
+        {
+          "command": "flatpak-vscode.clean",
+          "when": "flatpakHasActiveManifest"
+        },
+        {
+          "command": "flatpak-vscode.build",
+          "when": "flatpakHasActiveManifest && !flatpakApplicationBuilt"
         }
       ]
     },

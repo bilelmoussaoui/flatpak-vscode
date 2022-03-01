@@ -61,11 +61,6 @@ class Extension {
 
   async activate() {
     await migrateStateToMemento(this.workspaceState)
-    await ensureDocumentsPortal()
-    await this.manifestManager.loadLastActiveManifest()
-
-    console.log(`Flatpak version: ${FLATPAK_VERSION}`)
-    console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
     // Private commands
     this.registerCommand('show-active-manifest', async () => {
@@ -204,6 +199,10 @@ class Extension {
         this.outputTerminal.appendMessage('Nothing to do')
       }
     })
+
+    console.log("All commands are now loaded")
+
+    await this.manifestManager.loadLastActiveManifest()
   }
 
   async deactivate() {
@@ -336,6 +335,11 @@ let extension: Extension
 export async function activate(extCtx: ExtensionContext): Promise<void> {
   // TODO cleaner way to set FLATPAK_VERSION
   FLATPAK_VERSION = execSync((new Command('flatpak', ['--version'])).toString()).toString().trim().replace('Flatpak', '').trim()
+
+  void ensureDocumentsPortal()
+
+  console.log(`Flatpak version: ${FLATPAK_VERSION}`)
+  console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
   extension = new Extension(extCtx)
   await extension.activate()

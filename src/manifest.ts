@@ -115,13 +115,14 @@ export class Manifest {
     }
 
     runtimeTerminal(): vscode.TerminalOptions {
+        const sdkId = `${this.manifest.sdk}//${this.manifest['runtime-version']}`
         const command = new Command('flatpak', [
             'run',
             '--command=bash',
-            `${this.manifest.sdk}//${this.manifest['runtime-version']}`,
+            sdkId,
         ])
         return {
-            name: 'Flatpak Runtime Terminal',
+            name: sdkId,
             iconPath: new vscode.ThemeIcon('package'),
             shellPath: command.program,
             shellArgs: command.args
@@ -131,7 +132,7 @@ export class Manifest {
     buildTerminal(): vscode.TerminalOptions {
         const command = this.runInRepo('bash', true)
         return {
-            name: 'Flatpak Build Terminal',
+            name: this.id(),
             iconPath: new vscode.ThemeIcon('package'),
             shellPath: command.program,
             shellArgs: command.args,

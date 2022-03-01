@@ -1,7 +1,8 @@
 import * as assert from 'assert'
 import { Uri } from 'vscode'
 import { resolve } from 'path'
-import { isValidDbusName, parseManifest, versionCompare } from '../../manifestUtils'
+import { isValidDbusName, parseManifest } from '../../manifestUtils'
+import { versionCompare } from '../../flatpakVersion'
 
 function intoUri(path: string): Uri {
   return Uri.file(resolve(__dirname, path))
@@ -140,12 +141,13 @@ suite('flatpakManifestUtils', () => {
       'The characters must only contain a-z, A-Z, periods, or underscores'
     )
   })
+})
 
+suite('flatpakVersion', (): void => {
   test('versionCompare', () => {
     assert(versionCompare('1.12.5', '1.12.0'))
     assert(versionCompare('1.8.5', '1.2.0'))
     assert(versionCompare('0.9.2', '0.9.2'))
-    assert(versionCompare('0.9.2', undefined))
 
     assert(!versionCompare('1.12.5', '1.19.0'))
     assert(!versionCompare('1.0.0', '1.2.0'))

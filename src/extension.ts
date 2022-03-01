@@ -10,8 +10,6 @@ import { ManifestManager } from './manifestManager'
 import { Manifest } from './manifest'
 import { WorkspaceState } from './workspaceState'
 import { TerminalProvider } from './terminalProvider'
-import { execSync } from 'child_process'
-import { Command } from './command'
 import { migrateStateToMemento } from './migration'
 
 export const EXTENSION_ID = 'flatpak-vscode'
@@ -20,10 +18,6 @@ export const EXTENSION_ID = 'flatpak-vscode'
  * Whether VSCode is installed in a sandbox
  */
 export const IS_SANDBOXED = existsSync('/.flatpak-info')
-/**
- * Currently installed Flatpak version
- */
-export let FLATPAK_VERSION: string
 
 class Extension {
   private readonly extCtx: vscode.ExtensionContext
@@ -333,12 +327,8 @@ class Extension {
 let extension: Extension
 
 export async function activate(extCtx: ExtensionContext): Promise<void> {
-  // TODO cleaner way to set FLATPAK_VERSION
-  FLATPAK_VERSION = execSync((new Command('flatpak', ['--version'])).toString()).toString().trim().replace('Flatpak', '').trim()
-
   void ensureDocumentsPortal()
 
-  console.log(`Flatpak version: ${FLATPAK_VERSION}`)
   console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
   extension = new Extension(extCtx)

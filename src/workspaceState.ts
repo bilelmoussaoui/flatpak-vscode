@@ -24,7 +24,7 @@ export class WorkspaceState {
     }
 
     async setActiveManifestUri(value: vscode.Uri | undefined): Promise<void> {
-        await this.setContext('flatpakManifestFound', value !== undefined)
+        await this.setContext('flatpakHasActiveManifest', value !== undefined)
         await this.update('ActiveManifestUri', value)
     }
 

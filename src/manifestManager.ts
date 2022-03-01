@@ -78,7 +78,6 @@ export class ManifestManager implements vscode.Disposable {
 
         this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
         this.updateStatusItem()
-        this.statusItem.show()
     }
 
     async loadLastActiveManifest(): Promise<void> {
@@ -112,6 +111,11 @@ export class ManifestManager implements vscode.Disposable {
     async getManifests(): Promise<ManifestMap> {
         if (this.manifests === undefined) {
             this.manifests = await findManifests()
+
+            this.tryShowStatusItem()
+            this.manifests.onDidItemsChanged(() => {
+                this.tryShowStatusItem()
+            })
         }
 
         return this.manifests
@@ -244,6 +248,12 @@ export class ManifestManager implements vscode.Disposable {
         }
 
         await func(activeManifest)
+    }
+
+    private tryShowStatusItem() {
+        if (this.manifests !== undefined && !this.manifests.isEmpty()) {
+            this.statusItem.show()
+        }
     }
 
     private updateStatusItem() {

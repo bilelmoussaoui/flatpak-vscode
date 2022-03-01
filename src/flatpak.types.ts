@@ -1,3 +1,5 @@
+import { PathLike } from 'fs'
+
 export interface ManifestSchema {
     id?: string
     branch?: string
@@ -21,29 +23,37 @@ export type BuildOptionsPathKeys = 'append-path' | 'prepend-path' |
 
 export interface BuildOptions {
     'build-args': string[],
-    'append-path'?: string,
-    'prepend-path'?: string,
-    'append-ld-library-path'?: string,
-    'prepend-ld-library-path'?: string,
-    'append-pkg-config-path'?: string,
-    'prepend-pkg-config-path'?: string,
+    'append-path'?: PathLike,
+    'prepend-path'?: PathLike,
+    'append-ld-library-path'?: PathLike,
+    'prepend-ld-library-path'?: PathLike,
+    'append-pkg-config-path'?: PathLike,
+    'prepend-pkg-config-path'?: PathLike,
     env: Record<string, string>,
     'config-opts': string[],
 }
 
+export type BuildSystem = 'meson' | 'cmake' | 'cmake-ninja' |
+    'simple' | 'autotools' | 'qmake'
+
 export interface Module {
     name: string
-    buildsystem?: string
+    buildsystem?: BuildSystem
     'config-opts': string[]
     sources: Source[]
     'build-commands': string[]
     'build-options'?: BuildOptions,
 }
 
+export type SourceType = 'archive' | 'git' |
+    'bzr' | 'svn' | 'dir' | 'file' |
+    'script' | 'inline' | 'shell' |
+    'patch' | 'extra-data'
+
 export interface Source {
-    type: string
-    url?: string
-    path?: string
+    type: SourceType
+    url?: URL
+    path?: PathLike
     tag?: string
     commit?: string
     sha256?: string

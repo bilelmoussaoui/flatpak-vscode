@@ -6,8 +6,7 @@ import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
 import { generatePathOverride, getHostEnv } from './utils'
-import { versionCompare } from './manifestUtils'
-import { FLATPAK_VERSION } from './extension'
+import { getFlatpakVersion, versionCompare } from './flatpakVersion'
 
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 
@@ -40,8 +39,11 @@ export class Manifest {
      * @returns a message if there is an error otherwise null
      */
     checkForError(): string | null {
-        if (!versionCompare(FLATPAK_VERSION, this.requiredVersion)) {
-            return `Manifest requires ${this.requiredVersion as string} but ${FLATPAK_VERSION} is available`
+        if (this.requiredVersion !== undefined) {
+            const flatpakVersion = getFlatpakVersion()
+            if (!versionCompare(flatpakVersion, this.requiredVersion)) {
+                return `Manifest requires ${this.requiredVersion} but ${flatpakVersion} is available`
+            }
         }
 
         return null

@@ -144,15 +144,3 @@ function isValidManifest(manifest: ManifestSchema): boolean {
     const hasModules = manifest.modules !== undefined
     return hasId && hasModules
 }
-
-
-/**
- * Check if version1 is newer or equal than version2
- * @param version1 a flatpak version, usually returned by flatpak --version
- * @param version2 a flatpak version, required by the manifest
- * @returns Whether version1 is newer or equal than version2
- */
-export function versionCompare(version1: string, version2?: string): boolean {
-    // Ideally, this should maybe be a more sophisticated check
-    return version1 >= (version2 || '')
-}

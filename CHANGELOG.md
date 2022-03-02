@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.23]
+
+- Integrate with Vala language server
+
 ## [0.0.22]
 
 - Support `x-run-args`

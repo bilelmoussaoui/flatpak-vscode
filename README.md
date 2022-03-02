@@ -31,11 +31,16 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 
 ## Integrations
 
-### Rust Analyzer
+### [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer)
 
-- Overrides `rust-analyzer.server.path` to utilize SDK's rust-analyzer and `rust-analyzer.runnables.overrideCargo` to utilize SDK's cargo. This make sures that rust-analyzer and cargo uses package from the runtime instead of the host packages.
+- Overrides `rust-analyzer.server.path` to use the SDK's rust-analyzer and `rust-analyzer.runnables.overrideCargo` to use the SDK's cargo. This make sures that rust-analyzer and cargo uses package from the runtime instead of the host packages.
 - Overrides `rust-analyzer.runnables.cargoExtraArgs` to set cargo's `--target-dir` to `_build/src`. Identical target dir must be set on your build system to prevent rebuilding when running rust-analyzer runnables.
 - Overrides `rust-analyzer.files.excludeDirs` to set rust-analyzer to ignore `.flatpak` folder.
+
+
+### [Vala](https://marketplace.visualstudio.com/items?itemName=prince781.vala)
+
+- Overrides `vls.languageServerPath` to use the SDK's vls.
 
 ## Contributing
 

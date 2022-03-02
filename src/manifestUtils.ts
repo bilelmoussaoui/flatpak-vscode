@@ -69,7 +69,6 @@ export async function parseManifest(uri: Uri): Promise<Manifest | null> {
     }
 
     if (manifest === null) {
-        console.log(`Manifest at ${uri.fsPath} is not a valid Flatpak manifest`)
         return null
     }
 

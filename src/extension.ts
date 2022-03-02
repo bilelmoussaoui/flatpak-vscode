@@ -9,7 +9,6 @@ import { OutputTerminal } from './outputTerminal'
 import { ManifestManager } from './manifestManager'
 import { Manifest } from './manifest'
 import { WorkspaceState } from './workspaceState'
-import { TerminalProvider } from './terminalProvider'
 import { migrateStateToMemento } from './migration'
 
 export const EXTENSION_ID = 'flatpak-vscode'
@@ -25,7 +24,6 @@ class Extension {
     private readonly outputTerminal: OutputTerminal
     private readonly runner: Runner
     private readonly manifestManager: ManifestManager
-    private terminalProvider?: TerminalProvider
 
     constructor(extCtx: vscode.ExtensionContext) {
         this.extCtx = extCtx
@@ -199,7 +197,33 @@ class Extension {
             }
         })
 
-        console.log('All commands are now loaded')
+        this.registerTerminalProfileProvider('runtime-terminal-provider', {
+            provideTerminalProfile: () => {
+                const activeManifest = this.manifestManager.getActiveManifest()
+                if (activeManifest === null) {
+                    throw Error('There is no active manifest. Please create or select one.')
+                }
+                return new vscode.TerminalProfile(activeManifest.runtimeTerminal())
+            }
+        })
+
+        this.registerTerminalProfileProvider('build-terminal-provider', {
+            provideTerminalProfile: () => {
+                const activeManifest = this.manifestManager.getActiveManifest()
+                if (activeManifest === null) {
+                    throw Error('There is no active manifest. Please create or select one.')
+                }
+                if (!this.workspaceState.getInitialized()) {
+                    // FIXME Ideally we should initialized the build environment here.
+                    // But running build-init also triggers other commands. So that should
+                    // be sorted first.
+                    throw Error('Build environment is not initialized. Run a build command first.')
+                }
+                return new vscode.TerminalProfile(activeManifest.buildTerminal())
+            }
+        })
+
+        console.log('All commands and terminal profile providers are now registered.')
 
         await this.manifestManager.loadLastActiveManifest()
     }
@@ -209,6 +233,10 @@ class Extension {
         if (activeManifest) {
             await unloadIntegrations(activeManifest)
         }
+    }
+
+    private registerTerminalProfileProvider(name: string, provider: vscode.TerminalProfileProvider) {
+        this.extCtx.subscriptions.push(window.registerTerminalProfileProvider(`${EXTENSION_ID}.${name}`, provider))
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -232,14 +260,9 @@ class Extension {
             this.runner.close()
             await this.resetPipelineState()
 
-            this.terminalProvider?.dispose()
-            this.terminalProvider = undefined
-
             await manifest.deleteRepoDir()
             await unloadIntegrations(manifest)
         }
-
-        this.terminalProvider = new TerminalProvider(manifest)
 
         await this.ensurePipelineState()
     }

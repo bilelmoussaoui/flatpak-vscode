@@ -5,6 +5,7 @@ import { ensureDocumentsPortal } from './utils'
 import { FinishedTask, Runner } from './runner'
 import { TaskMode } from './taskMode'
 import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
+import { loadVLSConfigOverrides, restoreVLSConfigOverrides } from './integration/vls'
 import { OutputTerminal } from './outputTerminal'
 import { ManifestManager } from './manifestManager'
 import { Manifest } from './manifest'
@@ -312,6 +313,9 @@ class Extension {
             case 'rust':
                 await loadRustAnalyzerConfigOverrides(manifest)
                 break
+            case 'vala':
+                await loadVLSConfigOverrides(manifest)
+                break
         }
     }
 
@@ -319,6 +323,9 @@ class Extension {
         switch (manifest?.sdk()) {
             case 'rust':
                 await restoreRustAnalyzerConfigOverrides(manifest)
+                break
+            case 'vala':
+                await restoreVLSConfigOverrides(manifest)
                 break
         }
     }

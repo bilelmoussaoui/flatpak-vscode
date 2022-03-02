@@ -54,9 +54,11 @@ export class Manifest {
     }
 
     sdk(): string | null {
-        const sdkPath = this.manifest['build-options']?.['append-path']
-        if (sdkPath?.toString().includes('rust')) {
+        const sdkPath = this.manifest['build-options']?.['append-path']?.toString()
+        if (sdkPath?.includes('rust')) {
             return 'rust'
+        } else if (sdkPath?.includes('vala')) {
+            return 'vala'
         }
         return null
     }

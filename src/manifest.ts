@@ -513,7 +513,7 @@ export class Manifest {
     async overrideWorkspaceConfig(
         section: string,
         configName: string,
-        value: any
+        value?: string | string[]
     ): Promise<void> {
         const config = vscode.workspace.getConfiguration(section)
         await config.update(configName, value)

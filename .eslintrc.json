@@ -3,7 +3,9 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "tsconfigRootDir": ".",
-    "project": ["./tsconfig.json"]
+    "project": [
+      "./tsconfig.json"
+    ]
   },
   "env": {
     "node": true
@@ -13,10 +15,19 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking"
   ],
-  "plugins": ["@typescript-eslint"],
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "rules": {
     "@typescript-eslint/naming-convention": "warn",
-    "@typescript-eslint/semi": "off",
+    "@typescript-eslint/semi": [
+      "warn",
+      "never"
+    ],
+    "@typescript-eslint/quotes": [
+      "warn",
+      "single"
+    ],
     "curly": "warn",
     "eqeqeq": "warn",
     "no-throw-literal": "warn",

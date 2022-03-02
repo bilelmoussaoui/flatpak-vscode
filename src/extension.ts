@@ -194,7 +194,7 @@ class Extension {
             }
         })
 
-        console.log("All commands are now loaded")
+        console.log('All commands are now loaded')
 
         await this.manifestManager.loadLastActiveManifest()
     }

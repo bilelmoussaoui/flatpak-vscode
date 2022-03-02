@@ -30,7 +30,7 @@ export async function migrateStateToMemento(workspaceState: WorkspaceState): Pro
         return
     }
 
-    const stateFileUri = vscode.Uri.joinPath(workspaceFolders[0].uri, ".flatpak", "pipeline.json")
+    const stateFileUri = vscode.Uri.joinPath(workspaceFolders[0].uri, '.flatpak', 'pipeline.json')
 
     if (!await exists(stateFileUri.fsPath)) {
         return
@@ -59,7 +59,7 @@ export async function migrateStateToMemento(workspaceState: WorkspaceState): Pro
 
         await fs.rm(stateFileUri.fsPath)
 
-        console.info("Successfully migrated from `pipeline.json` to `Memento`")
+        console.info('Successfully migrated from `pipeline.json` to `Memento`')
     } catch (err) {
         console.warn(`Failed to migrate to memento: ${err as string}`)
     }

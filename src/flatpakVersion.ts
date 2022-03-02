@@ -1,5 +1,5 @@
-import { execSync } from "child_process"
-import { Command } from "./command"
+import { execSync } from 'child_process'
+import { Command } from './command'
 
 let FLATPAK_VERSION_CACHE: string | undefined
 

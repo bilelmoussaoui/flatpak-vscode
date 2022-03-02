@@ -169,6 +169,9 @@ suite('manifest', () => {
 suite('utils', () => {
     test('generatePathOverride', () => {
         assert.equal(generatePathOverride('/a/a:/b/b', [], []), '/a/a:/b/b')
+        assert.equal(generatePathOverride('/a/a:/b/b', ['', ''], ['']), '/a/a:/b/b')
+        assert.equal(generatePathOverride('/a/a:/b/b', ['/c/c', ''], ['', '/d/d']), '/c/c:/a/a:/b/b:/d/d')
+        assert.equal(generatePathOverride('', [''], ['']), '')
         assert.equal(generatePathOverride('', ['/b/b'], ['/c/c']), '/b/b:/c/c')
         assert.equal(generatePathOverride('', ['/b/b', '/d/d'], ['/c/c', '/e/e']), '/b/b:/d/d:/c/c:/e/e')
         assert.equal(generatePathOverride('/a/a', [], ['/c/c']), '/a/a:/c/c')

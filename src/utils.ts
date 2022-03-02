@@ -50,16 +50,7 @@ export function getHostEnv(): Map<string, string> {
 }
 
 export function generatePathOverride(oldValue: string, prependValues: (PathLike | undefined)[], appendValues: (PathLike | undefined)[]): string {
-    let output = oldValue || ''
-    for (const path of prependValues) {
-        if (path) {
-            output = `${path.toString()}:${output}`
-        }
-    }
-    for (const path of appendValues) {
-        if (path) {
-            output = `${output}:${path.toString()}`
-        }
-    }
-    return output
+    return [...prependValues, oldValue, ...appendValues]
+        .filter((path) => !!path)  // Filters out empty strings and undefined
+        .join(':')
 }

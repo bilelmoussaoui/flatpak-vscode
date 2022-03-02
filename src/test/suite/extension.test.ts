@@ -3,12 +3,13 @@ import { Uri } from 'vscode'
 import { resolve } from 'path'
 import { isValidDbusName, parseManifest } from '../../manifestUtils'
 import { versionCompare } from '../../flatpakVersion'
+import { exists, generatePathOverride } from '../../utils'
 
 function intoUri(path: string): Uri {
     return Uri.file(resolve(__dirname, path))
 }
 
-suite('flatpakManifestUtils', () => {
+suite('manifestUtils', () => {
     test('parseManifest', async () => {
 
         async function assertValidManifest(path: string): Promise<void> {
@@ -155,12 +156,30 @@ suite('flatpakVersion', (): void => {
     })
 })
 
-suite('flatpakManifest', () => {
+suite('manifest', () => {
     test('x-run-args', async () => {
         const manifest = await parseManifest(intoUri('../assets/org.gnome.Screenshot.json'))
         assert.deepEqual(manifest?.manifest['x-run-args'], ['--interactive'])
 
         const runCommand = manifest?.run()
         assert(runCommand?.toString().endsWith('gnome-screenshot --interactive'))
+    })
+})
+
+suite('utils', () => {
+    test('generatePathOverride', () => {
+        assert.equal(generatePathOverride('/a/a:/b/b', [], []), '/a/a:/b/b')
+        assert.equal(generatePathOverride('', ['/b/b'], ['/c/c']), '/b/b:/c/c')
+        assert.equal(generatePathOverride('', ['/b/b', '/d/d'], ['/c/c', '/e/e']), '/b/b:/d/d:/c/c:/e/e')
+        assert.equal(generatePathOverride('/a/a', [], ['/c/c']), '/a/a:/c/c')
+        assert.equal(generatePathOverride('/a/a', ['/b/b'], []), '/b/b:/a/a')
+        assert.equal(generatePathOverride('/a/a', ['/b/b'], ['/c/c']), '/b/b:/a/a:/c/c')
+        assert.equal(generatePathOverride('/a/a', ['/b/b', '/d/d'], ['/c/c', '/e/e']), '/b/b:/d/d:/a/a:/c/c:/e/e')
+        assert.equal(generatePathOverride('/a/a:/f/f', ['/b/b', '/d/d'], ['/c/c', '/e/e']), '/b/b:/d/d:/a/a:/f/f:/c/c:/e/e')
+    })
+
+    test('exists', async () => {
+        assert(await exists(intoUri('../assets/org.valid.Manifest.json').fsPath))
+        assert(!await exists(intoUri('../assets/sOmE.nOnExistenT.FilE.abc').fsPath))
     })
 })

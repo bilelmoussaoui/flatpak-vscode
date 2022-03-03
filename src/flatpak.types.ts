@@ -58,3 +58,5 @@ export interface Source {
     commit?: string
     sha256?: string
 }
+
+export type SdkExtension = 'vala' | 'rust'

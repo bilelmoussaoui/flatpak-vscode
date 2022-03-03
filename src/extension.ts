@@ -1,11 +1,10 @@
 import * as vscode from 'vscode'
 import { window, ExtensionContext, commands } from 'vscode'
 import { existsSync } from 'fs'
-import { ensureDocumentsPortal } from './utils'
+import { ensureDocumentsPortal, appendWatcherExclude } from './utils'
 import { FinishedTask, Runner } from './runner'
 import { TaskMode } from './taskMode'
-import { loadRustAnalyzerConfigOverrides, restoreRustAnalyzerConfigOverrides } from './integration/rustAnalyzer'
-import { loadVLSConfigOverrides, restoreVLSConfigOverrides } from './integration/vls'
+import { loadIntegrations, unloadIntegrations } from './integration'
 import { OutputTerminal } from './outputTerminal'
 import { ManifestManager } from './manifestManager'
 import { Manifest } from './manifest'
@@ -208,7 +207,7 @@ class Extension {
     async deactivate() {
         const activeManifest = this.manifestManager.getActiveManifest()
         if (activeManifest) {
-            await this.unloadIntegrations(activeManifest)
+            await unloadIntegrations(activeManifest)
         }
     }
 
@@ -237,7 +236,7 @@ class Extension {
             this.terminalProvider = undefined
 
             await manifest.deleteRepoDir()
-            await this.unloadIntegrations(manifest)
+            await unloadIntegrations(manifest)
         }
 
         this.terminalProvider = new TerminalProvider(manifest)
@@ -274,7 +273,7 @@ class Extension {
                 await this.workspaceState.setInitialized(true)
                 const activeManifest = this.manifestManager.getActiveManifest()
                 if (activeManifest) {
-                    await this.loadIntegrations(activeManifest)
+                    await loadIntegrations(activeManifest)
                 }
                 if (!finishedTask.restore) {
                     await this.executeCommand(TaskMode.updateDeps, finishedTask.completeBuild)
@@ -306,34 +305,6 @@ class Extension {
                 break
         }
     }
-
-    private async loadIntegrations(manifest: Manifest) {
-        // Exclude ./flatpak in watcher
-        const config = vscode.workspace.getConfiguration('files')
-        const value: Record<string, boolean> = config.get('watcherExclude') || {}
-        value['**/.flatpak'] = true
-        await config.update('watcherExclude', value)
-
-        switch (manifest?.sdk()) {
-            case 'rust':
-                await loadRustAnalyzerConfigOverrides(manifest)
-                break
-            case 'vala':
-                await loadVLSConfigOverrides(manifest)
-                break
-        }
-    }
-
-    private async unloadIntegrations(manifest: Manifest) {
-        switch (manifest?.sdk()) {
-            case 'rust':
-                await restoreRustAnalyzerConfigOverrides(manifest)
-                break
-            case 'vala':
-                await restoreVLSConfigOverrides(manifest)
-                break
-        }
-    }
 }
 
 let extension: Extension
@@ -345,6 +316,7 @@ export async function activate(extCtx: ExtensionContext): Promise<void> {
 
     extension = new Extension(extCtx)
     await extension.activate()
+    await appendWatcherExclude(['.flatpak'])
 }
 
 export async function deactivate(): Promise<void> {

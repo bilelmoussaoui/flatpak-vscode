@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { BuildOptionsPathKeys, ManifestSchema, Module } from './flatpak.types'
+import { BuildOptionsPathKeys, ManifestSchema, Module, SdkExtension } from './flatpak.types'
 import * as path from 'path'
 import { getuid } from 'process'
 import { cpus } from 'os'
@@ -53,14 +53,35 @@ export class Manifest {
         return this.manifest['app-id'] || this.manifest.id || 'org.flatpak.Test'
     }
 
-    sdk(): string | null {
-        const sdkPath = this.manifest['build-options']?.['append-path']?.toString()
-        if (sdkPath?.includes('rust')) {
-            return 'rust'
-        } else if (sdkPath?.includes('vala')) {
-            return 'vala'
+    sdkExtensions(): SdkExtension[] {
+        const rawSdkExtensions = this.manifest['sdk-extensions']
+
+        if (rawSdkExtensions === undefined) {
+            return []
         }
-        return null
+
+        const sdkExtensions: SdkExtension[] = []
+        for (const rawSdkExtension of rawSdkExtensions) {
+            const suffix = rawSdkExtension.split('.').pop()
+
+            if (suffix === undefined) {
+                continue
+            }
+
+            switch (suffix) {
+                case 'rust-stable':
+                case 'rust-nightly':
+                    sdkExtensions.push('rust')
+                    break
+                case 'vala':
+                    sdkExtensions.push('vala')
+                    break
+                default:
+                    console.warn(`SDK extension '${suffix}' was not handled`)
+            }
+        }
+
+        return sdkExtensions
     }
 
     /**

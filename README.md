@@ -32,6 +32,9 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 
 ## Integrations
 
+Other extensions like `rust-analyzer` and `vls` works better mostly if it integrates with the
+Flatpak runtime. If you want to contribute adding an integration, see [CONTRIBUTING](CONTRIBUTING.md).
+
 ### [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer)
 
 - Overrides `rust-analyzer.server.path` to use the SDK's rust-analyzer and `rust-analyzer.runnables.overrideCargo` to use the SDK's cargo. This make sures that rust-analyzer and cargo uses package from the runtime instead of the host packages.

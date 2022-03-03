@@ -58,7 +58,7 @@ class Extension {
         this.registerCommand('show-active-manifest', async () => {
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
                 await vscode.window.showTextDocument(activeManifest.uri)
-            })
+            }, false)
         })
 
         // Public commands

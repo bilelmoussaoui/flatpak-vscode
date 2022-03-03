@@ -130,7 +130,7 @@
         },
         {
           "command": "flatpak-vscode.stop",
-          "when": "flatpakRunnerActive"
+          "when": "flatpakHasActiveManifest && flatpakRunnerActive"
         },
         {
           "command": "flatpak-vscode.clean",

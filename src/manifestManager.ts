@@ -236,7 +236,7 @@ export class ManifestManager implements vscode.Disposable {
      * If it doesn't exist. Show manifests picker, or show messages.
      * @param func Callback function where the active manifest can be handled
      */
-    async doWithActiveManifest(func: (manifest: Manifest) => Promise<void> | void): Promise<void> {
+    async doWithActiveManifest(func: (manifest: Manifest) => Promise<void> | void, checkForError = true): Promise<void> {
         let activeManifest = this.getActiveManifest()
 
         if (activeManifest === null) {
@@ -246,6 +246,14 @@ export class ManifestManager implements vscode.Disposable {
                 return
             }
             activeManifest = selectedManifest
+        }
+
+        if (checkForError) {
+            const manifestError = activeManifest.checkForError()
+            if (manifestError !== null) {
+                void vscode.window.showWarningMessage(`Active Flatpak manifest has error: ${manifestError}`)
+                return
+            }
         }
 
         await func(activeManifest)

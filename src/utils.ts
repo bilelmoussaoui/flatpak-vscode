@@ -1,5 +1,6 @@
 import * as dbus from 'dbus-next'
 import { promises as fs, constants as fsc, PathLike } from 'fs'
+import * as vscode from 'vscode'
 
 /**
  * Make sures the documents portal is running
@@ -53,4 +54,15 @@ export function generatePathOverride(oldValue: string, prependValues: (PathLike 
     return [...prependValues, oldValue, ...appendValues]
         .filter((path) => !!path)  // Filters out empty strings and undefined
         .join(':')
+}
+
+export async function appendWatcherExclude(paths: PathLike[]) {
+    const config = vscode.workspace.getConfiguration('files')
+    const value: Record<string, boolean> = config.get('watcherExclude') || {}
+
+    for (const path of paths) {
+        value[path.toString()] = true
+    }
+
+    await config.update('watcherExclude', value)
 }

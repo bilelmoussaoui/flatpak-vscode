@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.0.24]
 
 - New play and stop button in editor title UI
 - Build terminal now uses the application ID

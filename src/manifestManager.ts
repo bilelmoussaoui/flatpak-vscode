@@ -251,7 +251,7 @@ export class ManifestManager implements vscode.Disposable {
         if (checkForError) {
             const manifestError = activeManifest.checkForError()
             if (manifestError !== null) {
-                void vscode.window.showWarningMessage(`Active Flatpak manifest has error: ${manifestError}`)
+                void vscode.window.showWarningMessage(`Active Flatpak manifest has error: ${manifestError.message}`)
                 return
             }
         }
@@ -277,7 +277,7 @@ export class ManifestManager implements vscode.Disposable {
         } else if (manifestError !== null) {
             this.statusItem.text = `$(package)  ${activeManifest.id()}`
             this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
-            this.statusItem.tooltip = manifestError
+            this.statusItem.tooltip = manifestError.message
             this.statusItem.color = new vscode.ThemeColor('notificationsErrorIcon.foreground')
         } else {
             this.statusItem.text = `$(package)  ${activeManifest.id()}`

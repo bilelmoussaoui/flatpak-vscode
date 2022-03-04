@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+- New play and stop button in editor title UI
+- Build terminal now uses the application ID
+- Runtime terminal now uses the runtime ID
+- Show error if certain runtimes are not installed
+- Improved other extension integration API
+- Fix migration
+
 ## [0.0.23]
 
 - Integrate with Vala language server

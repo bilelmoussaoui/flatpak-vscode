@@ -6,7 +6,8 @@ import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
 import { generatePathOverride, getHostEnv } from './utils'
-import { getFlatpakVersion, versionCompare } from './flatpakVersion'
+import { getFlatpakVersion, versionCompare } from './flatpakUtils'
+import { checkForMissingRuntimes } from './manifestUtils'
 
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 
@@ -36,14 +37,19 @@ export class Manifest {
 
     /**
      * Check for invalidity in the manifest
-     * @returns a message if there is an error otherwise null
+     * @returns an Error with a message if there is an error otherwise null
      */
-    checkForError(): string | null {
+    checkForError(): Error | null {
         if (this.requiredVersion !== undefined) {
             const flatpakVersion = getFlatpakVersion()
             if (!versionCompare(flatpakVersion, this.requiredVersion)) {
-                return `Manifest requires ${this.requiredVersion} but ${flatpakVersion} is available`
+                return new Error(`Manifest requires ${this.requiredVersion} but ${flatpakVersion} is available.`)
             }
+        }
+
+        const missingRuntimes = checkForMissingRuntimes(this)
+        if (missingRuntimes.length !== 0) {
+            return new Error(`Manifest requires the following but are not installed: ${missingRuntimes.join(', ')}`)
         }
 
         return null

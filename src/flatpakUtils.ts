@@ -1,5 +1,25 @@
-import { execSync } from 'child_process'
 import { Command } from './command'
+
+export interface Runtime {
+    id: string
+    version: string
+}
+
+export function getAvailableRuntimes(): Runtime[] {
+    const command = new Command('flatpak', ['list', '--runtime', '--columns=application,branch'])
+    const result = command.execSync().toString()
+
+    const runtimes = []
+    for (const line of result.split(/\r?\n/)) {  // Split at new line
+        const [id, version] = line.split(/\s+/)  // Split at whitespace
+
+        if (id !== undefined && version !== undefined) {
+            runtimes.push({ id, version })
+        }
+    }
+
+    return runtimes
+}
 
 let FLATPAK_VERSION_CACHE: string | undefined
 
@@ -10,7 +30,8 @@ let FLATPAK_VERSION_CACHE: string | undefined
 export function getFlatpakVersion(): string {
     if (FLATPAK_VERSION_CACHE === undefined) {
         const command = new Command('flatpak', ['--version'])
-        FLATPAK_VERSION_CACHE = execSync(command.toString())
+        FLATPAK_VERSION_CACHE = command
+            .execSync()
             .toString()
             .replace('Flatpak', '')
             .trim()

@@ -5,6 +5,7 @@ import * as JSONC from 'jsonc-parser'
 import { Uri, workspace } from 'vscode'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
+import { getAvailableRuntimes } from './flatpakUtils'
 
 /**
  * VSCode specification compliant glob pattern to look up for
@@ -144,4 +145,31 @@ function isValidManifest(manifest: ManifestSchema): boolean {
     const hasId = (manifest.id || manifest['app-id']) !== undefined
     const hasModules = manifest.modules !== undefined
     return hasId && hasModules
+}
+
+/**
+ * Check for runtimes specified in the manifest but are not installed.
+ * @param manifest Manifest to check
+ * @returns List of runtimes that are not installed
+ */
+export function checkForMissingRuntimes(manifest: Manifest): string[] {
+    const runtimeVersion = manifest.manifest['runtime-version']
+    const missingRuntimes = new Set([manifest.manifest.runtime, manifest.manifest.sdk])
+    const missingSdkExtensions = new Set(manifest.manifest['sdk-extensions'])
+
+    for (const availableRuntime of getAvailableRuntimes()) {
+        if (runtimeVersion === availableRuntime.version) {
+            missingRuntimes.delete(availableRuntime.id)
+            continue
+        }
+
+        // TODO also check the version
+        missingSdkExtensions.delete(availableRuntime.id)
+    }
+
+    const ret = [...missingSdkExtensions]
+    for (const missingRuntime of missingRuntimes) {
+        ret.push(`${missingRuntime}//${runtimeVersion}`)
+    }
+    return ret
 }

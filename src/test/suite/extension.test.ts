@@ -2,7 +2,7 @@ import * as assert from 'assert'
 import { Uri } from 'vscode'
 import { resolve } from 'path'
 import { isValidDbusName, parseManifest } from '../../manifestUtils'
-import { versionCompare } from '../../flatpakVersion'
+import { versionCompare } from '../../flatpakUtils'
 import { exists, generatePathOverride } from '../../utils'
 
 function intoUri(path: string): Uri {
@@ -144,7 +144,7 @@ suite('manifestUtils', () => {
     })
 })
 
-suite('flatpakVersion', () => {
+suite('flatpakUtils', () => {
     test('versionCompare', () => {
         assert(versionCompare('1.12.5', '1.12.0'))
         assert(versionCompare('1.8.5', '1.2.0'))

@@ -6,7 +6,7 @@ import * as fs from 'fs/promises'
 import { exists } from './utils'
 
 interface LegacyState {
-    selectedManifest: { uri: vscode.Uri } | null
+    selectedManifest: { uri: { path: string } } | null
     pipeline: {
         initialized: boolean
         dependencies: {
@@ -51,7 +51,7 @@ export async function migrateStateToMemento(workspaceState: WorkspaceState): Pro
             return
         }
 
-        await workspaceState.setActiveManifestUri(legacyState.selectedManifest.uri)
+        await workspaceState.setActiveManifestUri(vscode.Uri.file(legacyState.selectedManifest.uri.path))
         await workspaceState.setInitialized(legacyState.pipeline.initialized)
         await workspaceState.setDependenciesUpdated(legacyState.pipeline.dependencies.updated)
         await workspaceState.setDependenciesBuilt(legacyState.pipeline.dependencies.built)

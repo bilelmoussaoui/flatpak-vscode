@@ -156,7 +156,7 @@ export class Manifest {
                 this.manifest.runtime,
                 this.manifest['runtime-version'],
             ],
-            this.workspace,
+            { cwd: this.workspace },
         )
     }
 
@@ -175,7 +175,7 @@ export class Manifest {
         return new Command(
             'flatpak-builder',
             args,
-            this.workspace,
+            { cwd: this.workspace },
         )
     }
 
@@ -196,7 +196,7 @@ export class Manifest {
         return new Command(
             'flatpak-builder',
             args,
-            this.workspace,
+            { cwd: this.workspace },
         )
     }
 
@@ -318,7 +318,7 @@ export class Manifest {
                         '--prefix=/app',
                         configOpts,
                     ],
-                    path.join(this.workspace),
+                    { cwd: this.workspace },
                 )
             )
         }
@@ -326,7 +326,7 @@ export class Manifest {
             new Command(
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'make', '-p', '-n', '-s'],
-                path.join(this.workspace),
+                { cwd: this.workspace },
             )
         )
 
@@ -334,7 +334,7 @@ export class Manifest {
             new Command(
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'make', 'V=0', `-j${numCPUs}`, 'install'],
-                path.join(this.workspace),
+                { cwd: this.workspace },
             )
         )
         return commands
@@ -364,7 +364,7 @@ export class Manifest {
                 new Command(
                     'mkdir',
                     ['-p', cmakeBuildDir],
-                    this.workspace,
+                    { cwd: this.workspace },
                 )
             )
             commands.push(
@@ -384,7 +384,7 @@ export class Manifest {
                         '-DCMAKE_INSTALL_PREFIX=/app',
                         configOpts,
                     ],
-                    path.join(this.workspace, cmakeBuildDir),
+                    { cwd: path.join(this.workspace, cmakeBuildDir) },
                 )
             )
         }
@@ -392,7 +392,7 @@ export class Manifest {
             new Command(
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'ninja'],
-                path.join(this.workspace, cmakeBuildDir),
+                { cwd: path.join(this.workspace, cmakeBuildDir) },
             )
         )
 
@@ -400,7 +400,7 @@ export class Manifest {
             new Command(
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'ninja', 'install'],
-                path.join(this.workspace, cmakeBuildDir),
+                { cwd: path.join(this.workspace, cmakeBuildDir) },
             )
         )
         return commands
@@ -438,7 +438,7 @@ export class Manifest {
                         mesonBuildDir,
                         configOpts,
                     ],
-                    this.workspace,
+                    { cwd: this.workspace },
                 )
             )
         }
@@ -446,7 +446,7 @@ export class Manifest {
             new Command(
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'ninja', '-C', mesonBuildDir],
-                this.workspace,
+                { cwd: this.workspace },
             )
         )
         commands.push(
@@ -461,7 +461,7 @@ export class Manifest {
                     '-C',
                     mesonBuildDir,
                 ],
-                this.workspace,
+                { cwd: this.workspace },
             )
         )
         return commands
@@ -472,7 +472,7 @@ export class Manifest {
             return new Command(
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, command],
-                this.workspace,
+                { cwd: this.workspace },
             )
         })
     }
@@ -517,7 +517,7 @@ export class Manifest {
 
         args.push(this.repoDir)
         args.push(shellCommand)
-        return new Command('flatpak', args, this.workspace)
+        return new Command('flatpak', args, { cwd: this.workspace })
     }
 
     async deleteRepoDir(): Promise<void> {

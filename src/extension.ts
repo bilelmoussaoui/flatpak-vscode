@@ -144,6 +144,7 @@ class Extension {
         // could be different, the rebuild also triggers a run command afterwards
         this.registerCommand(TaskMode.rebuild, async () => {
             if (!this.workspaceState.getApplicationBuilt()) {
+                void vscode.window.showWarningMessage('Please run a Flatpak build command first.')
                 return
             }
             await this.manifestManager.doWithActiveManifest(async (activeManifest) => {

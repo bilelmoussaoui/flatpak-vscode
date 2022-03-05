@@ -4,30 +4,35 @@ import * as pty from './nodePty'
 import { PathLike } from 'fs'
 import { execFileSync } from 'child_process'
 
+export interface CommandOptions {
+    cwd?: string
+    /**
+     * Should only be used when running tests or debugging.
+     */
+    forceSandbox?: boolean
+}
+
 export class Command {
     readonly program: string
     readonly args: string[]
     private readonly cwd?: string
 
-    constructor(program: string, args: string[], cwd?: string) {
-        if (IS_SANDBOXED) {
+    constructor(program: string, args: string[], options?: CommandOptions) {
+        if (options?.forceSandbox || IS_SANDBOXED) {
             this.program = 'flatpak-spawn'
-            args.unshift(...['--host', '--env=TERM=xterm-256color', program])
+            args.unshift('--host', '--env=TERM=xterm-256color', program)
         } else {
             this.program = program
         }
         this.args = args
-        this.cwd = cwd
+        this.cwd = options?.cwd
     }
 
     toString(): string {
-        const cmd = []
-        cmd.push(this.program)
-        cmd.push(...this.args.filter((arg) => {
-            return arg !== '--env=TERM=xterm-256color'
-        }))
-
-        return cmd.join(' ')
+        return [
+            this.program,
+            ...this.args.filter((arg) => arg !== '--env=TERM=xterm-256color')
+        ].join(' ')
     }
 
     /**
@@ -47,6 +52,8 @@ export class Command {
     }
 
     execSync(): Buffer {
-        return execFileSync(this.program, this.args)
+        return execFileSync(this.program, this.args, {
+            cwd: this.cwd
+        })
     }
 }

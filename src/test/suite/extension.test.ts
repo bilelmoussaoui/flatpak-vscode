@@ -4,10 +4,32 @@ import { resolve } from 'path'
 import { isValidDbusName, parseManifest } from '../../manifestUtils'
 import { versionCompare } from '../../flatpakUtils'
 import { exists, generatePathOverride } from '../../utils'
+import { Command } from '../../command'
 
 function intoUri(path: string): Uri {
     return Uri.file(resolve(__dirname, path))
 }
+
+suite('command', () => {
+    test('sandboxed', function () {
+        const command = new Command('echo', ['Hello', 'world'], { forceSandbox: true })
+        assert.equal(command.program, 'flatpak-spawn')
+        assert.deepStrictEqual(command.args, ['--host', '--env=TERM=xterm-256color', 'echo', 'Hello', 'world'])
+        assert.equal(command.toString(), 'flatpak-spawn --host echo Hello world')
+    })
+
+    test('notSandboxed', function () {
+        const command = new Command('echo', ['Hello', 'world'])
+        assert.equal(command.program, 'echo')
+        assert.deepStrictEqual(command.args, ['Hello', 'world'])
+        assert.equal(command.toString(), 'echo Hello world')
+    })
+
+    test('execSync', () => {
+        const command = new Command('echo', ['Hello', 'world'])
+        assert.equal(command.execSync().toString(), 'Hello world\n')
+    })
+})
 
 suite('manifestUtils', () => {
     test('parseManifest', async () => {

@@ -46,9 +46,9 @@ Flatpak runtime. To add an integration, follow the following steps:
 
 1. Create a new file in `src/integration/`.
 2. Create a new class in the created file that extends the `Integration` abstract class from `src/integration/base.ts`. It has the following abstract methods:
+    - `isApplicable`: The integration will only be loaded on context where this returns true. Extend `SdkIntegration` instead to have this default to whether if current manifest has the required SDK extension.
     - `load`: This is called when loading your integration.
     - `unload`: This is called when unloading your integration. This is where you should put the cleanups.
-    - `isApplicable`: The integration will only be loaded on context where this returns true. Extend `SdkIntegration` instead to have this default to whether if current manifest has the require SDK extension.
 3. Don't forget to append an instance of your class to `INTEGRATIONS` in `src/integration/index.ts`. It needs the following parameters:
     - `extensionId`: The VSCode ID of the extension you are integrating.
     - `sdkExtension`: For which SDK Extension should it be enabled. If it doesn't exist, update `Manifest.sdkExtensions` method in `src/manifest.ts`.

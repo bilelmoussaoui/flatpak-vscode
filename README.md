@@ -32,15 +32,21 @@ A very simple VSCode extension that detects a Flatpak manifest and offers variou
 
 ## Integrations
 
-Other extensions like `rust-analyzer` and `vls` works better mostly if it integrates with the
-Flatpak runtime. If you want to contribute adding an integration, see [CONTRIBUTING](CONTRIBUTING.md).
+Other extensions like `rust-analyzer` and `vala` mostly works better if it integrates with the
+Flatpak runtime. Some integrations may prevent rebuilds or requiring to install dependencies in
+the host. If you want to contribute on adding an integration, see [CONTRIBUTING](CONTRIBUTING.md).
+
+### [Meson Build](https://marketplace.visualstudio.com/items?itemName=mesonbuild.mesonbuild)
+
+- Overrides `mesonbuild.configureOnOpen` to not ask to configure the build directory; this should be handled by Flatpak.
+- Overrides `mesonbuild.buildFolder` to use the build directory used by Flatpak.
+- Overrides `mesonbuild.mesonPath` to use the meson binary from the SDK.
 
 ### [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer)
 
 - Overrides `rust-analyzer.server.path` to use the SDK's rust-analyzer and `rust-analyzer.runnables.overrideCargo` to use the SDK's cargo. This make sures that rust-analyzer and cargo uses package from the runtime instead of the host packages.
 - Overrides `rust-analyzer.runnables.cargoExtraArgs` to set cargo's `--target-dir` to `_build/src`. Identical target dir must be set on your build system to prevent rebuilding when running rust-analyzer runnables.
 - Overrides `rust-analyzer.files.excludeDirs` to set rust-analyzer to ignore `.flatpak` folder.
-
 
 ### [Vala](https://marketplace.visualstudio.com/items?itemName=prince781.vala)
 

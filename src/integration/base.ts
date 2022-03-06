@@ -2,22 +2,14 @@ import * as vscode from 'vscode'
 import { SdkExtension } from '../flatpak.types'
 import { Manifest } from '../manifest'
 
+/**
+ * Derive from this when needed more control for `isApplicable`.
+ */
 export abstract class Integration {
     private readonly extensionId: string
-    private readonly requiredSdkExtension: SdkExtension
 
-    constructor(extensionId: string, requiredSdkExtension: SdkExtension) {
+    constructor(extensionId: string) {
         this.extensionId = extensionId
-        this.requiredSdkExtension = requiredSdkExtension
-    }
-
-    /**
-     * Whether the manifest has the required SDK extension for this to be applicable.
-     * @param manifest The manifest to check
-     * @returns
-     */
-    hasRequiredSdkExtension(manifest: Manifest): boolean {
-        return manifest.sdkExtensions().includes(this.requiredSdkExtension)
     }
 
     /**
@@ -26,6 +18,13 @@ export abstract class Integration {
     isExtensionEnabled(): boolean {
         return vscode.extensions.getExtension(this.extensionId) !== undefined
     }
+
+    /**
+     * Whether the integration is applicable to current context. It will only
+     * be loaded on scenario where this returns true.
+     * @param manifest contains necessary context
+     */
+    abstract isApplicable(manifest: Manifest): boolean
 
     /**
      * Called when loading the integration.
@@ -38,4 +37,20 @@ export abstract class Integration {
      * @param manifest contains the necessary context
      */
     abstract unload(manifest: Manifest): Promise<void>
+}
+
+/**
+ * Derive from this when creating an integration that requires a specific SDK extension.
+ */
+export abstract class SdkIntegration extends Integration {
+    private readonly requiredSdkExtension: SdkExtension
+
+    constructor(extensionId: string, requiredSdkExtension: SdkExtension) {
+        super(extensionId)
+        this.requiredSdkExtension = requiredSdkExtension
+    }
+
+    isApplicable(manifest: Manifest): boolean {
+        return manifest.sdkExtensions().includes(this.requiredSdkExtension)
+    }
 }

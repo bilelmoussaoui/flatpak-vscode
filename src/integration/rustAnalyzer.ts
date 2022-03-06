@@ -1,7 +1,11 @@
 import { Manifest } from '../manifest'
-import { Integration } from './base'
+import { SdkIntegration } from './base'
 
-export class RustAnalyzer extends Integration {
+export class RustAnalyzer extends SdkIntegration {
+    constructor() {
+        super('matklad.rust-analyzer', 'rust')
+    }
+
     async load(manifest: Manifest): Promise<void> {
         await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer', '/usr/lib/sdk/rust-stable/bin/')
 

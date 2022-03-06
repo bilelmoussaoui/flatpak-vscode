@@ -331,7 +331,7 @@ class Extension {
     }
 }
 
-let extension: Extension
+let extension: Extension | undefined
 
 export async function activate(extCtx: ExtensionContext): Promise<void> {
     void ensureDocumentsPortal()
@@ -344,5 +344,6 @@ export async function activate(extCtx: ExtensionContext): Promise<void> {
 }
 
 export async function deactivate(): Promise<void> {
-    await extension.deactivate()
+    await extension?.deactivate()
+    extension = undefined
 }

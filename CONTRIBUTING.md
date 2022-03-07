@@ -48,7 +48,8 @@ To add an integration, follow the following steps:
     - `isApplicable`: The integration will only be loaded on context where this returns true. Extend `SdkIntegration` instead to have this default to whether if current manifest has the required SDK extension.
     - `load`: This is called when loading your integration.
     - `unload`: This is called when unloading your integration. This is where you should put the cleanups.
-3. Don't forget to append an instance of your class to `INTEGRATIONS` in `src/integration/index.ts`. It needs the following parameters:
+3. The constructor needs the following parameters:
     - `extensionId`: The VSCode ID of the extension you are integrating.
-    - `sdkExtension`: For which SDK Extension should it be enabled. If it doesn't exist, update `Manifest.sdkExtensions` method in `src/manifest.ts`.
-4. You can also add a documentations for your integration in `README.md`.
+    - `sdkExtension`: For which SDK Extension should it be enabled. If it doesn't exist, update `Manifest.sdkExtensions` method in `src/manifest.ts`. This is only needed when extending `SdkIntegration`.
+4. Don't forget to append an instance of your class to `INTEGRATIONS` in `src/integration/index.ts`.
+5. You can also add documentations for your integration in `README.md`.

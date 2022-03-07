@@ -55,7 +55,7 @@
     "commands": [
       {
         "command": "flatpak-vscode.select-manifest",
-        "title": "Change active manifest",
+        "title": "Select or change the active manifest",
         "category": "Flatpak"
       },
       {

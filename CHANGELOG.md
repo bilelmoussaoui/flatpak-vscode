@@ -1,5 +1,10 @@
 # Change Log
 
+## [Unreleased]
+
+- Added `mesonbuild.mesonbuild` extension integration.
+- Now showing a warning when trying to run a rebuild with initializing a build.
+
 ## [0.0.24]
 
 - New play and stop button in editor title UI

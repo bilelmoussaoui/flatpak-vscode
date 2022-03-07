@@ -2,47 +2,46 @@
 
 ## Installation
 
-### Flatpaked VSCodium / Visual Studio Code
+### Flatpaked VSCodium/VSCode
 
-1. Install the node14 extension by executing
-```
+1. Install the node14 SDK extension by executing the following:
+```bash
 flatpak install flathub org.freedesktop.Sdk.Extension.node14
 ```
-Note: It will suggest multiple versions. To be sure which one to use, check the manifest in the flathub repo of [VSCodium](https://github.com/flathub/com.vscodium.codium/blob/master/com.vscodium.codium.yaml) / [Visual Studio Code](https://github.com/flathub/com.visualstudio.code/blob/master/com.visualstudio.code.yaml).
+Note: It will suggest multiple versions. To be sure which one to use, check the manifest in the flathub repo of [VSCodium](https://github.com/flathub/com.vscodium.codium/blob/master/com.vscodium.codium.yaml)/[VSCode](https://github.com/flathub/com.visualstudio.code/blob/master/com.visualstudio.code.yaml).
 
-2. Enable it by adding the following line to ~/.bash_profile
-```
+2. Enable it by adding the following line to `~/.bash_profile`:
+```bash
 export FLATPAK_ENABLE_SDK_EXT=node14
 ```
 
-3. Log out and in again
+3. Log out and in again.
 
-4. Open the `flatpak-vscode` repo with your editor
+4. Open the `flatpak-vscode` repository with your editor.
 
-5. Within the integrated terminal of your editor, execute at the root of the repository
-```
+5. Within the integrated terminal of your editor, execute the following commands at the root of the repository:
+```bash
 npm install --global yarn
 yarn install
 ```
 
-6. To start debugging, run `F5`
+6. To start debugging, run `F5`.
 
-### Directly installed VSCodium / Visual Studio Code
+### Directly installed VSCodium/VSCode
 
-1. Install `yarn` with your preferred method and make sure it is in your PATH
+1. Install `yarn` with your preferred method and make sure it is in your `PATH`.
 
-2. Execute at the root of the repository
-```
+2. Execute the following at the root of the repository:
+```bash
 yarn install
 ```
 
-3. To start debugging, run `F5`
+3. To start debugging, run `F5`.
 
 
 ## Integration with other extensions
 
-Other extensions like `rust-analyzer` and `vala` works better mostly if it is integrated with the
-Flatpak runtime. To add an integration, follow the following steps:
+To add an integration, follow the following steps:
 
 1. Create a new file in `src/integration/`.
 2. Create a new class in the created file that extends the `Integration` abstract class from `src/integration/base.ts`. It has the following abstract methods:

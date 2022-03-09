@@ -11,8 +11,8 @@ export interface ManifestSchema {
     'sdk-extensions'?: string[]
     command: string
     'finish-args': string[]
-    'build-options'?: BuildOptions,
-    'x-run-args'?: string[],
+    'build-options'?: BuildOptions
+    'x-run-args'?: string[]
 }
 
 export type BuildOptionsPathKeys = 'append-path' | 'prepend-path' |
@@ -22,15 +22,15 @@ export type BuildOptionsPathKeys = 'append-path' | 'prepend-path' |
     'prepend-pkg-config-path'
 
 export interface BuildOptions {
-    'build-args': string[],
-    'append-path'?: PathLike,
-    'prepend-path'?: PathLike,
-    'append-ld-library-path'?: PathLike,
-    'prepend-ld-library-path'?: PathLike,
-    'append-pkg-config-path'?: PathLike,
-    'prepend-pkg-config-path'?: PathLike,
-    env: Record<string, string>,
-    'config-opts': string[],
+    'build-args': string[]
+    'append-path'?: PathLike
+    'prepend-path'?: PathLike
+    'append-ld-library-path'?: PathLike
+    'prepend-ld-library-path'?: PathLike
+    'append-pkg-config-path'?: PathLike
+    'prepend-pkg-config-path'?: PathLike
+    env: Record<string, string>
+    'config-opts': string[]
 }
 
 export type BuildSystem = 'meson' | 'cmake' | 'cmake-ninja' |
@@ -42,7 +42,8 @@ export interface Module {
     'config-opts': string[]
     sources: Source[]
     'build-commands': string[]
-    'build-options'?: BuildOptions,
+    'build-options'?: BuildOptions
+    'post-install'?: string[]
 }
 
 export type SourceType = 'archive' | 'git' |

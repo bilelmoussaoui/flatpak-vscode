@@ -261,21 +261,30 @@ export class Manifest {
             )
         ).join(' ')
 
+        let commands = []
         switch (module.buildsystem) {
-            case undefined:
+            default:
             case 'autotools':
-                return this.getAutotoolsCommands(rebuild, buildArgs, configOpts)
+                commands = this.getAutotoolsCommands(rebuild, buildArgs, configOpts)
+                break
             case 'cmake':
             case 'cmake-ninja':
-                return this.getCmakeCommands(rebuild, buildArgs, configOpts)
+                commands = this.getCmakeCommands(rebuild, buildArgs, configOpts)
+                break
             case 'meson':
-                return this.getMesonCommands(rebuild, buildArgs, configOpts)
+                commands = this.getMesonCommands(rebuild, buildArgs, configOpts)
+                break
             case 'simple':
-                return this.getSimpleCommands(module['build-commands'], buildArgs)
+                commands = this.getSimpleCommands(module['build-commands'], buildArgs)
+                break
             case 'qmake':
                 throw new Error('Qmake is not implemented yet')
         }
-        throw new Error('Failed to build application')
+        /// Add the post-install commands if there are any
+        commands.push(
+            ... this.getSimpleCommands(this.module()['post-install'] || [], buildArgs)
+        )
+        return commands
     }
 
     buildSystemBuildDir(): string | null {

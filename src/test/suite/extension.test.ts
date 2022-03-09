@@ -186,6 +186,17 @@ suite('manifest', () => {
         const runCommand = manifest?.run()
         assert(runCommand?.toString().endsWith('gnome-screenshot --interactive'))
     })
+
+    test('post-install', async () => {
+        const manifest = await parseManifest(intoUri('../assets/org.gnome.Screenshot.json'))
+        assert.deepEqual(manifest?.module()['post-install'], ['echo \'hello\''])
+
+        const postInstallCommand = manifest?.build(false).slice(-1)[0]
+        assert(postInstallCommand?.toString().endsWith('echo \'hello\''))
+
+        const postInstallCommand2 = manifest?.build(true).slice(-1)[0]
+        assert(postInstallCommand2?.toString().endsWith('echo \'hello\''))
+    })
 })
 
 suite('utils', () => {

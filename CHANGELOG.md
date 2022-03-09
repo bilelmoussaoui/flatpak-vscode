@@ -4,6 +4,7 @@
 
 - Added `mesonbuild.mesonbuild` extension integration.
 - Now showing a warning when trying to run a rebuild with initializing a build.
+- Support `post-install`
 
 ## [0.0.24]
 

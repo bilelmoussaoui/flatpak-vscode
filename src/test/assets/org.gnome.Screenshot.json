@@ -49,6 +49,9 @@
             "name" : "gnome-screenshot",
             "buildsystem" : "meson",
             "builddir" : true,
+            "post-install": [
+              "echo 'hello'"
+            ],
             "sources" : [
                 {
                     "type" : "git",

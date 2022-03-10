@@ -211,7 +211,7 @@
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts",
     "watch": "tsc -watch -p ./",
-    "pretest": "yarn run compile && copyfiles -u 1 src/test/assets/* out/ && yarn run lint --max-warnings=0",
+    "pretest": "yarn run compile && cp -r src/test/assets out/test/assets && yarn run lint --max-warnings=0",
     "test": "node ./out/test/runTest.js",
     "deploy-vs": "vsce publish --yarn",
     "deploy-ovsx": "ovsx publish --yarn"

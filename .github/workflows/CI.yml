@@ -23,6 +23,8 @@ jobs:
       matrix:
         node-version: [12.x, 14.x]
     steps:
+      - name: Install dependencies
+        run: sudo apt install flatpak
       - uses: actions/checkout@v2
       - name: Tests with Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1

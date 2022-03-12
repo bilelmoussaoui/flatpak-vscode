@@ -72,24 +72,18 @@ class Extension {
             await this.buildPipeline.showOutputTerminal()
         })
 
-        this.registerCommand(TaskMode.buildInit, async () => {
-            await this.buildPipeline.initializeBuild()
-        })
-
         this.registerCommand(TaskMode.updateDeps, async () => {
             await this.buildPipeline.updateDependencies()
         })
 
-        this.registerCommand(TaskMode.buildDeps, async () => {
-            await this.buildPipeline.buildDependencies()
-        })
+        this.registerCommand('build-and-run', async () => {
+            if (this.workspaceState.getApplicationBuilt()) {
+                await this.buildPipeline.rebuildApplication()
+            } else {
+                await this.buildPipeline.build()
+            }
 
-        this.registerCommand(TaskMode.buildApp, async () => {
-            await this.buildPipeline.buildApplication()
-        })
-
-        this.registerCommand(TaskMode.rebuild, async () => {
-            await this.buildPipeline.rebuild()
+            await this.buildPipeline.run()
         })
 
         this.registerCommand(TaskMode.stop, async () => {
@@ -100,7 +94,6 @@ class Extension {
             await this.buildPipeline.clean()
         })
 
-        // Run the application, only if it was already built
         this.registerCommand(TaskMode.run, async () => {
             await this.buildPipeline.run()
         })

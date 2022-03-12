@@ -75,7 +75,7 @@ export class BuildPipeline implements vscode.Disposable {
         this.runner.completeBuild = completeBuild
 
         if (this.workspaceState.getDependenciesBuilt()) {
-            console.log('Skipped buildDependencies. Depencies are already built.')
+            console.log('Skipped buildDependencies. Dependencies are already built.')
             return
         }
 
@@ -100,6 +100,18 @@ export class BuildPipeline implements vscode.Disposable {
         })
     }
 
+    async rebuildApplication() {
+        if (!this.workspaceState.getApplicationBuilt()) {
+            console.log('Skipped rebuild. The application was not built.')
+            return
+        }
+
+        await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+            await this.outputTerminal.show(true)
+            await this.runner.setCommands(activeManifest.build(true), TaskMode.rebuild)
+        })
+    }
+
     /**
      * A helper method to chain up commands based on current pipeline state
      */
@@ -120,26 +132,7 @@ export class BuildPipeline implements vscode.Disposable {
     }
 
     /**
-     *
-     * Rebuild the application
-     * If a buildsystem is set on the latest module, the build/rebuild commands
-     * could be different, the rebuild also triggers a run command afterwards
-     */
-    async rebuild() {
-        if (!this.workspaceState.getApplicationBuilt()) {
-            console.log('Skipped rebuild and run. The application was not built.')
-            void vscode.window.showWarningMessage('Please run a Flatpak build command first.')
-            return
-        }
-
-        await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands(activeManifest.build(true), TaskMode.rebuild)
-        })
-    }
-
-    /**
-     * Run the application
+     * Run the application, only if it was already built
      */
     async run() {
         if (!this.workspaceState.getApplicationBuilt()) {
@@ -157,16 +150,14 @@ export class BuildPipeline implements vscode.Disposable {
      * Clean build environment
      */
     async clean() {
-        if (!this.workspaceState.getInitialized()) {
-            console.log('Skipped clean. Nothing to clean; build is not initialized.')
-            return
-        }
-
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
             await this.outputTerminal.show(true)
+
             await activeManifest.deleteRepoDir()
+            this.outputTerminal.appendMessage('Deleted Flatpak repository directory')
+
             await this.resetState()
-            await this.initializeBuild()
+            this.outputTerminal.appendMessage('Pipeline state reset')
         })
     }
 

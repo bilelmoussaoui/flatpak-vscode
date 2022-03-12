@@ -2,14 +2,13 @@ import * as vscode from 'vscode'
 import { window, ExtensionContext, commands } from 'vscode'
 import { existsSync } from 'fs'
 import { ensureDocumentsPortal, appendWatcherExclude } from './utils'
-import { FinishedTask, Runner } from './runner'
 import { TaskMode } from './taskMode'
-import { loadIntegrations, unloadIntegrations } from './integration'
-import { OutputTerminal } from './outputTerminal'
 import { ManifestManager } from './manifestManager'
 import { Manifest } from './manifest'
 import { WorkspaceState } from './workspaceState'
 import { migrateStateToMemento } from './migration'
+import { BuildPipeline } from './buildPipeline'
+import { unloadIntegrations } from './integration'
 
 export const EXTENSION_ID = 'flatpak-vscode'
 
@@ -21,9 +20,8 @@ export const IS_SANDBOXED = existsSync('/.flatpak-info')
 class Extension {
     private readonly extCtx: vscode.ExtensionContext
     private readonly workspaceState: WorkspaceState
-    private readonly outputTerminal: OutputTerminal
-    private readonly runner: Runner
     private readonly manifestManager: ManifestManager
+    private readonly buildPipeline: BuildPipeline
 
     constructor(extCtx: vscode.ExtensionContext) {
         this.extCtx = extCtx
@@ -34,21 +32,9 @@ class Extension {
         this.manifestManager.onDidActiveManifestChanged(async ([manifest, isLastActive]) => {
             await this.handleActiveManifestChanged(manifest, isLastActive)
         })
-        this.manifestManager.onDidRequestRebuild(async (manifest) => {
-            if (manifest === this.manifestManager.getActiveManifest()) {
-                console.log(`Manifest at ${manifest.uri.fsPath} requested a rebuild`)
-                await this.executeCommand(TaskMode.clean)
-            }
-        })
 
-        this.outputTerminal = new OutputTerminal()
-        this.extCtx.subscriptions.push(this.outputTerminal)
-
-        this.runner = new Runner(this.outputTerminal)
-        this.extCtx.subscriptions.push(this.runner)
-        this.runner.onDidFinishedTask(async (finishedTask) => {
-            await this.handleFinishedTask(finishedTask)
-        })
+        this.buildPipeline = new BuildPipeline(this.workspaceState, this.manifestManager)
+        this.extCtx.subscriptions.push(this.buildPipeline)
     }
 
     async activate() {
@@ -83,119 +69,44 @@ class Extension {
         })
 
         this.registerCommand('show-output-terminal', async () => {
-            await this.outputTerminal.show(true)
+            await this.buildPipeline.showOutputTerminal()
         })
 
-        // Init the build environment
-        this.registerCommand(TaskMode.buildInit, async (completeBuild: boolean | undefined) => {
-            this.runner.completeBuild = completeBuild || false
-            if (this.workspaceState.getInitialized()) {
-                return
-            }
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.outputTerminal.show(true)
-                await this.runner.setCommands([activeManifest.initBuild()], TaskMode.buildInit)
-            })
+        this.registerCommand(TaskMode.buildInit, async () => {
+            await this.buildPipeline.initializeBuild()
         })
 
-        // Update the application's dependencies
-        this.registerCommand(TaskMode.updateDeps, async (completeBuild: boolean | undefined) => {
-            this.runner.completeBuild = completeBuild || false
-            if (!this.workspaceState.getInitialized()) {
-                return
-            }
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.outputTerminal.show(true)
-                await this.runner.setCommands(
-                    [activeManifest.updateDependencies()],
-                    TaskMode.updateDeps
-                )
-            })
+        this.registerCommand(TaskMode.updateDeps, async () => {
+            await this.buildPipeline.updateDependencies()
         })
 
-        // Build the application's dependencies
-        this.registerCommand(TaskMode.buildDeps, async (completeBuild: boolean | undefined) => {
-            this.runner.completeBuild = completeBuild || false
-            if (this.workspaceState.getDependenciesBuilt()) {
-                return
-            }
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.outputTerminal.show(true)
-                await this.runner.setCommands(
-                    [activeManifest.buildDependencies()],
-                    TaskMode.buildDeps
-                )
-            })
+        this.registerCommand(TaskMode.buildDeps, async () => {
+            await this.buildPipeline.buildDependencies()
         })
 
-        // Build the application
         this.registerCommand(TaskMode.buildApp, async () => {
-            if (!this.workspaceState.getDependenciesBuilt()) {
-                return
-            }
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.outputTerminal.show(true)
-                await this.runner.setCommands(activeManifest.build(false), TaskMode.buildApp)
-            })
+            await this.buildPipeline.buildApplication()
         })
 
-        // Rebuild the application
-        // If a buildsystem is set on the latest module, the build/rebuild commands
-        // could be different, the rebuild also triggers a run command afterwards
         this.registerCommand(TaskMode.rebuild, async () => {
-            if (!this.workspaceState.getApplicationBuilt()) {
-                void vscode.window.showWarningMessage('Please run a Flatpak build command first.')
-                return
-            }
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.outputTerminal.show(true)
-                await this.runner.setCommands(activeManifest.build(true), TaskMode.rebuild)
-            })
+            await this.buildPipeline.rebuild()
         })
 
         this.registerCommand(TaskMode.stop, async () => {
-            await this.outputTerminal.show(true)
-            this.runner.close()
+            await this.buildPipeline.stop()
         })
 
-        // Clean build environment
         this.registerCommand(TaskMode.clean, async () => {
-            if (!this.workspaceState.getInitialized()) {
-                return
-            }
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.outputTerminal.show(true)
-                await activeManifest.deleteRepoDir()
-                await this.resetPipelineState()
-                await this.executeCommand(TaskMode.buildInit)
-            })
+            await this.buildPipeline.clean()
         })
 
         // Run the application, only if it was already built
         this.registerCommand(TaskMode.run, async () => {
-            if (!this.workspaceState.getApplicationBuilt()) {
-                return
-            }
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.outputTerminal.show(true)
-                await this.runner.setCommands([activeManifest.run()], TaskMode.run)
-            })
+            await this.buildPipeline.run()
         })
 
-        // A helper command, chains up to other commands based on current pipeline state
         this.registerCommand('build', async () => {
-            this.runner.completeBuild = true
-            if (!this.workspaceState.getInitialized()) {
-                await this.executeCommand(TaskMode.buildInit)
-            } else if (!this.workspaceState.getDependenciesUpdated()) {
-                await this.executeCommand(TaskMode.updateDeps)
-            } else if (!this.workspaceState.getDependenciesBuilt()) {
-                await this.executeCommand(TaskMode.buildDeps)
-            } else if (!this.workspaceState.getApplicationBuilt()) {
-                await this.executeCommand(TaskMode.buildApp)
-            } else {
-                this.outputTerminal.appendMessage('Nothing to do')
-            }
+            await this.buildPipeline.build()
         })
 
         this.registerTerminalProfileProvider('runtime-terminal-provider', {
@@ -247,87 +158,20 @@ class Extension {
         )
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private executeCommand(name: string, ...args: any[]): Thenable<unknown> {
-        return commands.executeCommand(`${EXTENSION_ID}.${name}`, args)
-    }
-
     private async handleActiveManifestChanged(manifest: Manifest | null, isLastActive: boolean) {
         if (manifest === null) {
             return
         }
 
         if (!isLastActive) {
-            this.runner.close()
-            await this.resetPipelineState()
+            await this.buildPipeline.stop()
+            await this.buildPipeline.resetState()
 
             await manifest.deleteRepoDir()
             await unloadIntegrations(manifest)
         }
 
-        await this.ensurePipelineState()
-    }
-
-    private async resetPipelineState(): Promise<void> {
-        await this.workspaceState.setInitialized(false)
-        await this.workspaceState.setDependenciesUpdated(false)
-        await this.workspaceState.setDependenciesBuilt(false)
-        await this.workspaceState.setApplicationBuilt(false)
-    }
-
-    private async ensurePipelineState(): Promise<void> {
-        // Trigger finished task so we update the context
-        if (this.workspaceState.getInitialized()) {
-            await this.handleFinishedTask({ mode: TaskMode.buildInit, restore: true, completeBuild: false })
-        }
-        if (this.workspaceState.getDependenciesUpdated()) {
-            await this.handleFinishedTask({ mode: TaskMode.updateDeps, restore: true, completeBuild: false })
-        }
-        if (this.workspaceState.getDependenciesBuilt()) {
-            await this.handleFinishedTask({ mode: TaskMode.buildDeps, restore: true, completeBuild: false })
-        }
-        if (this.workspaceState.getApplicationBuilt()) {
-            await this.handleFinishedTask({ mode: TaskMode.buildApp, restore: true, completeBuild: false })
-        }
-    }
-
-    private async handleFinishedTask(finishedTask: FinishedTask): Promise<void> {
-        switch (finishedTask.mode) {
-            case TaskMode.buildInit: {
-                await this.workspaceState.setInitialized(true)
-                const activeManifest = this.manifestManager.getActiveManifest()
-                if (activeManifest) {
-                    await loadIntegrations(activeManifest)
-                }
-                if (!finishedTask.restore) {
-                    await this.executeCommand(TaskMode.updateDeps, finishedTask.completeBuild)
-                }
-                break
-            }
-            case TaskMode.updateDeps:
-                await this.workspaceState.setDependenciesUpdated(true)
-                // Assume user might want to rebuild dependencies
-                await this.workspaceState.setDependenciesBuilt(false)
-                if (!finishedTask.restore) {
-                    await this.executeCommand(TaskMode.buildDeps, finishedTask.completeBuild)
-                }
-                break
-            case TaskMode.buildDeps:
-                await this.workspaceState.setDependenciesBuilt(true)
-                if (!finishedTask.restore && finishedTask.completeBuild) {
-                    await this.executeCommand(TaskMode.buildApp)
-                }
-                break
-            case TaskMode.buildApp:
-                await this.workspaceState.setApplicationBuilt(true)
-                break
-            case TaskMode.rebuild:
-                await this.workspaceState.setApplicationBuilt(true)
-                if (!finishedTask.restore) {
-                    await this.executeCommand(TaskMode.run)
-                }
-                break
-        }
+        await this.buildPipeline.ensureState()
     }
 }
 

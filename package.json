@@ -46,8 +46,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:flatpak-vscode.build-init",
-    "onCommand:flatpak-vscode.run",
     "workspaceContains:**/*.{json,yaml,yml}"
   ],
   "main": "./out/extension.js",
@@ -84,8 +82,8 @@
         "category": "Flatpak"
       },
       {
-        "command": "flatpak-vscode.rebuild",
-        "title": "Rebuild the application",
+        "command": "flatpak-vscode.build-and-run",
+        "title": "Rebuild and run the application",
         "icon": "$(play)",
         "category": "Flatpak"
       },
@@ -125,7 +123,7 @@
           "when": "flatpakHasActiveManifest && flatpakApplicationBuilt && !flatpakRunnerActive"
         },
         {
-          "command": "flatpak-vscode.rebuild",
+          "command": "flatpak-vscode.build-and-run",
           "when": "flatpakHasActiveManifest && flatpakApplicationBuilt && !flatpakRunnerActive"
         },
         {
@@ -143,7 +141,7 @@
       ],
       "editor/title/run": [
         {
-          "command": "flatpak-vscode.rebuild",
+          "command": "flatpak-vscode.build-and-run",
           "when": "!flatpakRunnerActive"
         },
         {
@@ -154,7 +152,7 @@
     },
     "keybindings": [
       {
-        "command": "flatpak-vscode.rebuild",
+        "command": "flatpak-vscode.build-and-run",
         "linux": "ctrl+alt+B",
         "when": "!flatpakRunnerActive"
       },

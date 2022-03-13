@@ -5,7 +5,7 @@ import { getuid } from 'process'
 import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
-import { generatePathOverride, getHostEnv } from './utils'
+import { exists, generatePathOverride, getHostEnv } from './utils'
 import { getFlatpakVersion, versionCompare } from './flatpakUtils'
 import { checkForMissingRuntimes } from './manifestUtils'
 
@@ -14,7 +14,9 @@ const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 export class Manifest {
     readonly uri: vscode.Uri
     readonly manifest: ManifestSchema
-    readonly repoDir: string
+    private readonly repoDir: string
+    private readonly finializedRepoDir: string
+    private readonly ostreeRepoPath: string
     readonly buildDir: string
     readonly workspace: string
     readonly stateDir: string
@@ -29,6 +31,8 @@ export class Manifest {
         this.workspace = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath || ''
         this.buildDir = path.join(this.workspace, '.flatpak')
         this.repoDir = path.join(this.buildDir, 'repo')
+        this.finializedRepoDir = path.join(this.buildDir, 'finalized-repo')
+        this.ostreeRepoPath = path.join(this.buildDir, 'ostree-repo')
         this.stateDir = path.join(this.buildDir, 'flatpak-builder')
         this.requiredVersion = manifest['finish-args'].map((val) => val.split('=')).find((value) => {
             return value[0] === '--require-version'
@@ -484,6 +488,43 @@ export class Manifest {
                 { cwd: this.workspace },
             )
         })
+    }
+
+    async bundle(): Promise<Command[]> {
+        const commands = []
+        if (await exists(this.finializedRepoDir)) {
+            await fs.rmdir(this.finializedRepoDir, {
+                recursive: true
+            })
+        }
+
+        commands.push(new Command('cp', [
+            '-r',
+            this.repoDir,
+            this.finializedRepoDir,
+        ]))
+
+        commands.push(new Command('flatpak', [
+            'build-finish',
+            ...this.finishArgs(),
+            `--command=${this.manifest.command}`,
+            this.finializedRepoDir,
+        ], { cwd: this.workspace }))
+
+        commands.push(new Command('flatpak', [
+            'build-export',
+            this.ostreeRepoPath,
+            this.finializedRepoDir,
+        ], { cwd: this.workspace }))
+
+        commands.push(new Command('flatpak', [
+            'build-bundle',
+            this.ostreeRepoPath,
+            `${this.id()}.flatpak`,
+            this.id(),
+        ], { cwd: this.workspace }))
+
+        return commands
     }
 
     run(): Command {

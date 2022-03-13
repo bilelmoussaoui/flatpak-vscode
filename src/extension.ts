@@ -98,6 +98,12 @@ class Extension {
             await this.buildPipeline.run()
         })
 
+        // export bundle
+        this.registerCommand(TaskMode.export, async () => {
+            await this.buildPipeline.exportBundle()
+        })
+
+        // A helper command, chains up to other commands based on current pipeline state
         this.registerCommand('build', async () => {
             await this.buildPipeline.build()
         })

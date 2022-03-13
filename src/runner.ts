@@ -37,10 +37,12 @@ export class Runner implements vscode.Disposable {
     close(): void {
         this.terminal.appendMessage('Child process exited')
 
-        this.currentProcess?.kill()
-        this.currentProcess = undefined
         this.commands = []
         this.currentCommand = 0
+
+        this.currentProcess?.kill()
+        this.currentProcess = undefined
+
         this.failed = false
         this.isRunning = false
     }

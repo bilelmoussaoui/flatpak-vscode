@@ -231,9 +231,6 @@ export class BuildPipeline implements vscode.Disposable {
                 break
             case TaskMode.rebuild:
                 await this.workspaceState.setApplicationBuilt(true)
-                if (!finishedTask.restore) {
-                    await this.run()
-                }
                 break
         }
     }

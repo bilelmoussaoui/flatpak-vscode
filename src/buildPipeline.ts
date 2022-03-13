@@ -5,6 +5,8 @@ import { TaskMode } from './taskMode'
 import { OutputTerminal } from './outputTerminal'
 import { loadIntegrations } from './integration'
 import * as vscode from 'vscode'
+import * as path from 'path'
+import * as fs from 'fs/promises'
 
 export class BuildPipeline implements vscode.Disposable {
     private readonly workspaceState: WorkspaceState
@@ -25,7 +27,8 @@ export class BuildPipeline implements vscode.Disposable {
         this.manifestManager.onDidRequestRebuild(async (manifest) => {
             if (manifest === this.manifestManager.getActiveManifest()) {
                 console.log(`Manifest at ${manifest.uri.fsPath} requested a rebuild`)
-                await this.clean()
+                await manifest.deleteRepoDir()
+                await this.resetState()
             }
         })
     }
@@ -171,6 +174,13 @@ export class BuildPipeline implements vscode.Disposable {
             await activeManifest.deleteRepoDir()
             this.outputTerminal.appendMessage('Deleted Flatpak repository directory')
 
+            const buildSystemDir = activeManifest.buildSystemBuildDir()
+            if (buildSystemDir) {
+                await fs.rmdir(path.join(activeManifest.workspace, buildSystemDir), {
+                    recursive: true
+                })
+                this.outputTerminal.appendMessage(`Deleted ${buildSystemDir} directory`)
+            }
             await this.resetState()
             this.outputTerminal.appendMessage('Pipeline state reset')
         })

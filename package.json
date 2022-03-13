@@ -89,7 +89,7 @@
       },
       {
         "command": "flatpak-vscode.export",
-        "title": "Export a bundle",
+        "title": "Export bundle",
         "category": "Flatpak"
       },
       {

@@ -3,8 +3,9 @@
 ## [Unreleased]
 
 - Added `mesonbuild.mesonbuild` extension integration.
-- Now showing a warning when trying to run a rebuild with initializing a build.
-- Support `post-install`
+- Added `post-install` manifest option support.
+- Rename `rebuild` command to `build-and-run`. It would also now do a build automatically without having to run a separate `build` command.
+- Don't require for the build to be initialized when running `clean` command.
 
 ## [0.0.24]
 

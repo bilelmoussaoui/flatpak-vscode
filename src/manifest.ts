@@ -574,6 +574,14 @@ export class Manifest {
         await fs.rmdir(this.repoDir, {
             recursive: true,
         })
+
+        const buildSystemDir = this.buildSystemBuildDir()
+        if (buildSystemDir) {
+            console.log(`Cleaning ${buildSystemDir} directory`)
+            await fs.rmdir(path.join(this.workspace, buildSystemDir), {
+                recursive: true
+            })
+        }
     }
 
     async overrideWorkspaceCommandConfig(

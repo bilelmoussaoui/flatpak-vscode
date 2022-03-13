@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.0.25]
 
 - Added `mesonbuild.mesonbuild` extension integration.
 - Added `post-install` manifest option support.

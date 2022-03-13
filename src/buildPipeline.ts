@@ -5,7 +5,6 @@ import { TaskMode } from './taskMode'
 import { OutputTerminal } from './outputTerminal'
 import { loadIntegrations } from './integration'
 import * as vscode from 'vscode'
-import { Manifest } from './manifest'
 
 export class BuildPipeline implements vscode.Disposable {
     private readonly workspaceState: WorkspaceState
@@ -152,8 +151,10 @@ export class BuildPipeline implements vscode.Disposable {
      */
     async exportBundle() {
         if (!this.workspaceState.getApplicationBuilt()) {
+            console.log('Skipped exportBundle. Application is not built.')
             return
         }
+
         await this.manifestManager.doWithActiveManifest(async (activeManfiest) => {
             await this.outputTerminal.show(true)
             await this.runner.setCommands(await activeManfiest.bundle(), TaskMode.export)
@@ -247,10 +248,17 @@ export class BuildPipeline implements vscode.Disposable {
                 await this.workspaceState.setApplicationBuilt(true)
                 break
             case TaskMode.export: {
-                const activeManifest = this.manifestManager.getActiveManifest() as Manifest
+                void vscode.window.showInformationMessage('Flatpak bundle has been exported successfully.', 'Show bundle')
+                    .then((response) => {
+                        if (response !== 'Show bundle') {
+                            return
+                        }
 
-                void vscode.window.showInformationMessage('Flatpak bundle exported successfully')
-                void vscode.env.openExternal(vscode.Uri.parse(`file://${activeManifest.workspace}`))
+                        const activeManifest = this.manifestManager.getActiveManifest()
+                        if (activeManifest !== null) {
+                            void vscode.env.openExternal(vscode.Uri.file(activeManifest.workspace))
+                        }
+                    })
                 break
             }
         }

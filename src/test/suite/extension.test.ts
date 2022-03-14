@@ -1,6 +1,9 @@
 import * as assert from 'assert'
+import * as path from 'path'
 import { Uri } from 'vscode'
 import { resolve } from 'path'
+import { Manifest } from '../../manifest'
+import { ManifestMap } from '../../manifestMap'
 import { isValidDbusName, parseManifest } from '../../manifestUtils'
 import { versionCompare } from '../../flatpakUtils'
 import { exists, generatePathOverride } from '../../utils'
@@ -11,14 +14,14 @@ function intoUri(path: string): Uri {
 }
 
 suite('command', () => {
-    test('sandboxed', function () {
+    test('sandboxed', () => {
         const command = new Command('echo', ['Hello', 'world'], { forceSandbox: true })
         assert.equal(command.program, 'flatpak-spawn')
         assert.deepStrictEqual(command.args, ['--host', '--env=TERM=xterm-256color', 'echo', 'Hello', 'world'])
         assert.equal(command.toString(), 'flatpak-spawn --host echo Hello world')
     })
 
-    test('notSandboxed', function () {
+    test('notSandboxed', () => {
         const command = new Command('echo', ['Hello', 'world'])
         assert.equal(command.program, 'echo')
         assert.deepStrictEqual(command.args, ['Hello', 'world'])
@@ -28,6 +31,76 @@ suite('command', () => {
     test('execSync', () => {
         const command = new Command('echo', ['Hello', 'world'])
         assert.equal(command.execSync().toString(), 'Hello world\n')
+    })
+})
+
+suite('manifestMap', () => {
+    function createTestManifest(uri: Uri): Manifest {
+        return new Manifest(uri, {
+            id: path.parse(uri.fsPath).name,
+            modules: [],
+            sdk: '',
+            runtime: '',
+            'runtime-version': '',
+            command: '',
+            'finish-args': [],
+        })
+    }
+
+    test('add, delete, get, getFirstItem, isEmpty, & size', () => {
+        const map = new ManifestMap()
+        assert(map.isEmpty())
+        assert.equal(map.getFirstItem(), undefined)
+
+        const manifestAUri = Uri.file('/home/test/a.a.a.json')
+        const manifestA = createTestManifest(manifestAUri)
+        map.add(manifestA)
+        assert.equal(map.size(), 1)
+        assert.deepStrictEqual(map.get(manifestAUri), manifestA)
+        assert.deepStrictEqual(map.getFirstItem(), manifestA)
+
+        const manifestBUri = Uri.file('/home/test/b.b.b.json')
+        const manifestB = createTestManifest(manifestBUri)
+        map.add(manifestB)
+        assert.equal(map.size(), 2)
+        assert.deepStrictEqual(map.get(manifestBUri), manifestB)
+        assert.deepStrictEqual(map.getFirstItem(), manifestA)
+
+        assert(map.delete(manifestAUri))
+        assert.equal(map.size(), 1)
+        assert.equal(map.get(manifestAUri), undefined)
+
+        assert.deepStrictEqual(map.getFirstItem(), manifestB)
+
+        assert(map.delete(manifestBUri))
+        assert.equal(map.size(), 0)
+        assert.equal(map.get(manifestBUri), undefined)
+
+        assert(map.isEmpty())
+        assert.equal(map.getFirstItem(), undefined)
+    })
+
+    test('forEach', () => {
+        const map = new ManifestMap()
+
+        map.forEach(() => {
+            throw new Error('forEach should not call the callback when empty.')
+        })
+
+        const manifestAUri = Uri.file('/home/test/a.a.a.json')
+        const manifestA = createTestManifest(manifestAUri)
+        map.add(manifestA)
+
+        const manifestBUri = Uri.file('/home/test/b.b.b.json')
+        const manifestB = createTestManifest(manifestBUri)
+        map.add(manifestB)
+
+        let nIter = 0
+        map.forEach((manifest) => {
+            nIter++
+            assert.notEqual(manifest, undefined)
+        })
+        assert.equal(nIter, 2)
     })
 })
 

@@ -20,7 +20,7 @@ A simple VSCode extension that detects a Flatpak manifest and offers various com
 ## Commands
 
 - Build: Initialize a Flatpak build, update the dependencies & build them. It also does a first build of the application.
-- Rebuild: Rebuild the application and triggers a "Run" command.
+- Build and Run: Build or rebuild the application then run it.
 - Stop: Stop the currently running task.
 - Run: Run the application.
 - Update Dependencies: Download/Update the dependencies and builds them.

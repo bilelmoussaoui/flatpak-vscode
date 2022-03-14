@@ -82,7 +82,7 @@
       },
       {
         "command": "flatpak-vscode.build-and-run",
-        "title": "Rebuild and run the application",
+        "title": "Build and run the application",
         "icon": "$(play)",
         "category": "Flatpak"
       },

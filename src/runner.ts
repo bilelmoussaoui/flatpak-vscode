@@ -1,132 +1,85 @@
 import * as vscode from 'vscode'
 import { TaskMode, taskModeAsStatus } from './taskMode'
-import { Command } from './command'
-import * as pty from './nodePty'
+import { Canceled, Command } from './command'
 import { OutputTerminal } from './outputTerminal'
 import { RunnerStatusItem } from './runnerStatusItem'
 import { EXTENSION_ID } from './extension'
 
-export interface FinishedTask {
-    mode: TaskMode
-    restore: boolean
-    completeBuild: boolean
-}
-
 export class Runner implements vscode.Disposable {
-    private commands: Command[] = []
-    private currentCommand: number
-    private failed: boolean
-    private isRunning = false
-    private mode?: TaskMode
-    private currentProcess?: pty.IPty
-    public completeBuild = false
-    private readonly terminal: OutputTerminal
+    private readonly outputTerminal: OutputTerminal
     private readonly statusItem: RunnerStatusItem
+    private currentCommandHandler?: vscode.CancellationTokenSource
 
-    private readonly _onDidFinishedTask = new vscode.EventEmitter<FinishedTask>()
-    readonly onDidFinishedTask = this._onDidFinishedTask.event
+    constructor(outputTerminal: OutputTerminal) {
+        this.outputTerminal = outputTerminal
+        this.outputTerminal.onDidClose(() => this.close())
 
-    constructor(terminal: OutputTerminal) {
         this.statusItem = new RunnerStatusItem()
-        this.currentCommand = 0
-        this.failed = false
-        this.terminal = terminal
-        this.terminal.onDidClose(() => this.close())
     }
 
-    close(): void {
-        this.terminal.appendMessage('Child process exited')
+    /**
+     * Run the commands one after another in order. Errors on a command would
+     * inhibit other queued commands from running.
+     * @param commands The commands to be executed
+     * @param mode Execution context
+     */
+    async execute(commands: Command[], mode: TaskMode): Promise<void> {
+        await this.outputTerminal.show(true)
 
-        this.commands = []
-        this.currentCommand = 0
+        await this.setActiveContext(true)
+        this.statusItem.setStatus(taskModeAsStatus(mode))
 
-        this.currentProcess?.kill()
-        this.currentProcess = undefined
+        try {
+            for (const command of commands) {
+                this.outputTerminal.appendMessage(command.toString())
 
-        this.failed = false
-        this.isRunning = false
-    }
+                this.currentCommandHandler = new vscode.CancellationTokenSource()
+                await command.spawn(this.outputTerminal, this.currentCommandHandler.token)
+                this.currentCommandHandler = undefined
+            }
+        } catch (err) {
+            // Don't error when stopped the application using stop button
+            if (mode === TaskMode.run && err instanceof Canceled) {
+                return
+            }
 
-    async setCommands(commands: Command[], mode: TaskMode): Promise<void> {
-        if (this.isRunning) {
-            this.commands = [...this.commands, ...commands]
-        } else {
-            this.commands = commands
-            this.mode = mode
-            this.currentCommand = 0
-            this.failed = false
-            await this.spawn(this.commands[0])
+            this.onError(mode, err as string)
+            throw err
+        } finally {
+            this.statusItem.setStatus(null)
+            await this.setActiveContext(false)
         }
     }
 
-    onError(message: string): void {
-        this.terminal.appendError(message)
-        this.failed = true
-        this.isRunning = false
+    /**
+     * Cancel the running and queued commands
+     */
+    async close(): Promise<void> {
+        await this.outputTerminal.show(true)
 
-        let title = 'An error occurred'
-        if (this.mode !== undefined) {
-            title = `Failed to execute ${this.mode}`
+        if (this.currentCommandHandler !== undefined) {
+            this.currentCommandHandler.cancel()
+            this.currentCommandHandler = undefined
         }
+    }
+
+    async dispose() {
+        await this.close()
+        this.statusItem.dispose()
+    }
+
+    private onError(mode: TaskMode, message: string): void {
+        this.outputTerminal.appendError(message)
+
         this.statusItem?.setStatus({
             type: 'error',
             isOperation: false,
-            title,
+            title: `Failed to execute ${mode}`,
             clickable: {
                 command: `${EXTENSION_ID}.show-output-terminal`,
                 tooltip: 'Show output'
             },
         })
-    }
-
-    async spawnNext(): Promise<void> {
-        this.currentCommand++
-        if (this.failed) {
-            return
-        }
-        if (this.currentCommand <= this.commands.length - 1) {
-            await this.spawn(this.commands[this.currentCommand])
-        } else {
-            this.currentCommand = 0
-            this.isRunning = false
-            this._onDidFinishedTask.fire({ mode: this.mode as TaskMode, restore: false, completeBuild: this.completeBuild })
-            await this.setActiveContext(false)
-            this.statusItem?.setStatus(null)
-            this.completeBuild = false
-        }
-    }
-
-    async spawn(command: Command): Promise<void> {
-        if (this.mode !== undefined) {
-            await this.setActiveContext(true)
-            this.statusItem.setStatus(taskModeAsStatus(this.mode))
-        }
-
-        this.terminal.appendMessage(command.toString())
-        this.currentProcess = command.spawn()
-        this.isRunning = true
-
-        this.currentProcess.onData((data) => {
-            this.terminal.append(data)
-        })
-
-        this.currentProcess
-            .onExit(async ({ exitCode }) => {
-                if (exitCode !== 0) {
-                    this.onError(`Child process exited with code ${exitCode}`)
-                    await this.setActiveContext(false)
-                    return
-                }
-                await this.spawnNext()
-            })
-    }
-
-    current(): Command {
-        return this.commands[this.currentCommand]
-    }
-
-    dispose(): void {
-        this.statusItem.dispose()
     }
 
     private async setActiveContext(value: boolean): Promise<void> {

@@ -38,6 +38,8 @@ export class BuildPipeline implements vscode.Disposable {
      * Init the build environment
      */
     async initializeBuild() {
+        this.runner.ensureIdle()
+
         if (this.workspaceState.getInitialized()) {
             console.log('Skipped build initialization. Already initialized.')
             return
@@ -55,6 +57,8 @@ export class BuildPipeline implements vscode.Disposable {
      * Update the application's dependencies
      */
     async updateDependencies() {
+        this.runner.ensureIdle()
+
         if (!this.workspaceState.getInitialized()) {
             console.log('Did not run updateDependencies. Build is not initialized.')
             return
@@ -73,6 +77,8 @@ export class BuildPipeline implements vscode.Disposable {
      * Build the application's dependencies
      */
     async buildDependencies() {
+        this.runner.ensureIdle()
+
         if (this.workspaceState.getDependenciesBuilt()) {
             console.log('Skipped buildDependencies. Dependencies are already built.')
             return
@@ -86,6 +92,8 @@ export class BuildPipeline implements vscode.Disposable {
     }
 
     async buildApplication() {
+        this.runner.ensureIdle()
+
         if (!this.workspaceState.getDependenciesBuilt()) {
             console.log('Cannot build application; dependencies are not built.')
             return
@@ -99,6 +107,8 @@ export class BuildPipeline implements vscode.Disposable {
     }
 
     async rebuildApplication() {
+        this.runner.ensureIdle()
+
         if (!this.workspaceState.getApplicationBuilt()) {
             console.log('Skipped rebuild. The application was not built.')
             return
@@ -115,6 +125,8 @@ export class BuildPipeline implements vscode.Disposable {
      * A helper method to chain up commands based on current pipeline state
      */
     async build() {
+        this.runner.ensureIdle()
+
         await this.initializeBuild()
 
         if (!this.workspaceState.getDependenciesUpdated()) {
@@ -134,6 +146,8 @@ export class BuildPipeline implements vscode.Disposable {
      * Run the application, only if it was already built
      */
     async run() {
+        this.runner.ensureIdle()
+
         if (!this.workspaceState.getApplicationBuilt()) {
             console.log('Skipped run; the application is not built.')
             return
@@ -143,13 +157,14 @@ export class BuildPipeline implements vscode.Disposable {
             await this.runner.execute([activeManifest.run()], TaskMode.run)
             this.outputTerminal.appendMessage('Application exited')
         })
-
     }
 
     /**
      * Export a Flatpak bundle, only if the application was already built
      */
     async exportBundle() {
+        this.runner.ensureIdle()
+
         if (!this.workspaceState.getApplicationBuilt()) {
             console.log('Skipped exportBundle. Application is not built.')
             return
@@ -176,6 +191,8 @@ export class BuildPipeline implements vscode.Disposable {
      * Clean build environment
      */
     async clean() {
+        this.runner.ensureIdle()
+
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
             await this.outputTerminal.show(true)
 
@@ -199,7 +216,7 @@ export class BuildPipeline implements vscode.Disposable {
      * Clear and stop the running commands in the runner
      */
     async stop() {
-        await this.runner.close()
+        await this.runner.stop()
     }
 
     async resetState() {

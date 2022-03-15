@@ -1,6 +1,6 @@
 import { ManifestManager } from './manifestManager'
 import { WorkspaceState } from './workspaceState'
-import { FinishedTask, Runner } from './runner'
+import { Runner } from './runner'
 import { TaskMode } from './taskMode'
 import { OutputTerminal } from './outputTerminal'
 import { loadIntegrations } from './integration'
@@ -19,9 +19,6 @@ export class BuildPipeline implements vscode.Disposable {
 
         this.outputTerminal = new OutputTerminal()
         this.runner = new Runner(this.outputTerminal)
-        this.runner.onDidFinishedTask(async (finishedTask) => {
-            await this.handleFinishedTask(finishedTask)
-        })
 
         this.manifestManager = manifestManager
         this.manifestManager.onDidRequestRebuild(async (manifest) => {
@@ -40,55 +37,52 @@ export class BuildPipeline implements vscode.Disposable {
     /**
      * Init the build environment
      */
-    async initializeBuild(completeBuild = false) {
-        this.runner.completeBuild = completeBuild
-
+    async initializeBuild() {
         if (this.workspaceState.getInitialized()) {
             console.log('Skipped build initialization. Already initialized.')
             return
         }
 
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands([activeManifest.initBuild()], TaskMode.buildInit)
+            await this.runner.execute([activeManifest.initBuild()], TaskMode.buildInit)
+            await loadIntegrations(activeManifest)
         })
+
+        await this.workspaceState.setInitialized(true)
     }
 
     /**
      * Update the application's dependencies
      */
-    async updateDependencies(completeBuild = false) {
-        this.runner.completeBuild = completeBuild
-
+    async updateDependencies() {
         if (!this.workspaceState.getInitialized()) {
             console.log('Did not run updateDependencies. Build is not initialized.')
             return
         }
 
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands([activeManifest.updateDependencies()], TaskMode.updateDeps)
+            await this.runner.execute([activeManifest.updateDependencies()], TaskMode.updateDeps)
         })
+
+        await this.workspaceState.setDependenciesUpdated(true)
+        // Assume user might want to rebuild dependencies
+        await this.workspaceState.setDependenciesBuilt(false)
     }
 
     /**
      * Build the application's dependencies
      */
-    async buildDependencies(completeBuild = false) {
-        this.runner.completeBuild = completeBuild
-
+    async buildDependencies() {
         if (this.workspaceState.getDependenciesBuilt()) {
             console.log('Skipped buildDependencies. Dependencies are already built.')
             return
         }
 
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands(
-                [activeManifest.buildDependencies()],
-                TaskMode.buildDeps
-            )
+            await this.runner.execute([activeManifest.buildDependencies()], TaskMode.buildDeps)
         })
+
+        await this.workspaceState.setDependenciesBuilt(true)
     }
 
     async buildApplication() {
@@ -98,9 +92,10 @@ export class BuildPipeline implements vscode.Disposable {
         }
 
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands(activeManifest.build(false), TaskMode.buildApp)
+            await this.runner.execute(activeManifest.build(false), TaskMode.buildApp)
         })
+
+        await this.workspaceState.setApplicationBuilt(true)
     }
 
     async rebuildApplication() {
@@ -110,27 +105,28 @@ export class BuildPipeline implements vscode.Disposable {
         }
 
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands(activeManifest.build(true), TaskMode.rebuild)
+            await this.runner.execute(activeManifest.build(true), TaskMode.rebuild)
         })
+
+        await this.workspaceState.setApplicationBuilt(true)
     }
 
     /**
      * A helper method to chain up commands based on current pipeline state
      */
     async build() {
-        this.runner.completeBuild = true
+        await this.initializeBuild()
 
-        if (!this.workspaceState.getInitialized()) {
-            await this.initializeBuild()
-        } else if (!this.workspaceState.getDependenciesUpdated()) {
+        if (!this.workspaceState.getDependenciesUpdated()) {
             await this.updateDependencies()
-        } else if (!this.workspaceState.getDependenciesBuilt()) {
-            await this.buildDependencies()
-        } else if (!this.workspaceState.getApplicationBuilt()) {
-            await this.buildApplication()
+        }
+
+        await this.buildDependencies()
+
+        if (this.workspaceState.getApplicationBuilt()) {
+            await this.rebuildApplication()
         } else {
-            this.outputTerminal.appendMessage('Nothing to do')
+            await this.buildApplication()
         }
     }
 
@@ -144,9 +140,10 @@ export class BuildPipeline implements vscode.Disposable {
         }
 
         await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands([activeManifest.run()], TaskMode.run)
+            await this.runner.execute([activeManifest.run()], TaskMode.run)
+            this.outputTerminal.appendMessage('Application exited')
         })
+
     }
 
     /**
@@ -159,9 +156,20 @@ export class BuildPipeline implements vscode.Disposable {
         }
 
         await this.manifestManager.doWithActiveManifest(async (activeManfiest) => {
-            await this.outputTerminal.show(true)
-            await this.runner.setCommands(await activeManfiest.bundle(), TaskMode.export)
+            await this.runner.execute(await activeManfiest.bundle(), TaskMode.export)
         })
+
+        void vscode.window.showInformationMessage('Flatpak bundle has been exported successfully.', 'Show bundle')
+            .then((response) => {
+                if (response !== 'Show bundle') {
+                    return
+                }
+
+                const activeManifest = this.manifestManager.getActiveManifest()
+                if (activeManifest !== null) {
+                    void vscode.env.openExternal(vscode.Uri.file(activeManifest.workspace))
+                }
+            })
     }
 
     /**
@@ -181,6 +189,7 @@ export class BuildPipeline implements vscode.Disposable {
                 })
                 this.outputTerminal.appendMessage(`Deleted ${buildSystemDir} directory`)
             }
+
             await this.resetState()
             this.outputTerminal.appendMessage('Pipeline state reset')
         })
@@ -190,8 +199,7 @@ export class BuildPipeline implements vscode.Disposable {
      * Clear and stop the running commands in the runner
      */
     async stop() {
-        await this.outputTerminal.show(true)
-        this.runner.close()
+        await this.runner.close()
     }
 
     async resetState() {
@@ -201,76 +209,8 @@ export class BuildPipeline implements vscode.Disposable {
         await this.workspaceState.setApplicationBuilt(false)
     }
 
-    /**
-     * Trigger finished task to update context
-     */
-    async ensureState() {
-        if (this.workspaceState.getInitialized()) {
-            await this.handleFinishedTask({ mode: TaskMode.buildInit, restore: true, completeBuild: false })
-        }
-        if (this.workspaceState.getDependenciesUpdated()) {
-            await this.handleFinishedTask({ mode: TaskMode.updateDeps, restore: true, completeBuild: false })
-        }
-        if (this.workspaceState.getDependenciesBuilt()) {
-            await this.handleFinishedTask({ mode: TaskMode.buildDeps, restore: true, completeBuild: false })
-        }
-        if (this.workspaceState.getApplicationBuilt()) {
-            await this.handleFinishedTask({ mode: TaskMode.buildApp, restore: true, completeBuild: false })
-        }
-    }
-
-    dispose() {
+    async dispose() {
         this.outputTerminal.dispose()
-        this.runner.dispose()
-    }
-
-    private async handleFinishedTask(finishedTask: FinishedTask) {
-        switch (finishedTask.mode) {
-            case TaskMode.buildInit: {
-                await this.workspaceState.setInitialized(true)
-                const activeManifest = this.manifestManager.getActiveManifest()
-                if (activeManifest) {
-                    await loadIntegrations(activeManifest)
-                }
-                if (!finishedTask.restore) {
-                    await this.updateDependencies()
-                }
-                break
-            }
-            case TaskMode.updateDeps:
-                await this.workspaceState.setDependenciesUpdated(true)
-                // Assume user might want to rebuild dependencies
-                await this.workspaceState.setDependenciesBuilt(false)
-                if (!finishedTask.restore) {
-                    await this.buildDependencies(finishedTask.completeBuild)
-                }
-                break
-            case TaskMode.buildDeps:
-                await this.workspaceState.setDependenciesBuilt(true)
-                if (!finishedTask.restore && finishedTask.completeBuild) {
-                    await this.buildApplication()
-                }
-                break
-            case TaskMode.buildApp:
-                await this.workspaceState.setApplicationBuilt(true)
-                break
-            case TaskMode.rebuild:
-                await this.workspaceState.setApplicationBuilt(true)
-                break
-            case TaskMode.export: {
-                void vscode.window.showInformationMessage('Flatpak bundle has been exported successfully.', 'Show bundle')
-                    .then((response) => {
-                        if (response !== 'Show bundle') {
-                            return
-                        }
-
-                        const activeManifest = this.manifestManager.getActiveManifest()
-                        if (activeManifest !== null) {
-                            void vscode.env.openExternal(vscode.Uri.file(activeManifest.workspace))
-                        }
-                    })
-                break
-            }
-        }
+        await this.runner.dispose()
     }
 }

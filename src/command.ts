@@ -3,6 +3,14 @@ import * as fs from 'fs/promises'
 import * as pty from './nodePty'
 import { PathLike } from 'fs'
 import { execFileSync } from 'child_process'
+import { OutputTerminal } from './outputTerminal'
+import { CancellationToken } from 'vscode'
+
+export class Canceled extends Error {
+    constructor() {
+        super('Cancelled task')
+    }
+}
 
 export interface CommandOptions {
     cwd?: string
@@ -45,15 +53,44 @@ export class Command {
         await fs.chmod(path, 0o755)
     }
 
-    spawn(): pty.IPty {
-        return pty.spawn(this.program, this.args, {
-            cwd: this.cwd,
-        })
-    }
-
     execSync(): Buffer {
         return execFileSync(this.program, this.args, {
             cwd: this.cwd
+        })
+    }
+
+    /**
+     * Spawn this with using node-pty
+     * @param terminal Where the output stream will be sent
+     * @param token For cancellation. This will send SIGINT on the process when cancelled.
+     */
+    spawn(terminal: OutputTerminal, token: CancellationToken): Promise<void> {
+        const iPty = pty.spawn(this.program, this.args, {
+            cwd: this.cwd,
+        })
+
+        iPty.onData((data) => {
+            terminal.append(data)
+        })
+
+        return new Promise((resolve, reject) => {
+            token.onCancellationRequested(() => {
+                iPty.kill('SIGINT')
+            })
+
+            iPty.onExit(({ exitCode, signal }) => {
+                if (exitCode !== 0) {
+                    reject(new Error(`Child process exited with code ${exitCode}`))
+                    return
+                }
+
+                if (signal === 2) {  // SIGINT
+                    reject(new Canceled())
+                    return
+                }
+
+                resolve()
+            })
         })
     }
 }

@@ -23,6 +23,14 @@ export class WorkspaceState {
         this.extCtx = extCtx
     }
 
+    async loadContexts(): Promise<void> {
+        // Contexts has to be set again between startups
+        await this.setContext('flatpakHasActiveManifest', this.getActiveManifestUri() !== undefined)
+        await this.setContext('flatpakInitialized', this.getInitialized())
+        await this.setContext('flatpakDependenciesBuilt', this.getDependenciesBuilt())
+        await this.setContext('flatpakApplicationBuilt', this.getApplicationBuilt())
+    }
+
     async setActiveManifestUri(value: vscode.Uri | undefined): Promise<void> {
         await this.setContext('flatpakHasActiveManifest', value !== undefined)
         await this.update('ActiveManifestUri', value)

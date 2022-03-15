@@ -8,7 +8,7 @@ import { Manifest } from './manifest'
 import { WorkspaceState } from './workspaceState'
 import { migrateStateToMemento } from './migration'
 import { BuildPipeline } from './buildPipeline'
-import { unloadIntegrations } from './integration'
+import { loadIntegrations, unloadIntegrations } from './integration'
 
 export const EXTENSION_ID = 'flatpak-vscode'
 
@@ -39,6 +39,7 @@ class Extension {
 
     async activate() {
         await migrateStateToMemento(this.workspaceState)
+        await this.workspaceState.loadContexts()
 
         // Private commands
         this.registerCommand('show-active-manifest', async () => {
@@ -74,15 +75,11 @@ class Extension {
 
         this.registerCommand(TaskMode.updateDeps, async () => {
             await this.buildPipeline.updateDependencies()
+            await this.buildPipeline.buildDependencies()
         })
 
         this.registerCommand('build-and-run', async () => {
-            if (this.workspaceState.getApplicationBuilt()) {
-                await this.buildPipeline.rebuildApplication()
-            } else {
-                await this.buildPipeline.build()
-            }
-
+            await this.buildPipeline.build()
             await this.buildPipeline.run()
         })
 
@@ -169,7 +166,10 @@ class Extension {
         }
 
         await appendWatcherExclude(['.flatpak/**', '_build/**'])
-        await this.buildPipeline.ensureState()
+
+        if (this.workspaceState.getInitialized()) {
+            await loadIntegrations(manifest)
+        }
     }
 }
 

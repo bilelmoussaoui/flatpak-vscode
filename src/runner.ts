@@ -8,13 +8,24 @@ import { EXTENSION_ID } from './extension'
 export class Runner implements vscode.Disposable {
     private readonly outputTerminal: OutputTerminal
     private readonly statusItem: RunnerStatusItem
+    private isActive: boolean
     private currentCommandHandler?: vscode.CancellationTokenSource
 
     constructor(outputTerminal: OutputTerminal) {
         this.outputTerminal = outputTerminal
-        this.outputTerminal.onDidClose(() => this.close())
+        this.outputTerminal.onDidClose(() => this.stop())
 
         this.statusItem = new RunnerStatusItem()
+        this.isActive = false
+    }
+
+    /**
+     * Throws an error if this is active
+     */
+    ensureIdle() {
+        if (this.isActive) {
+            throw new Error('Stop the currently running task first.')
+        }
     }
 
     /**
@@ -26,7 +37,7 @@ export class Runner implements vscode.Disposable {
     async execute(commands: Command[], mode: TaskMode): Promise<void> {
         await this.outputTerminal.show(true)
 
-        await this.setActiveContext(true)
+        await this.setActive(true)
         this.statusItem.setStatus(taskModeAsStatus(mode))
 
         try {
@@ -35,7 +46,6 @@ export class Runner implements vscode.Disposable {
 
                 this.currentCommandHandler = new vscode.CancellationTokenSource()
                 await command.spawn(this.outputTerminal, this.currentCommandHandler.token)
-                this.currentCommandHandler = undefined
             }
         } catch (err) {
             // Don't error when stopped the application using stop button
@@ -46,15 +56,16 @@ export class Runner implements vscode.Disposable {
             this.onError(mode, err as string)
             throw err
         } finally {
+            this.currentCommandHandler = undefined
             this.statusItem.setStatus(null)
-            await this.setActiveContext(false)
+            await this.setActive(false)
         }
     }
 
     /**
      * Cancel the running and queued commands
      */
-    async close(): Promise<void> {
+    async stop(): Promise<void> {
         await this.outputTerminal.show(true)
 
         if (this.currentCommandHandler !== undefined) {
@@ -64,8 +75,13 @@ export class Runner implements vscode.Disposable {
     }
 
     async dispose() {
-        await this.close()
+        await this.stop()
         this.statusItem.dispose()
+    }
+
+    private async setActive(value: boolean): Promise<void> {
+        await vscode.commands.executeCommand('setContext', 'flatpakRunnerActive', value)
+        this.isActive = value
     }
 
     private onError(mode: TaskMode, message: string): void {
@@ -80,9 +96,5 @@ export class Runner implements vscode.Disposable {
                 tooltip: 'Show output'
             },
         })
-    }
-
-    private async setActiveContext(value: boolean): Promise<void> {
-        await vscode.commands.executeCommand('setContext', 'flatpakRunnerActive', value)
     }
 }

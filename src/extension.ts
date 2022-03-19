@@ -168,6 +168,7 @@ class Extension {
             await unloadIntegrations(manifest)
         }
 
+        await appendWatcherExclude(['.flatpak/**', '_build/**'])
         await this.buildPipeline.ensureState()
     }
 }
@@ -181,8 +182,6 @@ export async function activate(extCtx: ExtensionContext): Promise<void> {
 
     extension = new Extension(extCtx)
     await extension.activate()
-
-    await appendWatcherExclude(['.flatpak/**', '_build/**'])
 }
 
 export async function deactivate(): Promise<void> {

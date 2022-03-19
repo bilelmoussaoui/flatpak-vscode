@@ -150,11 +150,11 @@
       "editor/title/run": [
         {
           "command": "flatpak-vscode.build-and-run",
-          "when": "!flatpakRunnerActive"
+          "when": "flatpakHasActiveManifest && !flatpakRunnerActive"
         },
         {
           "command": "flatpak-vscode.stop",
-          "when": "flatpakRunnerActive"
+          "when": "flatpakHasActiveManifest && flatpakRunnerActive"
         }
       ]
     },

@@ -162,17 +162,17 @@
       {
         "command": "flatpak-vscode.build-and-run",
         "linux": "ctrl+alt+B",
-        "when": "!flatpakRunnerActive"
+        "when": "flatpakHasActiveManifest && !flatpakRunnerActive"
       },
       {
         "command": "flatpak-vscode.stop",
         "linux": "ctrl+alt+B",
-        "when": "flatpakRunnerActive"
+        "when": "flatpakHasActiveManifest && flatpakRunnerActive"
       },
       {
         "command": "flatpak-vscode.run",
         "linux": "ctrl+alt+R",
-        "when": "!flatpakRunnerActive"
+        "when": "flatpakHasActiveManifest && !flatpakRunnerActive"
       }
     ],
     "terminal": {

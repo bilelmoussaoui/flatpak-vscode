@@ -158,8 +158,9 @@ export function checkForMissingRuntimes(manifest: Manifest): string[] {
 
     for (const availableRuntime of getAvailableRuntimes()) {
         if (runtimeVersion === availableRuntime.version) {
-            missingRuntimes.delete(availableRuntime.id)
-            continue
+            if (missingRuntimes.delete(availableRuntime.id)) {
+                continue
+            }
         }
 
         // TODO also check the version

@@ -263,7 +263,7 @@ export class Manifest {
             (module['config-opts'] || []).concat(
                 this.manifest['build-options']?.['config-opts'] || []
             )
-        ).join(' ')
+        )
 
         let commands = []
         switch (module.buildsystem) {
@@ -315,7 +315,7 @@ export class Manifest {
     getAutotoolsCommands(
         rebuild: boolean,
         buildArgs: string[],
-        configOpts: string
+        configOpts: string[]
     ): Command[] {
         const numCPUs = cpus().length
         const commands: Command[] = []
@@ -329,7 +329,7 @@ export class Manifest {
                         this.repoDir,
                         './configure',
                         '--prefix=/app',
-                        configOpts,
+                        ...configOpts,
                     ],
                     { cwd: this.workspace },
                 )
@@ -367,7 +367,7 @@ export class Manifest {
     getCmakeCommands(
         rebuild: boolean,
         buildArgs: string[],
-        configOpts: string
+        configOpts: string[]
     ): Command[] {
         const commands: Command[] = []
         const cmakeBuildDir = DEFAULT_BUILD_SYSTEM_BUILD_DIR
@@ -395,7 +395,7 @@ export class Manifest {
                         '-DCMAKE_EXPORT_COMPILE_COMMANDS=1',
                         '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
                         '-DCMAKE_INSTALL_PREFIX=/app',
-                        configOpts,
+                        ...configOpts,
                     ],
                     { cwd: path.join(this.workspace, cmakeBuildDir) },
                 )
@@ -432,7 +432,7 @@ export class Manifest {
     getMesonCommands(
         rebuild: boolean,
         buildArgs: string[],
-        configOpts: string
+        configOpts: string[]
     ): Command[] {
         const commands: Command[] = []
         const mesonBuildDir = DEFAULT_BUILD_SYSTEM_BUILD_DIR
@@ -449,7 +449,7 @@ export class Manifest {
                         '--prefix',
                         '/app',
                         mesonBuildDir,
-                        configOpts,
+                        ...configOpts,
                     ],
                     { cwd: this.workspace },
                 )

@@ -33,8 +33,16 @@ class Extension {
             await this.handleActiveManifestChanged(manifest, isLastActive)
         })
 
-        this.buildPipeline = new BuildPipeline(this.workspaceState, this.manifestManager)
+        this.buildPipeline = new BuildPipeline(this.workspaceState)
         this.extCtx.subscriptions.push(this.buildPipeline)
+
+        this.manifestManager.onDidRequestRebuild(async (manifest) => {
+            if (manifest === this.manifestManager.getActiveManifest()) {
+                console.log(`Manifest at ${manifest.uri.fsPath} requested a rebuild`)
+                await manifest.deleteRepoDir()
+                await this.buildPipeline.resetState()
+            }
+        })
     }
 
     async activate() {
@@ -74,13 +82,17 @@ class Extension {
         })
 
         this.registerCommand(TaskMode.updateDeps, async () => {
-            await this.buildPipeline.updateDependencies()
-            await this.buildPipeline.buildDependencies()
+            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+                await this.buildPipeline.updateDependencies(activeManifest)
+                await this.buildPipeline.buildDependencies(activeManifest)
+            })
         })
 
         this.registerCommand('build-and-run', async () => {
-            await this.buildPipeline.build()
-            await this.buildPipeline.run()
+            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+                await this.buildPipeline.build(activeManifest)
+                await this.buildPipeline.run(activeManifest)
+            })
         })
 
         this.registerCommand(TaskMode.stop, async () => {
@@ -88,19 +100,27 @@ class Extension {
         })
 
         this.registerCommand(TaskMode.clean, async () => {
-            await this.buildPipeline.clean()
+            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+                await this.buildPipeline.clean(activeManifest)
+            })
         })
 
         this.registerCommand(TaskMode.run, async () => {
-            await this.buildPipeline.run()
+            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+                await this.buildPipeline.run(activeManifest)
+            })
         })
 
         this.registerCommand(TaskMode.export, async () => {
-            await this.buildPipeline.exportBundle()
+            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+                await this.buildPipeline.exportBundle(activeManifest)
+            })
         })
 
         this.registerCommand('build', async () => {
-            await this.buildPipeline.build()
+            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
+                await this.buildPipeline.build(activeManifest)
+            })
         })
 
         this.registerTerminalProfileProvider('runtime-terminal-provider', {

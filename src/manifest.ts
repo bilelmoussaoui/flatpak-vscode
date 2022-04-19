@@ -571,9 +571,11 @@ export class Manifest {
     }
 
     async deleteRepoDir(): Promise<void> {
-        await fs.rmdir(this.repoDir, {
-            recursive: true,
-        })
+        if (await exists(this.repoDir)) {
+            await fs.rmdir(this.repoDir, {
+                recursive: true,
+            })
+        }
     }
 
     async overrideWorkspaceCommandConfig(

@@ -150,9 +150,7 @@ export class ManifestManager implements vscode.Disposable {
         }
 
         // Ensure that build directory of active manifest exists
-        if (!(await exists(manifest.buildDir))) {
-            await fs.mkdir(manifest.buildDir)
-        }
+        await fs.mkdir(manifest.buildDir, { recursive: true })
     }
 
     /**

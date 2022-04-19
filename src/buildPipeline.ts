@@ -7,7 +7,6 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import * as fs from 'fs/promises'
 import { Manifest } from './manifest'
-import { exists } from './utils'
 
 export class BuildPipeline implements vscode.Disposable {
     private readonly workspaceState: WorkspaceState
@@ -174,12 +173,10 @@ export class BuildPipeline implements vscode.Disposable {
 
         const buildSystemDir = manifest.buildSystemBuildDir()
         if (buildSystemDir) {
-            const buildDir = path.join(manifest.workspace, buildSystemDir)
-            if (await exists(buildDir)) {
-                await fs.rmdir(buildDir, {
-                    recursive: true
-                })
-            }
+            await fs.rm(path.join(manifest.workspace, buildSystemDir), {
+                recursive: true,
+                force: true,
+            })
             this.outputTerminal.appendMessage(`Deleted ${buildSystemDir} directory`)
         }
 

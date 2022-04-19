@@ -5,7 +5,7 @@ import { getuid } from 'process'
 import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
-import { exists, generatePathOverride, getHostEnv } from './utils'
+import { generatePathOverride, getHostEnv } from './utils'
 import { getFlatpakVersion, versionCompare } from './flatpakUtils'
 import { checkForMissingRuntimes } from './manifestUtils'
 
@@ -492,11 +492,10 @@ export class Manifest {
 
     async bundle(): Promise<Command[]> {
         const commands = []
-        if (await exists(this.finializedRepoDir)) {
-            await fs.rmdir(this.finializedRepoDir, {
-                recursive: true
-            })
-        }
+        await fs.rm(this.finializedRepoDir, {
+            recursive: true,
+            force: true,
+        })
 
         commands.push(new Command('cp', [
             '-r',
@@ -571,11 +570,10 @@ export class Manifest {
     }
 
     async deleteRepoDir(): Promise<void> {
-        if (await exists(this.repoDir)) {
-            await fs.rmdir(this.repoDir, {
-                recursive: true,
-            })
-        }
+        await fs.rm(this.repoDir, {
+            recursive: true,
+            force: true,
+        })
     }
 
     async overrideWorkspaceCommandConfig(

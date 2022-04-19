@@ -26,20 +26,17 @@ export class BuildPipeline implements vscode.Disposable {
     }
 
     /**
-     * Init the build environment
+     * Ensure that the build environment is initialized
      */
-    async initializeBuild(manifest: Manifest) {
-        this.runner.ensureIdle()
-
-        if (this.workspaceState.getInitialized()) {
+    async ensureInitializedBuild(manifest: Manifest) {
+        if (await manifest.isBuildInitialized()) {
             console.log('Skipped build initialization. Already initialized.')
             return
         }
 
+        this.runner.ensureIdle()
         await this.runner.execute([manifest.initBuild()], TaskMode.buildInit)
         await loadIntegrations(manifest)
-
-        await this.workspaceState.setInitialized(true)
     }
 
     /**
@@ -47,11 +44,7 @@ export class BuildPipeline implements vscode.Disposable {
      */
     async updateDependencies(manifest: Manifest) {
         this.runner.ensureIdle()
-
-        if (!this.workspaceState.getInitialized()) {
-            console.log('Did not run updateDependencies. Build is not initialized.')
-            return
-        }
+        await this.ensureInitializedBuild(manifest)
 
         await this.runner.execute([manifest.updateDependencies()], TaskMode.updateDeps)
 
@@ -107,8 +100,7 @@ export class BuildPipeline implements vscode.Disposable {
      */
     async build(manifest: Manifest) {
         this.runner.ensureIdle()
-
-        await this.initializeBuild(manifest)
+        await this.ensureInitializedBuild(manifest)
 
         if (!this.workspaceState.getDependenciesUpdated()) {
             await this.updateDependencies(manifest)
@@ -195,7 +187,6 @@ export class BuildPipeline implements vscode.Disposable {
     }
 
     async resetState() {
-        await this.workspaceState.setInitialized(false)
         await this.workspaceState.setDependenciesUpdated(false)
         await this.workspaceState.setDependenciesBuilt(false)
         await this.workspaceState.setApplicationBuilt(false)

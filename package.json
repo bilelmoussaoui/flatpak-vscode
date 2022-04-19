@@ -116,11 +116,11 @@
         },
         {
           "command": "flatpak-vscode.build-terminal",
-          "when": "flatpakHasActiveManifest && flatpakInitialized"
+          "when": "flatpakHasActiveManifest"
         },
         {
           "command": "flatpak-vscode.update-deps",
-          "when": "flatpakHasActiveManifest && flatpakInitialized"
+          "when": "flatpakHasActiveManifest"
         },
         {
           "command": "flatpak-vscode.run",

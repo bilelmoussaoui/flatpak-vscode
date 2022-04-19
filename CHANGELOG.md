@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.0.26]
+
+- Only `appendWatcherExclude` when there is an active manifest 
+- Don't show run/stop button when there is no active manifest 
+- Disable keyboard shortcuts when there is no active manifest 
+- Fix missing SDKs verification
+- Simplify the build pipeline
+- Fix multiple config-opts
+
 ## [0.0.25]
 
 - Added `mesonbuild.mesonbuild` extension integration.

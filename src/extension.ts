@@ -134,17 +134,12 @@ class Extension {
         })
 
         this.registerTerminalProfileProvider('build-terminal-provider', {
-            provideTerminalProfile: () => {
+            provideTerminalProfile: async () => {
                 const activeManifest = this.manifestManager.getActiveManifest()
                 if (activeManifest === null) {
                     throw Error('There is no active manifest. Please create or select one.')
                 }
-                if (!this.workspaceState.getInitialized()) {
-                    // FIXME Ideally we should initialized the build environment here.
-                    // But running build-init also triggers other commands. So that should
-                    // be sorted first.
-                    throw Error('Build environment is not initialized. Run a build command first.')
-                }
+                await this.buildPipeline.ensureInitializedBuild(activeManifest)
                 return new vscode.TerminalProfile(activeManifest.buildTerminal())
             }
         })
@@ -187,9 +182,8 @@ class Extension {
 
         await appendWatcherExclude(['.flatpak/**', '_build/**'])
 
-        if (this.workspaceState.getInitialized()) {
-            await loadIntegrations(manifest)
-        }
+        await this.buildPipeline.ensureInitializedBuild(manifest)
+        await loadIntegrations(manifest)
     }
 }
 

@@ -4,8 +4,6 @@ type WorkspaceStateKey =
     // The current manifest URI that directs to active manifest.
     // This is used to retrieve the last active manifest between startup.
     'ActiveManifestUri' |
-    // Whether the '.flatpak' directory is present and populated
-    'Initialized' |
     // Whether dependencies of the application are up to date
     'DependenciesUpdated' |
     // Whether dependencies of the application are built
@@ -26,7 +24,6 @@ export class WorkspaceState {
     async loadContexts(): Promise<void> {
         // Contexts has to be set again between startups
         await this.setContext('flatpakHasActiveManifest', this.getActiveManifestUri() !== undefined)
-        await this.setContext('flatpakInitialized', this.getInitialized())
         await this.setContext('flatpakDependenciesBuilt', this.getDependenciesBuilt())
         await this.setContext('flatpakApplicationBuilt', this.getApplicationBuilt())
     }
@@ -38,15 +35,6 @@ export class WorkspaceState {
 
     getActiveManifestUri(): vscode.Uri | undefined {
         return this.get('ActiveManifestUri')
-    }
-
-    async setInitialized(value: boolean): Promise<void> {
-        await this.setContext('flatpakInitialized', value)
-        await this.update('Initialized', value)
-    }
-
-    getInitialized(): boolean {
-        return this.get('Initialized') || false
     }
 
     async setDependenciesUpdated(value: boolean): Promise<void> {

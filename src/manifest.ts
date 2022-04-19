@@ -39,6 +39,27 @@ export class Manifest {
         })?.[1]
     }
 
+    async isBuildInitialized(): Promise<boolean> {
+        const repoDir = vscode.Uri.file(this.repoDir)
+        const metadataFile = vscode.Uri.joinPath(repoDir, 'metadata')
+        const filesDir = vscode.Uri.joinPath(repoDir, 'files')
+        const varDir = vscode.Uri.joinPath(repoDir, 'var')
+
+        try {
+            // From gnome-builder
+            // https://gitlab.gnome.org/GNOME/gnome-builder/-/blob/8579055f5047a0af5462e8a587b0742014d71d64/src/plugins/flatpak/gbp-flatpak-pipeline-addin.c#L220
+            return (await vscode.workspace.fs.stat(metadataFile)).type === vscode.FileType.File
+                && (await vscode.workspace.fs.stat(filesDir)).type === vscode.FileType.Directory
+                && (await vscode.workspace.fs.stat(varDir)).type === vscode.FileType.Directory
+        } catch (err) {
+            if (err instanceof vscode.FileSystemError && err.code === 'FileNotFound') {
+                return false
+            }
+
+            throw err
+        }
+    }
+
     /**
      * Check for invalidity in the manifest
      * @returns an Error with a message if there is an error otherwise null

@@ -458,13 +458,6 @@ export class Manifest {
         commands.push(
             new Command(
                 'flatpak',
-                ['build', ...buildArgs, this.repoDir, 'ninja', '-C', mesonBuildDir],
-                { cwd: this.workspace },
-            )
-        )
-        commands.push(
-            new Command(
-                'flatpak',
                 [
                     'build',
                     ...buildArgs,

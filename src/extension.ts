@@ -38,7 +38,7 @@ class Extension {
         this.extCtx.subscriptions.push(this.buildPipeline)
 
         this.manifestManager.onDidRequestRebuild(async (manifest) => {
-            if (manifest === this.manifestManager.getActiveManifest()) {
+            if (this.manifestManager.isActiveManifest(manifest)) {
                 console.log(`Manifest at ${manifest.uri.fsPath} requested a rebuild`)
                 await manifest.deleteRepoDir()
                 await this.buildPipeline.resetState()
@@ -52,9 +52,8 @@ class Extension {
 
         // Private commands
         this.registerCommand('show-active-manifest', async () => {
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await vscode.window.showTextDocument(activeManifest.uri)
-            }, false)
+            const activeManifest = await this.manifestManager.getActiveManifest(false)
+            await vscode.window.showTextDocument(activeManifest.uri)
         })
 
         // Public commands
@@ -63,19 +62,17 @@ class Extension {
         })
 
         this.registerCommand('runtime-terminal', async () => {
-            await this.manifestManager.doWithActiveManifest((activeManifest) => {
-                const runtimeTerminal = window.createTerminal(activeManifest.runtimeTerminal())
-                this.extCtx.subscriptions.push(runtimeTerminal)
-                runtimeTerminal.show()
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            const runtimeTerminal = window.createTerminal(activeManifest.runtimeTerminal())
+            this.extCtx.subscriptions.push(runtimeTerminal)
+            runtimeTerminal.show()
         })
 
         this.registerCommand('build-terminal', async () => {
-            await this.manifestManager.doWithActiveManifest((activeManifest) => {
-                const buildTerminal = window.createTerminal(activeManifest.buildTerminal())
-                this.extCtx.subscriptions.push(buildTerminal)
-                buildTerminal.show()
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            const buildTerminal = window.createTerminal(activeManifest.buildTerminal())
+            this.extCtx.subscriptions.push(buildTerminal)
+            buildTerminal.show()
         })
 
         this.registerCommand('show-output-terminal', async () => {
@@ -83,17 +80,15 @@ class Extension {
         })
 
         this.registerCommand(TaskMode.updateDeps, async () => {
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.buildPipeline.updateDependencies(activeManifest)
-                await this.buildPipeline.buildDependencies(activeManifest)
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            await this.buildPipeline.updateDependencies(activeManifest)
+            await this.buildPipeline.buildDependencies(activeManifest)
         })
 
         this.registerCommand('build-and-run', async () => {
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.buildPipeline.build(activeManifest)
-                await this.buildPipeline.run(activeManifest)
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            await this.buildPipeline.build(activeManifest)
+            await this.buildPipeline.run(activeManifest)
         })
 
         this.registerCommand(TaskMode.stop, async () => {
@@ -101,45 +96,35 @@ class Extension {
         })
 
         this.registerCommand(TaskMode.clean, async () => {
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.buildPipeline.clean(activeManifest)
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            await this.buildPipeline.clean(activeManifest)
         })
 
         this.registerCommand(TaskMode.run, async () => {
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.buildPipeline.run(activeManifest)
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            await this.buildPipeline.run(activeManifest)
         })
 
         this.registerCommand(TaskMode.export, async () => {
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.buildPipeline.exportBundle(activeManifest)
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            await this.buildPipeline.exportBundle(activeManifest)
         })
 
         this.registerCommand('build', async () => {
-            await this.manifestManager.doWithActiveManifest(async (activeManifest) => {
-                await this.buildPipeline.build(activeManifest)
-            })
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            await this.buildPipeline.build(activeManifest)
         })
 
         this.registerTerminalProfileProvider('runtime-terminal-provider', {
-            provideTerminalProfile: () => {
-                const activeManifest = this.manifestManager.getActiveManifest()
-                if (activeManifest === null) {
-                    throw Error('There is no active manifest. Please create or select one.')
-                }
+            provideTerminalProfile: async () => {
+                const activeManifest = await this.manifestManager.getActiveManifest()
                 return new vscode.TerminalProfile(activeManifest.runtimeTerminal())
             }
         })
 
         this.registerTerminalProfileProvider('build-terminal-provider', {
             provideTerminalProfile: async () => {
-                const activeManifest = this.manifestManager.getActiveManifest()
-                if (activeManifest === null) {
-                    throw Error('There is no active manifest. Please create or select one.')
-                }
+                const activeManifest = await this.manifestManager.getActiveManifest()
                 await this.buildPipeline.ensureInitializedBuild(activeManifest)
                 return new vscode.TerminalProfile(activeManifest.buildTerminal())
             }
@@ -151,10 +136,8 @@ class Extension {
     }
 
     async deactivate() {
-        const activeManifest = this.manifestManager.getActiveManifest()
-        if (activeManifest) {
-            await unloadIntegrations(activeManifest)
-        }
+        const activeManifest = await this.manifestManager.getActiveManifest()
+        await unloadIntegrations(activeManifest)
     }
 
     private registerTerminalProfileProvider(name: string, provider: vscode.TerminalProfileProvider) {

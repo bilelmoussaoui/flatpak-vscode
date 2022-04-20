@@ -63,7 +63,7 @@ export class ManifestManager implements vscode.Disposable {
             const manifests = await this.getManifests()
             manifests.delete(deletedUri)
 
-            if (deletedUri.fsPath === this.getActiveManifest()?.uri.fsPath) {
+            if (deletedUri.fsPath === this.activeManifest?.uri.fsPath) {
                 // If current active manifest is deleted and there is only one manifest
                 // left, select that manifest automatically.
                 const firstManifest = manifests.getFirstItem()
@@ -122,8 +122,39 @@ export class ManifestManager implements vscode.Disposable {
         return this.manifests
     }
 
-    getActiveManifest(): Manifest | null {
-        return this.activeManifest
+    /**
+     * Convenience function to get the active manifest and try handle if it doesn't exist.
+     *
+     * This throws an error if a null active manifest is unhandled.
+     *
+     * This also throw error by default when the active manifest contains error.
+     *
+     * @param checkForError Whether to throw an error if any error is found in the manifest
+     * @returns active manifest
+     */
+    async getActiveManifest(checkForError = true): Promise<Manifest> {
+        let ret = this.activeManifest
+
+        if (ret === null) {
+            const selectedManifest = await this.selectManifest()
+            if (selectedManifest === null) {
+                throw Error('No Flatpak manifest was selected.')
+            }
+            ret = selectedManifest
+        }
+
+        if (checkForError) {
+            const manifestError = ret.checkForError()
+            if (manifestError !== null) {
+                throw Error(`Active Flatpak manifest has error: ${manifestError.message}`)
+            }
+        }
+
+        return ret
+    }
+
+    isActiveManifest(manifest: Manifest | null): boolean {
+        return isDeepStrictEqual(this.activeManifest, manifest)
     }
 
     /**
@@ -132,7 +163,7 @@ export class ManifestManager implements vscode.Disposable {
      * @param isLastActive Whether if the manifest was loaded from stored ActiveManifestUri
      */
     private async setActiveManifest(manifest: Manifest | null, isLastActive: boolean): Promise<void> {
-        if (isDeepStrictEqual(this.getActiveManifest(), manifest)) {
+        if (this.isActiveManifest(manifest)) {
             return
         }
 
@@ -174,7 +205,7 @@ export class ManifestManager implements vscode.Disposable {
             manifests.delete(oldManifest.uri)
             manifests.add(updatedManifest)
 
-            if (uri.fsPath === this.getActiveManifest()?.uri.fsPath) {
+            if (uri.fsPath === this.activeManifest?.uri.fsPath) {
                 await this.setActiveManifest(updatedManifest, false)
             }
 
@@ -203,9 +234,8 @@ export class ManifestManager implements vscode.Disposable {
         }
 
         const quickPickItems: ManifestQuickPickItem[] = []
-        const activeManifest = this.getActiveManifest()
         manifests.forEach((manifest) => {
-            const labelPrefix = manifest.uri.fsPath === activeManifest?.uri.fsPath
+            const labelPrefix = manifest.uri.fsPath === this.activeManifest?.uri.fsPath
                 ? '$(pass-filled)' : '$(circle-large-outline)'
 
             quickPickItems.push({
@@ -229,34 +259,6 @@ export class ManifestManager implements vscode.Disposable {
         return selectedItem.manifest
     }
 
-    /**
-     * Convenience function to do things with the active manifest if it exist.
-     * If it doesn't exist. Show manifests picker, or show messages.
-     * @param func Callback function where the active manifest can be handled
-     */
-    async doWithActiveManifest(func: (manifest: Manifest) => Promise<void> | void, checkForError = true): Promise<void> {
-        let activeManifest = this.getActiveManifest()
-
-        if (activeManifest === null) {
-            const selectedManifest = await this.selectManifest()
-            if (selectedManifest === null) {
-                void vscode.window.showInformationMessage('No Flatpak manifest was selected.')
-                return
-            }
-            activeManifest = selectedManifest
-        }
-
-        if (checkForError) {
-            const manifestError = activeManifest.checkForError()
-            if (manifestError !== null) {
-                void vscode.window.showWarningMessage(`Active Flatpak manifest has error: ${manifestError.message}`)
-                return
-            }
-        }
-
-        await func(activeManifest)
-    }
-
     private tryShowStatusItem() {
         if (this.manifests !== undefined && !this.manifests.isEmpty()) {
             this.statusItem.show()
@@ -264,23 +266,22 @@ export class ManifestManager implements vscode.Disposable {
     }
 
     private updateStatusItem() {
-        const activeManifest = this.getActiveManifest()
-        const manifestError = activeManifest?.checkForError() || null
+        const manifestError = this.activeManifest?.checkForError() || null
 
-        if (activeManifest === null) {
+        if (this.activeManifest === null) {
             this.statusItem.text = '$(package)  No active manifest'
             this.statusItem.command = `${EXTENSION_ID}.select-manifest`
             this.statusItem.tooltip = 'Select manifest'
             this.statusItem.color = undefined
         } else if (manifestError !== null) {
-            this.statusItem.text = `$(package)  ${activeManifest.id()}`
+            this.statusItem.text = `$(package)  ${this.activeManifest.id()}`
             this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
             this.statusItem.tooltip = manifestError.message
             this.statusItem.color = new vscode.ThemeColor('notificationsErrorIcon.foreground')
         } else {
-            this.statusItem.text = `$(package)  ${activeManifest.id()}`
+            this.statusItem.text = `$(package)  ${this.activeManifest.id()}`
             this.statusItem.command = `${EXTENSION_ID}.show-active-manifest`
-            this.statusItem.tooltip = activeManifest.uri.fsPath
+            this.statusItem.tooltip = this.activeManifest.uri.fsPath
             this.statusItem.color = undefined
         }
     }

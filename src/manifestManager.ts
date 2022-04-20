@@ -223,14 +223,16 @@ export class ManifestManager implements vscode.Disposable {
 
     /**
      * Update the stored active manifest if user selects something and return the selected manifest.
+     *
+     * Throws an error if there are no discovered manifests
+     *
      * @returns the selected manifest
      */
     async selectManifest(): Promise<Manifest | null> {
         const manifests = await this.getManifests()
 
         if (manifests.isEmpty()) {
-            void vscode.window.showInformationMessage('No Flatpak manifest found in this workspace.')
-            return null
+            throw Error('No Flatpak manifest found in this workspace.')
         }
 
         const quickPickItems: ManifestQuickPickItem[] = []

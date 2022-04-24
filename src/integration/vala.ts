@@ -7,10 +7,10 @@ export class Vala extends SdkIntegration {
     }
 
     async load(manifest: Manifest): Promise<void> {
-        await manifest.overrideWorkspaceCommandConfig('vls', 'languageServerPath', 'vala-language-server', '/usr/lib/sdk/vala/bin/')
+        await manifest.overrideWorkspaceCommandConfig('vala', 'languageServerPath', 'vala-language-server', '/usr/lib/sdk/vala/bin/')
     }
 
     async unload(manifest: Manifest): Promise<void> {
-        await manifest.restoreWorkspaceConfig('vls', 'languageServerPath')
+        await manifest.restoreWorkspaceConfig('vala', 'languageServerPath')
     }
 }

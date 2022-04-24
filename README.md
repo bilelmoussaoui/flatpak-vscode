@@ -50,7 +50,7 @@ the host. If you want to contribute on adding an integration, see [CONTRIBUTING]
 
 ### [Vala](https://marketplace.visualstudio.com/items?itemName=prince781.vala)
 
-- Overrides `vls.languageServerPath` to use the SDK's Vala Language Server.
+- Overrides `vala.languageServerPath` to use the SDK's Vala Language Server.
 
 ## Contributing
 

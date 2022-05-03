@@ -5,6 +5,12 @@ import { OutputTerminal } from './outputTerminal'
 import { RunnerStatusItem } from './runnerStatusItem'
 import { EXTENSION_ID } from './extension'
 
+export class RunnerError extends Error {
+    constructor(mode: TaskMode, message: string) {
+        super(`Failed to execute ${mode}: ${message}`)
+    }
+}
+
 export class Runner implements vscode.Disposable {
     private readonly outputTerminal: OutputTerminal
     private readonly statusItem: RunnerStatusItem
@@ -54,7 +60,7 @@ export class Runner implements vscode.Disposable {
             }
 
             this.onError(mode, err as string)
-            throw err
+            throw new RunnerError(mode, err as string)
         } finally {
             this.currentCommandHandler = undefined
             this.statusItem.setStatus(null)

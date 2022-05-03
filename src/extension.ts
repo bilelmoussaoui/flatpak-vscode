@@ -9,6 +9,7 @@ import { WorkspaceState } from './workspaceState'
 import { migrateStateToMemento } from './migration'
 import { BuildPipeline } from './buildPipeline'
 import { loadIntegrations, unloadIntegrations } from './integration'
+import { RunnerError } from './runner'
 
 export const EXTENSION_ID = 'flatpak-vscode'
 
@@ -163,7 +164,17 @@ class Extension {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private registerCommand(name: string, callback: (...args: any) => any | Promise<void>) {
         this.extCtx.subscriptions.push(
-            commands.registerCommand(`${EXTENSION_ID}.${name}`, callback)
+            commands.registerCommand(`${EXTENSION_ID}.${name}`, async (args) => {
+                try {
+                    await callback(args)
+                } catch (err) {
+                    if (err instanceof RunnerError) {
+                        return
+                    }
+
+                    throw err
+                }
+            })
         )
     }
 

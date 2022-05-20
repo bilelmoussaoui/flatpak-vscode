@@ -44,8 +44,8 @@ the host. If you want to contribute on adding an integration, see [CONTRIBUTING]
 
 ### [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer)
 
-- Overrides `rust-analyzer.server.path` and `rust-analyzer.runnables.overrideCargo` to use the SDK's rust-analyzer and cargo binaries respectively. This is to avoid requiring build dependencies to be installed in the host.
-- Overrides `rust-analyzer.runnables.cargoExtraArgs` to set cargo's `--target-dir` to `_build/src`. Identical target directory must be set on your build system to prevent rebuilding when running rust-analyzer runnables.
+- Overrides `rust-analyzer.server.path` and `rust-analyzer.runnables.command` to use the SDK's rust-analyzer and cargo binaries respectively. This is to avoid requiring build dependencies to be installed in the host.
+- Overrides `rust-analyzer.runnables.extraArgs` to set cargo's `--target-dir` to `_build/src`. Identical target directory must be set on your build system to prevent rebuilding when running rust-analyzer runnables.
 - Overrides `rust-analyzer.files.excludeDirs` to set rust-analyzer to ignore `.flatpak` folder.
 
 ### [Vala](https://marketplace.visualstudio.com/items?itemName=prince781.vala)

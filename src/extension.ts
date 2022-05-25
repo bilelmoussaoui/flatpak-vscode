@@ -51,7 +51,7 @@ class Extension {
 
         // Private commands
         this.registerCommand('show-active-manifest', async () => {
-            const activeManifest = await this.manifestManager.getActiveManifest(false)
+            const activeManifest = await this.manifestManager.getActiveManifestUnchecked()
             await vscode.window.showTextDocument(activeManifest.uri)
         })
 

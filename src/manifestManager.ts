@@ -123,16 +123,29 @@ export class ManifestManager implements vscode.Disposable {
     }
 
     /**
+     * Like `getActiveManifestUnchecked` but throws an error when the active manifest contains error.
+     *
+     * @returns active manifest
+     */
+    async getActiveManifest(): Promise<Manifest> {
+        const manifest = await this.getActiveManifestUnchecked()
+
+        const error = manifest.checkForError()
+        if (error !== null) {
+            throw Error(`Active Flatpak manifest has error: ${error.message}`)
+        }
+
+        return manifest
+    }
+
+    /**
      * Convenience function to get the active manifest and try handle if it doesn't exist.
      *
      * This throws an error if a null active manifest is unhandled.
      *
-     * This also throw error by default when the active manifest contains error.
-     *
-     * @param checkForError Whether to throw an error if any error is found in the manifest
      * @returns active manifest
      */
-    async getActiveManifest(checkForError = true): Promise<Manifest> {
+    async getActiveManifestUnchecked(): Promise<Manifest> {
         let ret = this.activeManifest
 
         if (ret === null) {
@@ -141,13 +154,6 @@ export class ManifestManager implements vscode.Disposable {
                 throw Error('No Flatpak manifest was selected.')
             }
             ret = selectedManifest
-        }
-
-        if (checkForError) {
-            const manifestError = ret.checkForError()
-            if (manifestError !== null) {
-                throw Error(`Active Flatpak manifest has error: ${manifestError.message}`)
-            }
         }
 
         return ret

@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.0.27]
+
+- Update Vala/Rust Analyzer integrations
+- Catch runner errors and avoid VSCode showing a message dialog for them
+- Other cleanup
+
 ## [0.0.26]
 
 - Only `appendWatcherExclude` when there is an active manifest 

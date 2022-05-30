@@ -12,6 +12,7 @@ const INTEGRATIONS = [
 
 export async function loadIntegrations(manifest: Manifest) {
     for (const integration of INTEGRATIONS) {
+        console.log(`Trying to load integration ${integration.extensionId}`)
         if (integration.isApplicable(manifest) && integration.isExtensionEnabled()) {
             try {
                 await integration.load(manifest)
@@ -19,12 +20,15 @@ export async function loadIntegrations(manifest: Manifest) {
             } catch (err) {
                 void window.showErrorMessage(`Failed to load ${integration.constructor.name} integration: ${err as string}`)
             }
+        } else {
+            console.log(`Integration ${integration.extensionId} is not applicable`)
         }
     }
 }
 
 export async function unloadIntegrations(manifest: Manifest) {
     for (const integration of INTEGRATIONS) {
+        console.log(`Trying to unload integration ${integration.extensionId}`)
         if (integration.isApplicable(manifest) && integration.isExtensionEnabled()) {
             try {
                 await integration.unload(manifest)
@@ -32,7 +36,8 @@ export async function unloadIntegrations(manifest: Manifest) {
             } catch (err) {
                 void window.showWarningMessage(`Failed to unload ${integration.constructor.name} integration: ${err as string}`)
             }
-
+        } else {
+            console.log(`Integration ${integration.extensionId} is not applicable`)
         }
     }
 }

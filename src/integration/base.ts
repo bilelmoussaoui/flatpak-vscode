@@ -6,7 +6,7 @@ import { Manifest } from '../manifest'
  * Derive from this when needed more control for `isApplicable`.
  */
 export abstract class Integration {
-    private readonly extensionId: string
+    readonly extensionId: string
 
     constructor(extensionId: string) {
         this.extensionId = extensionId

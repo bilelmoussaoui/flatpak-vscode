@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.28]
+
+- Update Rust Analyzer extension ID
+
 ## [0.0.27]
 
 - Update Vala/Rust Analyzer integrations

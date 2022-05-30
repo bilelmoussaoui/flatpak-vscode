@@ -3,7 +3,7 @@ import { SdkIntegration } from './base'
 
 export class RustAnalyzer extends SdkIntegration {
     constructor() {
-        super('matklad.rust-analyzer', 'rust')
+        super('rust-lang.rust-analyzer', 'rust')
     }
 
     async load(manifest: Manifest): Promise<void> {

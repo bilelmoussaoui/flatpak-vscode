@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.29]
+
+- Update Flatpak logo
+
 ## [0.0.28]
 
 - Update Rust Analyzer extension ID

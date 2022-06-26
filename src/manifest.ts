@@ -197,8 +197,7 @@ export class Manifest {
         args.push(this.repoDir)
         args.push(this.path())
 
-        return new Command(
-            'flatpak-builder',
+        return Command.flatpakBuilder(
             args,
             { cwd: this.workspace },
         )
@@ -218,8 +217,7 @@ export class Manifest {
         args.push(this.repoDir)
         args.push(this.path())
 
-        return new Command(
-            'flatpak-builder',
+        return Command.flatpakBuilder(
             args,
             { cwd: this.workspace },
         )

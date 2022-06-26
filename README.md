@@ -15,7 +15,7 @@ A simple VSCode extension that detects a Flatpak manifest and offers various com
 - `flatpak`
 - `flatpak-builder`
 
-  If you're using Fedora Silverblue, you will have to layer `flatpak-builder` as it is no longer part of the base image. You can use something like `rpm-ostree install flatpak-builder`.
+If you're using Fedora Silverblue, it is recommended to install `org.flatpak.Builder` through `flatpak install org.flatpak.Builder`. However, layering `flatpak-builder` through `rpm-ostree install flatpak-builder` is still possible. The extension would use the host `flatpak-builder` by default and fallback to the flatpak-installed `org.flatpak.Builder`.
 
 ## Commands
 

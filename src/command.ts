@@ -6,6 +6,9 @@ import { execFileSync, execFile, ChildProcess } from 'child_process'
 import { OutputTerminal } from './outputTerminal'
 import { CancellationToken } from 'vscode'
 
+let FLATPAK_BUILDER_HOST_EXISTS: boolean | undefined
+let FLATPAK_BUILDER_SANDBOXED_EXISTS: boolean | undefined
+
 export class Canceled extends Error {
     constructor() {
         super('Cancelled task')
@@ -20,6 +23,9 @@ export interface CommandOptions {
     forceSandbox?: boolean
 }
 
+/**
+ * Tries to run the command in the host environment
+ */
 export class Command {
     readonly program: string
     readonly args: string[]
@@ -34,6 +40,21 @@ export class Command {
         }
         this.args = args
         this.cwd = options?.cwd
+    }
+
+    static flatpakBuilder(args: string[], options?: CommandOptions): Command {
+        if (flatpakBuilderHostExists()) {
+            return new Command('flatpak-builder', args, options)
+        } else if (flatpakBuilderSandboxedExists()) {
+            return new Command('flatpak', ['run', 'org.flatpak.Builder', ...args], options)
+        } else {
+            // User may have installed either after receiving the error
+            // so invalidate to check again if either now exists
+            FLATPAK_BUILDER_HOST_EXISTS = undefined
+            FLATPAK_BUILDER_SANDBOXED_EXISTS = undefined
+
+            throw new Error('Flatpak builder was not found. Please install either `flatpak-builder` from your distro repositories or `org.flatpak.Builder` through `flatpak install`')
+        }
     }
 
     toString(): string {
@@ -97,4 +118,52 @@ export class Command {
             })
         })
     }
+}
+
+/**
+ * Whether the flatpak-builder exists on host
+ */
+function flatpakBuilderHostExists(): boolean {
+    if (FLATPAK_BUILDER_HOST_EXISTS === undefined) {
+        const command = new Command('flatpak-builder', ['--version'])
+
+        try {
+            const version = command
+                .execSync()
+                .toString()
+                .replace('flatpak-builder', '')
+                .trim()
+            FLATPAK_BUILDER_HOST_EXISTS = true
+            console.log(`host flatpak-builder version: ${version}`)
+        } catch (error) {
+            FLATPAK_BUILDER_HOST_EXISTS = false
+            console.log(`host flatpak-builder not found: ${error as string}`)
+        }
+    }
+
+    return FLATPAK_BUILDER_HOST_EXISTS
+}
+
+/**
+ * Whether the flatpak-installed org.flatpak.Builder exists
+ */
+function flatpakBuilderSandboxedExists(): boolean {
+    if (FLATPAK_BUILDER_SANDBOXED_EXISTS === undefined) {
+        const command = new Command('flatpak', ['run', 'org.flatpak.Builder', '--version'])
+
+        try {
+            const version = command
+                .execSync()
+                .toString()
+                .replace('flatpak-builder', '')
+                .trim()
+            FLATPAK_BUILDER_SANDBOXED_EXISTS = true
+            console.log(`flatpak-installed flatpak-builder version: ${version}`)
+        } catch (error) {
+            FLATPAK_BUILDER_SANDBOXED_EXISTS = false
+            console.log(`flatpak-installed flatpak-builder not found: ${error as string}`)
+        }
+    }
+
+    return FLATPAK_BUILDER_SANDBOXED_EXISTS
 }

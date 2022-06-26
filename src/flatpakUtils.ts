@@ -1,12 +1,16 @@
 import { Command } from './command'
 
-export interface Runtime {
+export interface FlatpakEntry {
     id: string
     version: string
 }
 
-export function getAvailableRuntimes(): Runtime[] {
-    const command = new Command('flatpak', ['list', '--runtime', '--columns=application,branch'])
+/**
+ * Retrieves the list of installed flatpak applications or runtimes.
+ * @param type applications or runtimes
+ */
+export function getAvailable(type: 'app' | 'runtime'): FlatpakEntry[] {
+    const command = new Command('flatpak', ['list', `--${type}`, '--columns=application,branch'])
     const result = command.execSync().toString()
 
     const runtimes = []

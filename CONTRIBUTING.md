@@ -4,15 +4,15 @@
 
 ### Flatpaked VSCodium/VSCode
 
-1. Install the node14 SDK extension by executing the following:
+1. Install the node18 SDK extension by executing the following:
 ```bash
-flatpak install flathub org.freedesktop.Sdk.Extension.node14
+flatpak install flathub org.freedesktop.Sdk.Extension.node18
 ```
 Note: It will suggest multiple versions. To be sure which one to use, check the manifest in the flathub repo of [VSCodium](https://github.com/flathub/com.vscodium.codium/blob/master/com.vscodium.codium.yaml)/[VSCode](https://github.com/flathub/com.visualstudio.code/blob/master/com.visualstudio.code.yaml).
 
 2. Enable it by adding the following line to `~/.bash_profile`:
 ```bash
-export FLATPAK_ENABLE_SDK_EXT=node14
+export FLATPAK_ENABLE_SDK_EXT=node18
 ```
 
 3. Log out and in again.
@@ -21,7 +21,6 @@ export FLATPAK_ENABLE_SDK_EXT=node14
 
 5. Within the integrated terminal of your editor, execute the following commands at the root of the repository:
 ```bash
-npm install --global yarn
 yarn install
 ```
 

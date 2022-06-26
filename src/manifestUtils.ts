@@ -5,7 +5,7 @@ import * as JSONC from 'jsonc-parser'
 import { Uri, workspace } from 'vscode'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
-import { getAvailableRuntimes } from './flatpakUtils'
+import { getAvailable } from './flatpakUtils'
 
 /**
  * VSCode specification compliant glob pattern to look up for
@@ -156,7 +156,7 @@ export function checkForMissingRuntimes(manifest: Manifest): string[] {
     const missingRuntimes = new Set([manifest.manifest.runtime, manifest.manifest.sdk])
     const missingSdkExtensions = new Set(manifest.manifest['sdk-extensions'])
 
-    for (const availableRuntime of getAvailableRuntimes()) {
+    for (const availableRuntime of getAvailable('runtime')) {
         if (runtimeVersion === availableRuntime.version) {
             if (missingRuntimes.delete(availableRuntime.id)) {
                 continue

@@ -13,9 +13,6 @@ export class RustAnalyzer extends SdkIntegration {
         if (buildSystemBuildDir !== null) {
             const envArgs = new Map([['CARGO_HOME', `${buildSystemBuildDir}/cargo-home`]])
             await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'runnables.command', 'cargo', '/usr/lib/sdk/rust-stable/bin/', envArgs)
-
-            const cargoExtraArgs = [`--target-dir=${buildSystemBuildDir}/src`]
-            await manifest.overrideWorkspaceConfig('rust-analyzer', 'runnables.extraArgs', cargoExtraArgs)
         }
 
         await manifest.overrideWorkspaceConfig('rust-analyzer', 'files.excludeDirs', ['.flatpak'])
@@ -24,7 +21,6 @@ export class RustAnalyzer extends SdkIntegration {
     async unload(manifest: Manifest): Promise<void> {
         await manifest.restoreWorkspaceConfig('rust-analyzer', 'server.path')
         await manifest.restoreWorkspaceConfig('rust-analyzer', 'runnables.command')
-        await manifest.restoreWorkspaceConfig('rust-analyzer', 'runnables.extraArgs')
         await manifest.restoreWorkspaceConfig('rust-analyzer', 'files.excludeDirs')
     }
 }

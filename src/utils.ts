@@ -1,6 +1,10 @@
 import * as dbus from 'dbus-next'
 import { promises as fs, constants as fsc, PathLike } from 'fs'
 import * as vscode from 'vscode'
+import * as path from 'path'
+import { homedir } from 'os'
+import { IS_SANDBOXED } from './extension'
+import { Command } from './command'
 
 /**
  * Make sures the documents portal is running
@@ -65,4 +69,21 @@ export async function appendWatcherExclude(paths: PathLike[]) {
     }
 
     await config.update('watcherExclude', value)
+}
+
+/**
+ * Attempts to show the data directory of the app, typically in a file explorer.
+ * @param appId The app id of the app
+ */
+export function showDataDirectory(appId: string) {
+    const dataDirectory = path.join(homedir(), '.var/app/', appId)
+    console.log(`Showing data directory at: ${dataDirectory}`)
+
+    if (IS_SANDBOXED) {
+        // Spawn in host since a Flatpak-ed app cannot access other Flatpak apps
+        // data directory and would just fail silently if VSCode API's openExternal is used.
+        new Command('xdg-open', [dataDirectory]).exec()
+    } else {
+        void vscode.env.openExternal(vscode.Uri.file(dataDirectory))
+    }
 }

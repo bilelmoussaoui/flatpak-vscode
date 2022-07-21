@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { window, ExtensionContext, commands } from 'vscode'
 import { existsSync } from 'fs'
-import { ensureDocumentsPortal, appendWatcherExclude } from './utils'
+import { ensureDocumentsPortal, appendWatcherExclude, showDataDirectory } from './utils'
 import { TaskMode } from './taskMode'
 import { ManifestManager } from './manifestManager'
 import { Manifest } from './manifest'
@@ -57,6 +57,11 @@ class Extension {
         })
 
         // Public commands
+        this.registerCommand('show-data-directory', async () => {
+            const activeManifest = await this.manifestManager.getActiveManifest()
+            showDataDirectory(activeManifest.id())
+        })
+
         this.registerCommand('select-manifest', async () => {
             await this.manifestManager.selectManifest()
         })

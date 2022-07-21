@@ -51,6 +51,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "flatpak-vscode.show-data-directory",
+        "title": "Show the data directory for the active manifest",
+        "category": "Flatpak"
+      },
+      {
         "command": "flatpak-vscode.select-manifest",
         "title": "Select or change the active manifest",
         "category": "Flatpak"

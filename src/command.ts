@@ -2,7 +2,7 @@ import { IS_SANDBOXED } from './extension'
 import * as fs from 'fs/promises'
 import * as pty from './nodePty'
 import { PathLike } from 'fs'
-import { execFileSync } from 'child_process'
+import { execFileSync, execFile, ChildProcess } from 'child_process'
 import { OutputTerminal } from './outputTerminal'
 import { CancellationToken } from 'vscode'
 
@@ -57,6 +57,10 @@ export class Command {
         return execFileSync(this.program, this.args, {
             cwd: this.cwd
         })
+    }
+
+    exec(): ChildProcess {
+        return execFile(this.program, this.args, { cwd: this.cwd })
     }
 
     /**

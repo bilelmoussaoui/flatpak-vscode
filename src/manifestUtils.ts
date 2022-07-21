@@ -142,7 +142,11 @@ function isNumber(char: string): boolean {
 
 function isValidManifest(manifest: ManifestSchema): boolean {
     const hasId = (manifest.id || manifest['app-id']) !== undefined
-    const hasModules = manifest.modules.length !== 0
+    // FIXME ManifestSchema.modules can be undefined, even it is not marked as that.
+    // It was not detected before as we return `null` on `parseManifest` early before
+    // having a chance to access the undefined `modules`.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const hasModules = manifest.modules !== undefined
     return hasId && hasModules
 }
 

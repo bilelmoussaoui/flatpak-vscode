@@ -93,7 +93,7 @@ export class Runner implements vscode.Disposable {
     private onError(mode: TaskMode, message: string): void {
         this.outputTerminal.appendError(message)
 
-        this.statusItem?.setStatus({
+        this.statusItem.setStatus({
             type: 'error',
             isOperation: false,
             title: `Failed to execute ${mode}`,

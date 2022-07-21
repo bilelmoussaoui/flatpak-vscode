@@ -17,7 +17,7 @@ export function getAvailable(type: 'app' | 'runtime'): FlatpakEntry[] {
     for (const line of result.split(/\r?\n/)) {  // Split at new line
         const [id, version] = line.split(/\s+/)  // Split at whitespace
 
-        if (id !== undefined && version !== undefined) {
+        if (id && version) {
             runtimes.push({ id, version })
         }
     }

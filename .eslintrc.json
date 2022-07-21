@@ -28,6 +28,7 @@
       "warn",
       "single"
     ],
+    "@typescript-eslint/no-unnecessary-condition": "warn",
     "curly": "warn",
     "eqeqeq": "warn",
     "no-throw-literal": "warn",

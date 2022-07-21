@@ -1,13 +1,47 @@
-import { IS_SANDBOXED } from './extension'
 import * as fs from 'fs/promises'
 import * as pty from './nodePty'
 import { PathLike } from 'fs'
 import { execFileSync, execFile, ChildProcess } from 'child_process'
 import { OutputTerminal } from './outputTerminal'
 import { CancellationToken } from 'vscode'
+import { Lazy } from './lazy'
+import { IS_SANDBOXED } from './extension'
 
-let FLATPAK_BUILDER_HOST_EXISTS: boolean | undefined
-let FLATPAK_BUILDER_SANDBOXED_EXISTS: boolean | undefined
+/**
+ * Whether flatpak-builder is installed on the host
+ */
+const FLATPAK_BUILDER_HOST_EXISTS = new Lazy(() => {
+    try {
+        const version = new Command('flatpak-builder', ['--version'])
+            .execSync()
+            .toString()
+            .replace('flatpak-builder', '')
+            .trim()
+        console.log(`host flatpak-builder version: ${version}`)
+        return true
+    } catch (error) {
+        console.log(`host flatpak-builder not found: ${error as string}`)
+        return false
+    }
+})
+
+/**
+ * Whether flatpak-builder is installed as a Flatpak (org.flatpak.Builder)
+ */
+const FLATPAK_BUILDER_SANDBOXED_EXISTS = new Lazy(() => {
+    try {
+        const version = new Command('flatpak', ['run', 'org.flatpak.Builder', '--version'])
+            .execSync()
+            .toString()
+            .replace('flatpak-builder', '')
+            .trim()
+        console.log(`flatpak-installed flatpak-builder version: ${version}`)
+        return true
+    } catch (error) {
+        console.log(`flatpak-installed flatpak-builder not found: ${error as string}`)
+        return false
+    }
+})
 
 export class Canceled extends Error {
     constructor() {
@@ -32,7 +66,7 @@ export class Command {
     private readonly cwd?: string
 
     constructor(program: string, args: string[], options?: CommandOptions) {
-        if (options?.forceSandbox || IS_SANDBOXED) {
+        if (options?.forceSandbox || IS_SANDBOXED.get()) {
             this.program = 'flatpak-spawn'
             args.unshift('--host', '--env=TERM=xterm-256color', program)
         } else {
@@ -43,15 +77,15 @@ export class Command {
     }
 
     static flatpakBuilder(args: string[], options?: CommandOptions): Command {
-        if (flatpakBuilderHostExists()) {
+        if (FLATPAK_BUILDER_HOST_EXISTS.get()) {
             return new Command('flatpak-builder', args, options)
-        } else if (flatpakBuilderSandboxedExists()) {
+        } else if (FLATPAK_BUILDER_SANDBOXED_EXISTS.get()) {
             return new Command('flatpak', ['run', 'org.flatpak.Builder', ...args], options)
         } else {
             // User may have installed either after receiving the error
             // so invalidate to check again if either now exists
-            FLATPAK_BUILDER_HOST_EXISTS = undefined
-            FLATPAK_BUILDER_SANDBOXED_EXISTS = undefined
+            FLATPAK_BUILDER_HOST_EXISTS.reset()
+            FLATPAK_BUILDER_SANDBOXED_EXISTS.reset()
 
             throw new Error('Flatpak builder was not found. Please install either `flatpak-builder` from your distro repositories or `org.flatpak.Builder` through `flatpak install`')
         }
@@ -120,50 +154,3 @@ export class Command {
     }
 }
 
-/**
- * Whether the flatpak-builder exists on host
- */
-function flatpakBuilderHostExists(): boolean {
-    if (FLATPAK_BUILDER_HOST_EXISTS === undefined) {
-        const command = new Command('flatpak-builder', ['--version'])
-
-        try {
-            const version = command
-                .execSync()
-                .toString()
-                .replace('flatpak-builder', '')
-                .trim()
-            FLATPAK_BUILDER_HOST_EXISTS = true
-            console.log(`host flatpak-builder version: ${version}`)
-        } catch (error) {
-            FLATPAK_BUILDER_HOST_EXISTS = false
-            console.log(`host flatpak-builder not found: ${error as string}`)
-        }
-    }
-
-    return FLATPAK_BUILDER_HOST_EXISTS
-}
-
-/**
- * Whether the flatpak-installed org.flatpak.Builder exists
- */
-function flatpakBuilderSandboxedExists(): boolean {
-    if (FLATPAK_BUILDER_SANDBOXED_EXISTS === undefined) {
-        const command = new Command('flatpak', ['run', 'org.flatpak.Builder', '--version'])
-
-        try {
-            const version = command
-                .execSync()
-                .toString()
-                .replace('flatpak-builder', '')
-                .trim()
-            FLATPAK_BUILDER_SANDBOXED_EXISTS = true
-            console.log(`flatpak-installed flatpak-builder version: ${version}`)
-        } catch (error) {
-            FLATPAK_BUILDER_SANDBOXED_EXISTS = false
-            console.log(`flatpak-installed flatpak-builder not found: ${error as string}`)
-        }
-    }
-
-    return FLATPAK_BUILDER_SANDBOXED_EXISTS
-}

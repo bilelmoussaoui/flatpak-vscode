@@ -25,26 +25,6 @@ export function getAvailable(type: 'app' | 'runtime'): FlatpakEntry[] {
     return runtimes
 }
 
-let FLATPAK_VERSION_CACHE: string | undefined
-
-/**
- * Gets the version of currently installed Flatpak in host
- * @returns Flatpak version in host
- */
-export function getFlatpakVersion(): string {
-    if (FLATPAK_VERSION_CACHE === undefined) {
-        const command = new Command('flatpak', ['--version'])
-        FLATPAK_VERSION_CACHE = command
-            .execSync()
-            .toString()
-            .replace('Flatpak', '')
-            .trim()
-        console.log(`Flatpak version: '${FLATPAK_VERSION_CACHE}'`)
-    }
-
-    return FLATPAK_VERSION_CACHE
-}
-
 /**
  * Check if version1 is newer or equal than version2
  * @param version1 a flatpak version, usually returned by flatpak --version

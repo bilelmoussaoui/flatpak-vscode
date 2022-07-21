@@ -1,5 +1,11 @@
 # Change Log
 
+## [Unreleased]
+
+- Add command to show application's data directory.
+- Drop rust-analyzer runnables.extraArgs target-dir override
+- Update to node v16
+
 ## [0.0.29]
 
 - Update Flatpak logo
@@ -16,9 +22,9 @@
 
 ## [0.0.26]
 
-- Only `appendWatcherExclude` when there is an active manifest 
-- Don't show run/stop button when there is no active manifest 
-- Disable keyboard shortcuts when there is no active manifest 
+- Only `appendWatcherExclude` when there is an active manifest
+- Don't show run/stop button when there is no active manifest
+- Disable keyboard shortcuts when there is no active manifest
 - Fix missing SDKs verification
 - Simplify the build pipeline
 - Fix multiple config-opts

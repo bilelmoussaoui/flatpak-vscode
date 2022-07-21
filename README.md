@@ -28,6 +28,7 @@ A simple VSCode extension that detects a Flatpak manifest and offers various com
 - Runtime Terminal: Spawn a new terminal inside the specified SDK.
 - Build Terminal: Spawn a new terminal inside the current build repository (Note that the SDKs used are automatically mounted and enabled as well).
 - Show Output Terminal: Show the output terminal of the build and run commands.
+- Show Data Directory: Show the data directory (`~/.var/app/<application-id>`) for the active manifest.
 - Select Manifest: Select or change the active manifest.
 
 ## Integrations

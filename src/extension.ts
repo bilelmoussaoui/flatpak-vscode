@@ -10,13 +10,18 @@ import { migrateStateToMemento } from './migration'
 import { BuildPipeline } from './buildPipeline'
 import { loadIntegrations, unloadIntegrations } from './integration'
 import { RunnerError } from './runner'
+import { Lazy } from './lazy'
 
 export const EXTENSION_ID = 'flatpak-vscode'
 
 /**
  * Whether VSCode is installed in a sandbox
  */
-export const IS_SANDBOXED = existsSync('/.flatpak-info')
+export const IS_SANDBOXED = new Lazy(() => {
+    const isSandboxed = existsSync('/.flatpak-info')
+    console.log(`is VSCode running in sandbox: ${isSandboxed.toString()}`)
+    return isSandboxed
+})
 
 class Extension {
     private readonly extCtx: vscode.ExtensionContext
@@ -190,8 +195,6 @@ let extension: Extension | undefined
 
 export async function activate(extCtx: ExtensionContext): Promise<void> {
     void ensureDocumentsPortal()
-
-    console.log(`is VSCode running in sandbox: ${IS_SANDBOXED.toString()}`)
 
     extension = new Extension(extCtx)
     await extension.activate()

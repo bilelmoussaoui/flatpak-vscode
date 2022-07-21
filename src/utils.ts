@@ -79,7 +79,7 @@ export function showDataDirectory(appId: string) {
     const dataDirectory = path.join(homedir(), '.var/app/', appId)
     console.log(`Showing data directory at: ${dataDirectory}`)
 
-    if (IS_SANDBOXED) {
+    if (IS_SANDBOXED.get()) {
         // Spawn in host since a Flatpak-ed app cannot access other Flatpak apps
         // data directory and would just fail silently if VSCode API's openExternal is used.
         new Command('xdg-open', [dataDirectory]).exec()

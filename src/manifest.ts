@@ -6,8 +6,22 @@ import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
 import { generatePathOverride, getHostEnv } from './utils'
-import { getFlatpakVersion, versionCompare } from './flatpakUtils'
+import { versionCompare } from './flatpakUtils'
 import { checkForMissingRuntimes } from './manifestUtils'
+import { Lazy } from './lazy'
+
+/**
+ * Version of currently installed Flatpak in host
+ */
+export const FLATPAK_VERSION = new Lazy(() => {
+    const version = new Command('flatpak', ['--version'])
+        .execSync()
+        .toString()
+        .replace('Flatpak', '')
+        .trim()
+    console.log(`Flatpak version: '${version}'`)
+    return version
+})
 
 const DEFAULT_BUILD_SYSTEM_BUILD_DIR = '_build'
 
@@ -66,7 +80,7 @@ export class Manifest {
      */
     checkForError(): Error | null {
         if (this.requiredVersion !== undefined) {
-            const flatpakVersion = getFlatpakVersion()
+            const flatpakVersion = FLATPAK_VERSION.get()
             if (!versionCompare(flatpakVersion, this.requiredVersion)) {
                 return new Error(`Manifest requires ${this.requiredVersion} but ${flatpakVersion} is available.`)
             }

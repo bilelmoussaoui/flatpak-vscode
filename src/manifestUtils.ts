@@ -142,7 +142,7 @@ function isNumber(char: string): boolean {
 
 function isValidManifest(manifest: ManifestSchema): boolean {
     const hasId = (manifest.id || manifest['app-id']) !== undefined
-    const hasModules = manifest.modules !== undefined
+    const hasModules = manifest.modules.length !== 0
     return hasId && hasModules
 }
 

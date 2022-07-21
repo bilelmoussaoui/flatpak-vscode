@@ -39,7 +39,7 @@ export type BuildSystem = 'meson' | 'cmake' | 'cmake-ninja' |
 export interface Module {
     name: string
     buildsystem?: BuildSystem
-    'config-opts': string[]
+    'config-opts'?: string[]
     sources: Source[]
     'build-commands': string[]
     'build-options'?: BuildOptions

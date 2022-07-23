@@ -126,6 +126,12 @@ export class Command {
     spawn(terminal: OutputTerminal, token: CancellationToken): Promise<void> {
         const iPty = pty.spawn(this.program, this.args, {
             cwd: this.cwd,
+            cols: terminal.dimensions?.columns,
+            rows: terminal.dimensions?.rows,
+        })
+
+        const onDidSetDimensionsHandler = terminal.onDidSetDimensions((dimensions) => {
+            iPty.resize(dimensions.columns, dimensions.rows)
         })
 
         iPty.onData((data) => {
@@ -138,6 +144,8 @@ export class Command {
             })
 
             iPty.onExit(({ exitCode, signal }) => {
+                onDidSetDimensionsHandler.dispose()
+
                 if (exitCode !== 0) {
                     reject(new Error(`Child process exited with code ${exitCode}`))
                     return

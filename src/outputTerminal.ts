@@ -5,6 +5,7 @@ const RESET_COLOR = '\x1b[0m'
 export class OutputTerminal implements vscode.Disposable {
     private inner?: vscode.Terminal
     private isOpen: boolean
+    private _dimensions?: vscode.TerminalDimensions
     private readonly pty: vscode.Pseudoterminal
     private readonly writeEmitter: vscode.EventEmitter<string>
 
@@ -14,13 +15,21 @@ export class OutputTerminal implements vscode.Disposable {
     private readonly _onDidClose = new vscode.EventEmitter<void>()
     readonly onDidClose = this._onDidClose.event
 
+    private readonly _onDidSetDimensions = new vscode.EventEmitter<vscode.TerminalDimensions>()
+    readonly onDidSetDimensions = this._onDidSetDimensions.event
+
     constructor() {
         this.isOpen = false
         this.writeEmitter = new vscode.EventEmitter<string>()
         this.pty = {
-            open: () => {
+            open: (dimensions) => {
+                this._dimensions = dimensions
                 this.isOpen = true
                 this._onDidOpen.fire()
+            },
+            setDimensions: (dimensions) => {
+                this._dimensions = dimensions
+                this._onDidSetDimensions.fire(dimensions)
             },
             close: () => {
                 this.isOpen = false
@@ -30,6 +39,10 @@ export class OutputTerminal implements vscode.Disposable {
             },
             onDidWrite: this.writeEmitter.event,
         }
+    }
+
+    get dimensions(): vscode.TerminalDimensions | undefined {
+        return this._dimensions
     }
 
     append(content: string): void {

@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- Add command to show application's data directory.
+- Add command to show application's data directory
+- Resize output terminal when terminal window resizes
 - Drop rust-analyzer runnables.extraArgs target-dir override
 - Update to node v16
 

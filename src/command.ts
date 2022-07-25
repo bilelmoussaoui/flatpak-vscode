@@ -122,8 +122,9 @@ export class Command {
      * Spawn this with using node-pty
      * @param terminal Where the output stream will be sent
      * @param token For cancellation. This will send SIGINT on the process when cancelled.
+     * @returns the process
      */
-    spawn(terminal: OutputTerminal, token: CancellationToken): Promise<void> {
+    spawn(terminal: OutputTerminal, token: CancellationToken): Promise<pty.IPty> {
         const iPty = pty.spawn(this.program, this.args, {
             cwd: this.cwd,
             cols: terminal.dimensions?.columns,
@@ -156,7 +157,7 @@ export class Command {
                     return
                 }
 
-                resolve()
+                resolve(iPty)
             })
         })
     }

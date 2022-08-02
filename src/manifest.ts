@@ -616,9 +616,10 @@ export class Manifest {
         binaryPath?: string,
         additionalEnvVars?: Map<string, string>,
     ): Promise<void> {
+        const commandPathSettingsValue = '${workspaceFolder}' + `/.flatpak/${program}.sh`
         const commandPath = path.join(this.buildDir, `${program}.sh`)
         await this.runInRepo(`${binaryPath || ''}${program}`, true, additionalEnvVars).saveAsScript(commandPath)
-        await this.overrideWorkspaceConfig(section, configName, commandPath)
+        await this.overrideWorkspaceConfig(section, configName, commandPathSettingsValue)
     }
 
     async overrideWorkspaceConfig(

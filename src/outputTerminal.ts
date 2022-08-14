@@ -36,6 +36,7 @@ export class OutputTerminal implements vscode.Disposable {
                 this._onDidClose.fire()
                 this.inner?.dispose()
                 this.inner = undefined
+                this._dimensions = undefined
             },
             onDidWrite: this.writeEmitter.event,
         }
@@ -78,6 +79,7 @@ export class OutputTerminal implements vscode.Disposable {
 
     dispose() {
         this.inner?.dispose()
+        this.pty.close()
     }
 
     private async waitToOpen(): Promise<void> {

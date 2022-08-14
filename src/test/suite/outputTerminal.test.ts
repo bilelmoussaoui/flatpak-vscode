@@ -34,4 +34,17 @@ suite('dimensions', () => {
         assert.notEqual(iPty1.cols, iPty2.cols)
         assert.notEqual(iPty1.rows, iPty2.rows)
     })
+
+    test('reset dimensions on close', async () => {
+        const outputTerminal = new OutputTerminal()
+        await outputTerminal.show()
+
+        const command = new Command('echo', ['Hello, world!'])
+        const iPty = await command.spawn(outputTerminal, (new vscode.CancellationTokenSource).token)
+        assert.equal(outputTerminal.dimensions?.columns, iPty.cols)
+        assert.equal(outputTerminal.dimensions?.rows, iPty.rows)
+
+        outputTerminal.dispose()
+        assert.equal(outputTerminal.dimensions, undefined)
+    })
 })

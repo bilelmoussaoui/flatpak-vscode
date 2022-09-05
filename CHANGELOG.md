@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Mount fonts directories
+- Support running inside a container like toolbox
 
 ## [0.0.31]
 

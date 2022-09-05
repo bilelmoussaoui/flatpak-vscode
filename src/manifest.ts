@@ -48,7 +48,7 @@ export class Manifest {
         this.finializedRepoDir = path.join(this.buildDir, 'finalized-repo')
         this.ostreeRepoPath = path.join(this.buildDir, 'ostree-repo')
         this.stateDir = path.join(this.buildDir, 'flatpak-builder')
-        this.requiredVersion = manifest['finish-args'].map((val) => val.split('=')).find((value) => {
+        this.requiredVersion = (manifest['finish-args'] || []).map((val) => val.split('=')).find((value) => {
             return value[0] === '--require-version'
         })?.[1]
     }
@@ -144,7 +144,7 @@ export class Manifest {
     }
 
     finishArgs(): string[] {
-        return this.manifest['finish-args']
+        return (this.manifest['finish-args'] || [])
             .filter((arg) => {
                 // --metadata causes a weird issue
                 // --require-version is not supported by flatpak-builder, so filter it out

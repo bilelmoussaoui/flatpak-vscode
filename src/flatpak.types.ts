@@ -10,7 +10,7 @@ export interface ManifestSchema {
     'runtime-version': string
     'sdk-extensions'?: string[]
     command: string
-    'finish-args': string[]
+    'finish-args'?: string[]
     'build-options'?: BuildOptions
     'x-run-args'?: string[]
 }

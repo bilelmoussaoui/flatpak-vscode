@@ -2,11 +2,14 @@
 
 ## [Unreleased]
 
+## [0.0.30]
+
 - Add command to show application's data directory
 - Fallback to the Flatpak-installed `flatpak-builder` (`org.flatpak.Builder`) when it is not found on host
 - Automatically resize output terminal when terminal window resizes
 - Drop rust-analyzer runnables.extraArgs target-dir override
 - Update to node v16
+- Don't require finish-args
 
 ## [0.0.29]
 

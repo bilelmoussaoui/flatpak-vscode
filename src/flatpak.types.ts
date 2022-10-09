@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 import { PathLike } from 'fs'
 
 export interface ManifestSchema {

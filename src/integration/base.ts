@@ -16,7 +16,12 @@ export abstract class Integration {
      * Whether the extension this is integrating is enabled.
      */
     isExtensionEnabled(): boolean {
-        return vscode.extensions.getExtension(this.extensionId) !== undefined
+        const integrations = vscode.workspace.getConfiguration('flatpak.integrations')
+        if (integrations[this.extensionId] === false) {
+            return false
+        }else {
+            return vscode.extensions.getExtension(this.extensionId) !== undefined
+        }
     }
 
     /**

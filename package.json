@@ -49,6 +49,24 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": [
+      {
+        "title": "Flatpak",
+        "properties": {
+          "flatpak.integrations": {
+            "type": "object",
+            "$comment": "The key is the extension id for the integration",
+            "default": {
+              "prince781.vala": true,
+              "mesonbuild.mesonbuild": true,
+              "rust-lang.rust-analyzer": true
+            },
+            "scope": "resource"
+
+          }
+        }
+      }
+    ],
     "commands": [
       {
         "command": "flatpak-vscode.show-data-directory",

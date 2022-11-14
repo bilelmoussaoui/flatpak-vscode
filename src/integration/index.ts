@@ -13,7 +13,7 @@ const INTEGRATIONS = [
 export async function loadIntegrations(manifest: Manifest) {
     for (const integration of INTEGRATIONS) {
         console.log(`Trying to load integration ${integration.extensionId}`)
-        if (integration.isApplicable(manifest) && integration.isExtensionEnabled()) {
+        if (integration.isApplicable(manifest) && integration.isExtensionEnabled() && integration.isEnabled()) {
             try {
                 await integration.load(manifest)
                 console.log(`Loaded integration ${integration.constructor.name}`)

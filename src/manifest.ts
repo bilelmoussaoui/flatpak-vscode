@@ -150,13 +150,6 @@ export class Manifest {
                 // --require-version is not supported by flatpak-builder, so filter it out
                 return !['--metadata', '--require-version'].includes(arg.split('=')[0])
             })
-            .map((arg) => {
-                if (arg.endsWith('*')) {
-                    const [key, value] = arg.split('=')
-                    return `${key}='${value}'`
-                }
-                return arg
-            })
     }
 
     runtimeTerminal(): vscode.TerminalOptions {

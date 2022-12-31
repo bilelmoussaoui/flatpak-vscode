@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Stop wrapping `--talk-name=` ending with `*` in `''`
+
 ## [0.0.30]
 
 - Add command to show application's data directory

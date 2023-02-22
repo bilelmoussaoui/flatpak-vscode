@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.31]
+
 - Stop wrapping `--talk-name=` ending with `*` in `''`
 
 ## [0.0.30]

@@ -22,7 +22,6 @@
   ],
   "license": "MIT",
   "extensionKind": [
-    "ui",
     "workspace"
   ],
   "os": [

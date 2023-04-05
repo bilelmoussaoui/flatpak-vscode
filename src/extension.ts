@@ -80,7 +80,7 @@ class Extension {
 
         this.registerCommand('build-terminal', async () => {
             const activeManifest = await this.manifestManager.getActiveManifest()
-            const buildTerminal = window.createTerminal(activeManifest.buildTerminal())
+            const buildTerminal = window.createTerminal(await activeManifest.buildTerminal())
             this.extCtx.subscriptions.push(buildTerminal)
             buildTerminal.show()
         })
@@ -136,7 +136,7 @@ class Extension {
             provideTerminalProfile: async () => {
                 const activeManifest = await this.manifestManager.getActiveManifest()
                 await this.buildPipeline.ensureInitializedBuild(activeManifest)
-                return new vscode.TerminalProfile(activeManifest.buildTerminal())
+                return new vscode.TerminalProfile(await activeManifest.buildTerminal())
             }
         })
 

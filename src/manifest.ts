@@ -5,7 +5,7 @@ import { getuid } from 'process'
 import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
-import { generatePathOverride, getHostEnv } from './utils'
+import { generatePathOverride, getFontsArgs, getHostEnv } from './utils'
 import { versionCompare } from './flatpakUtils'
 import { checkForMissingRuntimes } from './manifestUtils'
 import { Lazy } from './lazy'
@@ -31,6 +31,7 @@ export class Manifest {
     private readonly repoDir: string
     private readonly finializedRepoDir: string
     private readonly ostreeRepoPath: string
+    private fontsArgs: string[]
     readonly buildDir: string
     readonly workspace: string
     readonly stateDir: string
@@ -51,6 +52,7 @@ export class Manifest {
         this.requiredVersion = (manifest['finish-args'] || []).map((val) => val.split('=')).find((value) => {
             return value[0] === '--require-version'
         })?.[1]
+        this.fontsArgs = []
     }
 
     async isBuildInitialized(): Promise<boolean> {
@@ -167,8 +169,8 @@ export class Manifest {
         }
     }
 
-    buildTerminal(): vscode.TerminalOptions {
-        const command = this.runInRepo('bash', true)
+    async buildTerminal(): Promise<vscode.TerminalOptions> {
+        const command = await this.runInRepo('bash', true)
         return {
             name: this.id(),
             iconPath: new vscode.ThemeIcon('package'),
@@ -552,19 +554,22 @@ export class Manifest {
         return commands
     }
 
-    run(): Command {
+    async run(): Promise<Command> {
         return this.runInRepo([this.manifest.command, ...(this.manifest['x-run-args'] || [])].join(' '), false)
     }
 
-    runInRepo(shellCommand: string, mountExtensions: boolean, additionalEnvVars?: Map<string, string>): Command {
+    async runInRepo(shellCommand: string, mountExtensions: boolean, additionalEnvVars?: Map<string, string>): Promise<Command> {
         const uid = getuid()
-
         const appId = this.id()
+        if (this.fontsArgs.length === 0) {
+            this.fontsArgs = await getFontsArgs()
+        }
 
         let args = [
             'build',
             '--with-appdir',
             '--allow=devel',
+            '--filesystem=host',
             `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
             ...this.finishArgs(),
             '--talk-name=org.freedesktop.portal.*',
@@ -589,6 +594,7 @@ export class Manifest {
             // Assume we might need network access by the executable
             args.push('--share=network')
         }
+        args.push(...this.fontsArgs)
 
         args.push(this.repoDir)
         args.push(shellCommand)
@@ -610,7 +616,8 @@ export class Manifest {
         additionalEnvVars?: Map<string, string>,
     ): Promise<void> {
         const commandPath = path.join(this.buildDir, `${program}.sh`)
-        await this.runInRepo(`${binaryPath || ''}${program}`, true, additionalEnvVars).saveAsScript(commandPath)
+        const command = await this.runInRepo(`${binaryPath || ''}${program}`, true, additionalEnvVars)
+        await command.saveAsScript(commandPath)
         await this.overrideWorkspaceConfig(section, configName, commandPath)
     }
 

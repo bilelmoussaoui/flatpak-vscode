@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Mount fonts directories
+
 ## [0.0.31]
 
 - Stop wrapping `--talk-name=` ending with `*` in `''`

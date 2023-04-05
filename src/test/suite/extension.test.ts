@@ -258,7 +258,7 @@ suite('manifest', () => {
         const manifest = await parseManifest(intoUri('../assets/org.gnome.Screenshot.json'))
         assert.deepEqual(manifest?.manifest['x-run-args'], ['--interactive'])
 
-        const runCommand = manifest?.run()
+        const runCommand = await manifest?.run()
         assert(runCommand?.toString().endsWith('gnome-screenshot --interactive'))
     })
 

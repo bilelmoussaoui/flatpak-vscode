@@ -125,7 +125,7 @@ export class BuildPipeline implements vscode.Disposable {
             return
         }
 
-        await this.runner.execute([manifest.run()], TaskMode.run)
+        await this.runner.execute([await manifest.run()], TaskMode.run)
         this.outputTerminal.appendMessage('Application exited')
     }
 

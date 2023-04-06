@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Mount fonts directories
+- Expose session accessibility bus
 
 ## [0.0.31]
 

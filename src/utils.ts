@@ -183,3 +183,57 @@ export async function getFontsArgs(): Promise<string[]> {
     await fs.writeFile(mappedFontFile, fontDirContent)
     return args
 }
+
+export async function getA11yBusArgs(): Promise<string[]> {
+    try {
+        let unixPath: string
+        let suffix: string | null = null
+        const chunks: Buffer[] = []
+        let chunk: ArrayBuffer
+        const procArgs = [
+            'call',
+            '--session',
+            '--dest=org.a11y.Bus',
+            '--object-path=/org/a11y/bus',
+            '--method=org.a11y.Bus.GetAddress']
+        let command
+        if (IS_SANDBOXED.get()) {
+            command = 'flatpak-spawn'
+            procArgs.unshift(...['--host', 'gdbus'])
+        } else {
+            command = 'gdbus'
+        }
+        const { stdout } = execFile(command, procArgs)
+        if (stdout === null) {
+            console.error('Failed to retrieve accessibility bus')
+            return []
+        }
+        for await (chunk of stdout) {
+            chunks.push(Buffer.from(chunk))
+        }
+        const address = Buffer.concat(chunks).toString('utf-8').trim().replace('(\'', '').replace('\',)', '')
+        console.log(`Accessibility bus retrieved: ${address}`)
+
+        const start = address.indexOf('unix:path=')
+        if (start === -1) {
+            return []
+        }
+        const end = address.indexOf(',', start)
+        if (end === -1) {
+            unixPath = address.substring('unix:path='.length)
+        } else {
+            unixPath = address.substring('unix:path='.length, end)
+            suffix = address.substring(end + 1)
+        }
+        const args = [`--bind-mount=/run/flatpak/at-spi-bus=${unixPath}`]
+        if (suffix !== null) {
+            args.push(`--env=AT_SPI_BUS_ADDRESS=unix:path=/run/flatpak/at-spi-bus${suffix}`)
+        } else {
+            args.push('--env=AT_SPI_BUS_ADDRESS=unix:path=/run/flatpak/at-spi-bus')
+        }
+        return args
+    } catch {
+        console.error('Failed to retrieve accessibility bus')
+        return []
+    }
+}

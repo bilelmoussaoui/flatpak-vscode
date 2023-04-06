@@ -5,7 +5,7 @@ import { getuid } from 'process'
 import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
-import { generatePathOverride, getFontsArgs, getHostEnv } from './utils'
+import { generatePathOverride, getA11yBusArgs, getFontsArgs, getHostEnv } from './utils'
 import { versionCompare } from './flatpakUtils'
 import { checkForMissingRuntimes } from './manifestUtils'
 import { Lazy } from './lazy'
@@ -564,7 +564,6 @@ export class Manifest {
         if (this.fontsArgs.length === 0) {
             this.fontsArgs = await getFontsArgs()
         }
-
         let args = [
             'build',
             '--with-appdir',
@@ -575,6 +574,7 @@ export class Manifest {
             '--talk-name=org.freedesktop.portal.*',
             '--talk-name=org.a11y.Bus',
         ]
+        args.push(...await getA11yBusArgs())
 
         const envVars = getHostEnv()
 

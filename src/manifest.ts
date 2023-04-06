@@ -568,7 +568,6 @@ export class Manifest {
             'build',
             '--with-appdir',
             '--allow=devel',
-            '--filesystem=host',
             `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
             ...this.finishArgs(),
             '--talk-name=org.freedesktop.portal.*',

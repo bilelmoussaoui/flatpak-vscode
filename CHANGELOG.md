@@ -1,11 +1,12 @@
 # Change Log
 
-## [Unreleased]
+## [0.0.32]
 
 - Mount fonts directories
 - Support running inside a container like toolbox
 - Expose session accessibility bus
-
+- Fix remote development support
+ 
 ## [0.0.31]
 
 - Stop wrapping `--talk-name=` ending with `*` in `''`

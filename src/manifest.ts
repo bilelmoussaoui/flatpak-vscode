@@ -194,7 +194,7 @@ export class Manifest {
         )
     }
 
-    updateDependencies(): Command {
+    async updateDependencies(): Promise<Command> {
         const args = [
             '--ccache',
             '--force-clean',
@@ -206,13 +206,13 @@ export class Manifest {
         args.push(this.repoDir)
         args.push(this.path())
 
-        return Command.flatpakBuilder(
+        return await Command.flatpakBuilder(
             args,
             { cwd: this.workspace },
         )
     }
 
-    buildDependencies(): Command {
+    async buildDependencies(): Promise<Command> {
         const args = [
             '--ccache',
             '--force-clean',
@@ -226,7 +226,7 @@ export class Manifest {
         args.push(this.repoDir)
         args.push(this.path())
 
-        return Command.flatpakBuilder(
+        return await Command.flatpakBuilder(
             args,
             { cwd: this.workspace },
         )

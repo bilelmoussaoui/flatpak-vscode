@@ -4,8 +4,9 @@ import { PathLike } from 'fs'
 import { execFileSync, execFile, ChildProcess } from 'child_process'
 import { OutputTerminal } from './outputTerminal'
 import { CancellationToken } from 'vscode'
-import { Lazy } from './lazy'
+import { AsyncLazy, Lazy } from './lazy'
 import { IS_SANDBOXED } from './extension'
+import { exists } from './utils'
 
 /**
  * Whether flatpak-builder is installed on the host
@@ -43,6 +44,24 @@ const FLATPAK_BUILDER_SANDBOXED_EXISTS = new Lazy(() => {
     }
 })
 
+/**
+ * Whether VSCode is running inside a container like Toolbx or distrobox
+ */
+const VSCODE_INSIDE_CONTAINER = new AsyncLazy(async () => {
+    try {
+        const containerEnv = '/run/.containerenv'
+        if (await exists(containerEnv)) {
+            console.log('VSCode is running inside a container')
+            return true
+        } else {
+            return false
+        }
+    } catch (error) {
+        console.log('Failed to check if running inside a container')
+        return false
+    }
+})
+
 export class Canceled extends Error {
     constructor() {
         super('Cancelled task')
@@ -76,7 +95,12 @@ export class Command {
         this.cwd = options?.cwd
     }
 
-    static flatpakBuilder(args: string[], options?: CommandOptions): Command {
+    static async flatpakBuilder(args: string[], options?: CommandOptions): Promise<Command> {
+        // flatpak-builder requires --disable-rofiles-fuse when running inside a container
+        if (await VSCODE_INSIDE_CONTAINER.get()) {
+            args = [...args, '--disable-rofiles-fuse']
+        }
+
         if (FLATPAK_BUILDER_HOST_EXISTS.get()) {
             return new Command('flatpak-builder', args, options)
         } else if (FLATPAK_BUILDER_SANDBOXED_EXISTS.get()) {

@@ -45,7 +45,7 @@ export class BuildPipeline implements vscode.Disposable {
         this.runner.ensureIdle()
         await this.ensureInitializedBuild(manifest)
 
-        await this.runner.execute([manifest.updateDependencies()], TaskMode.updateDeps)
+        await this.runner.execute([await manifest.updateDependencies()], TaskMode.updateDeps)
 
         await this.workspaceState.setDependenciesUpdated(true)
         // Assume user might want to rebuild dependencies
@@ -63,7 +63,7 @@ export class BuildPipeline implements vscode.Disposable {
             return
         }
 
-        await this.runner.execute([manifest.buildDependencies()], TaskMode.buildDeps)
+        await this.runner.execute([await manifest.buildDependencies()], TaskMode.buildDeps)
 
         await this.workspaceState.setDependenciesBuilt(true)
     }

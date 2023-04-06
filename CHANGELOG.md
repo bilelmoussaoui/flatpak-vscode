@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Mount fonts directories
+- Support running inside a container like toolbox
 - Expose session accessibility bus
 
 ## [0.0.31]

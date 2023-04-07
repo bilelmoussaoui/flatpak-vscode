@@ -1,7 +1,9 @@
 # Change Log
 
 ## [0.0.33]
-- fix: `TypeError` in podman development
+
+- Drop unneeded host permission
+- Fix: `TypeError` in podman development
 
 ## [0.0.32]
 

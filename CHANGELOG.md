@@ -3,6 +3,7 @@
 ## [0.0.34]
 
 - Fix check of the fonts cache before running the application
+- Cache the a11y bus arguments
 
 ## [0.0.33]
 

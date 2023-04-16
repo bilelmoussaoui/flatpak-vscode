@@ -32,6 +32,7 @@ export class Manifest {
     private readonly finializedRepoDir: string
     private readonly ostreeRepoPath: string
     private fontsArgs: string[]
+    private a11yBusArgs: string[]
     readonly buildDir: string
     readonly workspace: string
     readonly stateDir: string
@@ -53,6 +54,7 @@ export class Manifest {
             return value[0] === '--require-version'
         })?.[1]
         this.fontsArgs = []
+        this.a11yBusArgs = []
     }
 
     async isBuildInitialized(): Promise<boolean> {
@@ -564,6 +566,9 @@ export class Manifest {
         if (this.fontsArgs.length === 0) {
             this.fontsArgs = await getFontsArgs()
         }
+        if (this.a11yBusArgs.length === 0) {
+            this.a11yBusArgs = await getA11yBusArgs()
+        }
         let args = [
             'build',
             '--with-appdir',
@@ -573,7 +578,7 @@ export class Manifest {
             '--talk-name=org.freedesktop.portal.*',
             '--talk-name=org.a11y.Bus',
         ]
-        args.push(...await getA11yBusArgs())
+        args.push(...this.a11yBusArgs)
 
         const envVars = getHostEnv()
 

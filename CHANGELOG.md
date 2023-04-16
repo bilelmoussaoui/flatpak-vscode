@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.34]
+
+- Fix check of the fonts cache before running the application
+
 ## [0.0.33]
 
 - Drop unneeded host permission
@@ -11,7 +15,7 @@
 - Support running inside a container like toolbox
 - Expose session accessibility bus
 - Fix remote development support
- 
+
 ## [0.0.31]
 
 - Stop wrapping `--talk-name=` ending with `*` in `''`

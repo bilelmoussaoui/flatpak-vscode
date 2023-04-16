@@ -7,7 +7,6 @@ import { env } from 'process'
 import { IS_SANDBOXED } from './extension'
 import { Command } from './command'
 import { Lazy } from './lazy'
-import { execFile } from 'child_process'
 
 const HOME_DIR = new Lazy(() => {
     return homedir()
@@ -76,14 +75,13 @@ export async function existsOnHost(p: PathLike): Promise<boolean> {
         if (await exists(local)) {
             return true
         } else {
-            try {
-                execFile('ls', ['-d', p as string])
+            const { exitCode } = new Command('ls', ['-d', p as string]).exec()
+            if (exitCode === 0) {
                 return true
-            } catch {
-                return false
             }
         }
     }
+    return false
 }
 
 export function getHostEnv(): Map<string, string> {
@@ -190,20 +188,14 @@ export async function getA11yBusArgs(): Promise<string[]> {
         let suffix: string | null = null
         const chunks: Buffer[] = []
         let chunk: ArrayBuffer
-        const procArgs = [
+        const { stdout } = new Command('gdbus', [
             'call',
             '--session',
             '--dest=org.a11y.Bus',
             '--object-path=/org/a11y/bus',
-            '--method=org.a11y.Bus.GetAddress']
-        let command
-        if (IS_SANDBOXED.get()) {
-            command = 'flatpak-spawn'
-            procArgs.unshift(...['--host', 'gdbus'])
-        } else {
-            command = 'gdbus'
-        }
-        const { stdout } = execFile(command, procArgs)
+            '--method=org.a11y.Bus.GetAddress'
+        ]).exec()
+
         if (stdout === null) {
             console.error('Failed to retrieve accessibility bus')
             return []

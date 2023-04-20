@@ -622,7 +622,8 @@ export class Manifest {
         const commandPath = path.join(this.buildDir, `${program}.sh`)
         const command = await this.runInRepo(`${binaryPath || ''}${program}`, true, additionalEnvVars)
         await command.saveAsScript(commandPath)
-        await this.overrideWorkspaceConfig(section, configName, commandPath)
+        const commandPathSettingsValue = commandPath.replace(this.workspace, '${workspaceFolder}')
+        await this.overrideWorkspaceConfig(section, configName, commandPathSettingsValue)
     }
 
     async overrideWorkspaceConfig(

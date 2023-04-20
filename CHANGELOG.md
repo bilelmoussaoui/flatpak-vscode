@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.35]
+
+- Use relative path in generated settings.json
+
 ## [0.0.34]
 
 - Fix check of the fonts cache before running the application

@@ -260,7 +260,7 @@ export class Manifest {
     getPaths(): string[] {
         const paths: string[] = []
         paths.push(
-            this.getPathOverrides('PATH', '', 'prepend-path', 'append-path')
+            this.getPathOverrides('PATH', '/app/bin:/usr/bin"', 'prepend-path', 'append-path')
         )
         paths.push(
             this.getPathOverrides('LD_LIBRARY_PATH', '/app/lib', 'prepend-ld-library-path', 'append-ld-library-path')

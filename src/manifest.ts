@@ -242,7 +242,7 @@ export class Manifest {
      * @param appendOption an array of the paths to append
      * @returns the new path
      */
-    getPathOverrides(envVariable: string, defaultValue: string, prependOption: BuildOptionsPathKeys, appendOption: BuildOptionsPathKeys): string {
+    getPathOverrides(envVariable: string, defaultValue: string[], prependOption: BuildOptionsPathKeys, appendOption: BuildOptionsPathKeys): string {
         const module = this.module()
         const prependPaths = [
             this.manifest['build-options']?.[prependOption],
@@ -252,21 +252,37 @@ export class Manifest {
             this.manifest['build-options']?.[appendOption],
             module['build-options']?.[appendOption]
         ]
-        const currentValue = process.env[envVariable] || defaultValue
-        const path = generatePathOverride(currentValue, prependPaths, appendPaths)
+        const currentValue = process.env[envVariable]
+        const path = generatePathOverride(currentValue, defaultValue, prependPaths, appendPaths)
         return `--env=${envVariable}=${path}`
     }
 
     getPaths(): string[] {
         const paths: string[] = []
         paths.push(
-            this.getPathOverrides('PATH', '', 'prepend-path', 'append-path')
+            this.getPathOverrides('PATH',
+                ['/app/bin', '/usr/bin'],
+                'prepend-path', 'append-path'
+            )
         )
         paths.push(
-            this.getPathOverrides('LD_LIBRARY_PATH', '/app/lib', 'prepend-ld-library-path', 'append-ld-library-path')
+            this.getPathOverrides('LD_LIBRARY_PATH',
+                ['/app/lib'],
+                'prepend-ld-library-path',
+                'append-ld-library-path'
+            )
         )
         paths.push(
-            this.getPathOverrides('PKG_CONFIG_PATH', '/app/lib/pkgconfig:/app/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig', 'prepend-pkg-config-path', 'append-pkg-config-path')
+            this.getPathOverrides('PKG_CONFIG_PATH',
+                [
+                    '/app/lib/pkgconfig',
+                    '/app/share/pkgconfig',
+                    '/usr/lib/pkgconfig',
+                    '/usr/share/pkgconfig'
+                ],
+                'prepend-pkg-config-path',
+                'append-pkg-config-path'
+            )
         )
         return paths
     }

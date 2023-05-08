@@ -3,6 +3,7 @@
 ## [0.0.35]
 
 - Use relative path in generated settings.json
+- Fix logic when generating environment variables overrides
 
 ## [0.0.34]
 

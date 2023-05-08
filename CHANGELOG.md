@@ -4,6 +4,7 @@
 
 - Use relative path in generated settings.json
 - Fix logic when generating environment variables overrides
+- Fix simple build system generated commands
 
 ## [0.0.34]
 

@@ -530,7 +530,7 @@ export class Manifest {
         return buildCommands.map((command) => {
             return new Command(
                 'flatpak',
-                ['build', ...buildArgs, this.repoDir, command],
+                ['build', ...buildArgs, this.repoDir, ...command.split(' ').filter((v) => !!v)],
                 { cwd: this.workspace },
             )
         })

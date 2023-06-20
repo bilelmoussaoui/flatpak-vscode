@@ -295,7 +295,6 @@ export class Manifest {
         }
         let buildArgs = [
             '--share=network',
-            '--nofilesystem=host',
             `--filesystem=${this.workspace}`,
             `--filesystem=${this.repoDir}`,
         ]

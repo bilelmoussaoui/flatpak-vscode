@@ -87,7 +87,7 @@ export class Command {
     constructor(program: string, args: string[], options?: CommandOptions) {
         if (options?.forceSandbox || IS_SANDBOXED.get()) {
             this.program = 'flatpak-spawn'
-            args.unshift('--host', '--env=TERM=xterm-256color', program)
+            args.unshift('--host', '--watch-bus', '--env=TERM=xterm-256color', program)
         } else {
             this.program = program
         }

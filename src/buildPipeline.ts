@@ -76,7 +76,7 @@ export class BuildPipeline implements vscode.Disposable {
             return
         }
 
-        await this.runner.execute(manifest.build(false), TaskMode.buildApp)
+        await this.runner.execute(await manifest.build(false), TaskMode.buildApp)
 
         await this.workspaceState.setApplicationBuilt(true)
     }
@@ -89,7 +89,7 @@ export class BuildPipeline implements vscode.Disposable {
             return
         }
 
-        await this.runner.execute(manifest.build(true), TaskMode.rebuild)
+        await this.runner.execute(await manifest.build(true), TaskMode.rebuild)
 
         await this.workspaceState.setApplicationBuilt(true)
     }

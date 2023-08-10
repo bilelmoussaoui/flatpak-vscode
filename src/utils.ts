@@ -7,6 +7,7 @@ import { env } from 'process'
 import { IS_SANDBOXED } from './extension'
 import { Command } from './command'
 import { Lazy } from './lazy'
+import { walk } from 'walk'
 
 const HOME_DIR = new Lazy(() => {
     return homedir()
@@ -228,4 +229,30 @@ export async function getA11yBusArgs(): Promise<string[]> {
         console.error('Failed to retrieve accessibility bus')
         return []
     }
+}
+
+/*
+ * Finds the directory of the file with `fileName` in the given directory and return
+ * the first match.
+ * @param dir The directory to search
+ * @param fileName The file name to search for
+ */
+export function findFileParent(dir: PathLike, fileName: string): Promise<PathLike | null> {
+    return new Promise((resolve) => {
+        const walker = walk(dir.toString(), {
+            followLinks: false,
+        })
+
+        walker.on('file', (root, fileStats, next) => {
+            if (fileStats.name === fileName) {
+                resolve(root)
+            } else {
+                next()
+            }
+        })
+
+        walker.on('end', () => {
+            resolve(null)
+        })
+    })
 }

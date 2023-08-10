@@ -5,7 +5,7 @@ import { getuid } from 'process'
 import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
-import { generatePathOverride, getA11yBusArgs, getFontsArgs, getHostEnv } from './utils'
+import { generatePathOverride, getA11yBusArgs, getFontsArgs, getHostEnv, findFileParent } from './utils'
 import { versionCompare } from './flatpakUtils'
 import { checkForMissingRuntimes } from './manifestUtils'
 import { Lazy } from './lazy'
@@ -287,7 +287,7 @@ export class Manifest {
         return paths
     }
 
-    build(rebuild: boolean): Command[] {
+    async build(rebuild: boolean): Promise<Command[]> {
         const module = this.module()
         const buildEnv = {
             ...this.manifest['build-options']?.env || {},
@@ -321,7 +321,7 @@ export class Manifest {
                 commands = this.getCmakeCommands(rebuild, buildArgs, configOpts)
                 break
             case 'meson':
-                commands = this.getMesonCommands(rebuild, buildArgs, configOpts)
+                commands = await this.getMesonCommands(rebuild, buildArgs, configOpts)
                 break
             case 'simple':
                 commands = this.getSimpleCommands(module['build-commands'], buildArgs)
@@ -474,14 +474,16 @@ export class Manifest {
      * @param  {string[]}   buildArgs   The build arguments
      * @param  {string}     configOpts  The configuration options
      */
-    getMesonCommands(
+    async getMesonCommands(
         rebuild: boolean,
         buildArgs: string[],
         configOpts: string[]
-    ): Command[] {
+    ): Promise<Command[]> {
+        const mesonBuildParentDir = (await findFileParent(this.workspace, 'meson.build'))?.toString() || this.workspace
+
         const commands: Command[] = []
         const mesonBuildDir = DEFAULT_BUILD_SYSTEM_BUILD_DIR
-        buildArgs.push(`--filesystem=${this.workspace}/${mesonBuildDir}`)
+        buildArgs.push(`--filesystem=${mesonBuildParentDir}/${mesonBuildDir}`)
         if (!rebuild) {
             commands.push(
                 new Command(
@@ -496,7 +498,7 @@ export class Manifest {
                         mesonBuildDir,
                         ...configOpts,
                     ],
-                    { cwd: this.workspace },
+                    { cwd: mesonBuildParentDir },
                 )
             )
         }
@@ -504,7 +506,7 @@ export class Manifest {
             new Command(
                 'flatpak',
                 ['build', ...buildArgs, this.repoDir, 'ninja', '-C', mesonBuildDir],
-                { cwd: this.workspace },
+                { cwd: mesonBuildParentDir },
             )
         )
         commands.push(
@@ -519,7 +521,7 @@ export class Manifest {
                     '-C',
                     mesonBuildDir,
                 ],
-                { cwd: this.workspace },
+                { cwd: mesonBuildParentDir },
             )
         )
         return commands

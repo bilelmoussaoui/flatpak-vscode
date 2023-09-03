@@ -272,6 +272,26 @@ suite('manifest', () => {
         const postInstallCommand2 = manifest?.build(true).slice(-1)[0]
         assert(postInstallCommand2?.toString().endsWith('echo \'hello\''))
     })
+
+    test('meson build', async function () {
+        const manifest = await parseManifest(intoUri('../assets/meson/some.meson.Project.json'))
+
+        if (manifest === null) {
+            throw new Error('Failed to parse manifest of meson project.')
+        }
+
+        console.log(manifest.initBuild().execSync())
+        console.log(manifest.updateDependencies().execSync())
+        console.log(manifest.buildDependencies().execSync())
+
+        for (const command of manifest.build(false)) {
+            console.log(command.execSync())
+        }
+
+        console.log(manifest.run().execSync())
+
+        assert.equal(manifest.run().execSync().toString(), 'Hi from a meson project 0.1.1')
+    })
 })
 
 suite('utils', () => {

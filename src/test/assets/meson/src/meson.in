@@ -1,0 +1,13 @@
+#!@PYTHON@
+
+
+import sys
+
+pkgdatadir = '@pkgdatadir@'
+version = '@VERSION@'
+
+sys.path.insert(1, pkgdatadir)
+
+if __name__ == '__main__':
+    from meson import main
+    sys.exit(main.main(version))

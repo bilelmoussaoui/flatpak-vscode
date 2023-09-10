@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.36]
+
+- misc: also exit spawned command as flatpak-spawn exit
+- Remove host filesystem build restriction
+
 ## [0.0.35]
 
 - Use relative path in generated settings.json

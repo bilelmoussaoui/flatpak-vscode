@@ -1,7 +1,6 @@
 import * as vscode from 'vscode'
 import { BuildOptionsPathKeys, ManifestSchema, Module, SdkExtension } from './flatpak.types'
 import * as path from 'path'
-import { getuid } from 'process'
 import { cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
@@ -576,7 +575,7 @@ export class Manifest {
     }
 
     async runInRepo(shellCommand: string, mountExtensions: boolean, additionalEnvVars?: Map<string, string>): Promise<Command> {
-        const uid = getuid()
+        const uid = process.geteuid ? process.geteuid() : 1000
         const appId = this.id()
         if (this.fontsArgs.length === 0) {
             this.fontsArgs = await getFontsArgs()

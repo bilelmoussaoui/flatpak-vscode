@@ -155,7 +155,7 @@ class Extension {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private registerCommand(name: string, callback: (...args: any) => any | Promise<void>) {
+    private registerCommand(name: string, callback: (...args: any) => Promise<void>) {
         this.extCtx.subscriptions.push(
             commands.registerCommand(`${EXTENSION_ID}.${name}`, async (args) => {
                 try {

@@ -1,7 +1,7 @@
 import { Manifest } from './manifest'
 import * as vscode from 'vscode'
 
-export class ManifestMap {
+export class ManifestMap implements Iterable<Manifest> {
     private readonly inner: Map<string, Manifest>
 
     private readonly _onDidItemsChanged = new vscode.EventEmitter<void>()
@@ -9,6 +9,10 @@ export class ManifestMap {
 
     constructor() {
         this.inner = new Map()
+    }
+
+    [Symbol.iterator](): IterableIterator<Manifest> {
+        return this.inner.values()
     }
 
     add(manifest: Manifest): void {

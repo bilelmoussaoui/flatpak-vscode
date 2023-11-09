@@ -87,18 +87,16 @@ export class ManifestManager implements vscode.Disposable {
             lastActiveManifestUri = undefined
         }
 
-        const manifests = await this.getManifests()
-
         if (lastActiveManifestUri === undefined) {
-            // If there is only one manifest to select, select it automatically.
-            const firstManifest = manifests.getFirstItem()
-            if (manifests.size() === 1 && firstManifest) {
-                console.log(`Found only one valid manifest. Setting active manifest to ${firstManifest.uri.fsPath}`)
-                await this.setActiveManifest(firstManifest, true)
+            const defaultManifest = await this.findDefaultManifest()
+            if (defaultManifest !== undefined) {
+                console.log(`Manifest set as default at ${defaultManifest.uri.fsPath}`)
+                await this.setActiveManifest(defaultManifest, true)
             }
             return
         }
 
+        const manifests = await this.getManifests()
         const lastActiveManifest = manifests.get(lastActiveManifestUri)
         if (lastActiveManifest === undefined) {
             return
@@ -106,6 +104,27 @@ export class ManifestManager implements vscode.Disposable {
 
         console.log(`Found last active manifest uri at ${lastActiveManifestUri.fsPath}`)
         await this.setActiveManifest(lastActiveManifest, true)
+    }
+
+    async findDefaultManifest(): Promise<Manifest | undefined> {
+        const manifests = await this.getManifests()
+
+        // If there is only one manifest to select, select it automatically.
+        const firstManifest = manifests.getFirstItem()
+        if (manifests.size() === 1 && firstManifest) {
+            console.log('Found only one valid manifest')
+            return firstManifest
+        }
+
+        // If some manifest contains '.Devel.' in its filename, select it automatically.
+        for (const manifest of manifests) {
+            if (manifest.uri.fsPath.includes('.Devel.')) {
+                console.log('Found a manifest that contains ".Devel." in its filename')
+                return manifest
+            }
+        }
+
+        return undefined
     }
 
     async getManifests(): Promise<ManifestMap> {

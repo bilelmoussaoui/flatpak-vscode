@@ -646,7 +646,9 @@ export class Manifest {
         value?: string | string[] | boolean
     ): Promise<void> {
         const config = vscode.workspace.getConfiguration(section)
-        await config.update(configName, value)
+        if (config.get(configName) !== value) {
+            await config.update(configName, value)
+        }
     }
 
     async restoreWorkspaceConfig(

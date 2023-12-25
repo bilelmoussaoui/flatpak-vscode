@@ -1,5 +1,9 @@
 # Change Log
 
+## [unreleased]
+- feat: set Devel manifest as default manifest if any
+- fix: Only write to workspace configuration when settings need to change
+
 ## [0.0.36]
 
 - misc: also exit spawned command as flatpak-spawn exit

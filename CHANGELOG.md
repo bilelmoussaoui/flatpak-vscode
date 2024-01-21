@@ -1,5 +1,9 @@
 # Change Log
 
+## [Unreleased]
+
+- rust-analyzer: Ignore `.flatpak-builder`, `_build`, `build` directories
+
 ## [0.0.36]
 
 - misc: also exit spawned command as flatpak-spawn exit

@@ -1,7 +1,8 @@
 # Change Log
 
-## [Unreleased]
+## [0.0.37]
 
+- manifest: Automatically set `development` flatpak manifests, suffixed with `Devel` / `.devel` by default
 - rust-analyzer: Ignore `.flatpak-builder`, `_build`, `build` directories
 - manifest: Support `FLATPAK_ID` / `FLATPAK_ARCH` / `FLATPAK_DEST` / `FLATPAK_BUILDER_N_JOBS` / `FLATPAK_BUILDER_BUILDDIR` variables
 

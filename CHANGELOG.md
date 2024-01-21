@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - rust-analyzer: Ignore `.flatpak-builder`, `_build`, `build` directories
+- manifest: Support `FLATPAK_ID` / `FLATPAK_ARCH` / `FLATPAK_DEST` / `FLATPAK_BUILDER_N_JOBS` / `FLATPAK_BUILDER_BUILDDIR` variables
 
 ## [0.0.36]
 

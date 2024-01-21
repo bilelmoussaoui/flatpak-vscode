@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { BuildOptionsPathKeys, ManifestSchema, Module, SdkExtension } from './flatpak.types'
 import * as path from 'path'
-import { cpus } from 'os'
+import { arch, cpus } from 'os'
 import * as fs from 'fs/promises'
 import { Command } from './command'
 import { generatePathOverride, getA11yBusArgs, getFontsArgs, getHostEnv } from './utils'
@@ -323,14 +323,14 @@ export class Manifest {
                 commands = this.getMesonCommands(rebuild, buildArgs, configOpts)
                 break
             case 'simple':
-                commands = this.getSimpleCommands(module['build-commands'], buildArgs)
+                commands = this.getSimpleCommands(module.name, module['build-commands'], buildArgs)
                 break
             case 'qmake':
                 throw new Error('Qmake is not implemented yet')
         }
         /// Add the post-install commands if there are any
         commands.push(
-            ... this.getSimpleCommands(this.module()['post-install'] || [], buildArgs)
+            ... this.getSimpleCommands(this.module().name, this.module()['post-install'] || [], buildArgs)
         )
         return commands
     }
@@ -524,11 +524,17 @@ export class Manifest {
         return commands
     }
 
-    getSimpleCommands(buildCommands: string[], buildArgs: string[]): Command[] {
+    getSimpleCommands(moduleName: string, buildCommands: string[], buildArgs: string[]): Command[] {
         return buildCommands.map((command) => {
+            const commandArgs = command.replace('${FLATPAK_ID}', this.id())
+                .replace('${FLATPAK_ARCH}', arch())
+                .replace('${FLATPAK_DEST}', '/app') // We only support applications
+                .replace('${FLATPAK_BUILDER_N_JOBS}', cpus().length.toString())
+                .replace('${FLATPAK_BUILDER_BUILDDIR}', `/run/build/${moduleName}`)
+                .split(' ').filter((v) => !!v)
             return new Command(
                 'flatpak',
-                ['build', ...buildArgs, this.repoDir, ...command.split(' ').filter((v) => !!v)],
+                ['build', ...buildArgs, this.repoDir, ...commandArgs],
                 { cwd: this.workspace },
             )
         })

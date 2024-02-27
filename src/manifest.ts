@@ -490,6 +490,7 @@ export class Manifest {
                         ...buildArgs,
                         this.repoDir,
                         'meson',
+                        'setup',
                         '--prefix',
                         '/app',
                         mesonBuildDir,

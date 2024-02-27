@@ -45,6 +45,20 @@ const FLATPAK_BUILDER_SANDBOXED_EXISTS = new Lazy(() => {
 })
 
 /**
+ * Whether host-spawn is installed.
+ */
+const HOST_SPAWN_EXISTS = new Lazy(() => {
+    try {
+        const version = execFileSync('host-spawn', ['--version']).toString().trim()
+        console.log(`host-spawn version: ${version}`)
+        return true
+    } catch (error) {
+        console.log(`host-spawn not found: ${error as string}`)
+        return false
+    }
+})
+
+/**
  * Whether VSCode is running inside a container like Toolbx or distrobox
  */
 const VSCODE_INSIDE_CONTAINER = new AsyncLazy(async () => {
@@ -86,8 +100,13 @@ export class Command {
 
     constructor(program: string, args: string[], options?: CommandOptions) {
         if (options?.forceSandbox || IS_SANDBOXED.get()) {
-            this.program = 'flatpak-spawn'
-            args.unshift('--host', '--watch-bus', '--env=TERM=xterm-256color', program)
+            if (HOST_SPAWN_EXISTS.get()) {
+                this.program = 'host-spawn'
+                args.unshift(program)
+            } else {
+                this.program = 'flatpak-spawn'
+                args.unshift('--host', '--watch-bus', '--env=TERM=xterm-256color', program)
+            }
         } else {
             this.program = program
         }

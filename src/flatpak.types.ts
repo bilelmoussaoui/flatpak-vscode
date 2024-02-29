@@ -62,4 +62,6 @@ export interface Source {
     sha256?: string
 }
 
-export type SdkExtension = 'vala' | 'rust'
+export type SdkExtension = 'vala'
+    | 'rust-stable'
+    | 'rust-nightly'

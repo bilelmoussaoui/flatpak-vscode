@@ -43,14 +43,20 @@ export abstract class Integration {
  * Derive from this when creating an integration that requires a specific SDK extension.
  */
 export abstract class SdkIntegration extends Integration {
-    private readonly requiredSdkExtension: SdkExtension
+    private readonly associatedSdkExtensions: SdkExtension[]
 
-    constructor(extensionId: string, requiredSdkExtension: SdkExtension) {
+    constructor(extensionId: string, associatedSdkExtensions: SdkExtension[]) {
         super(extensionId)
-        this.requiredSdkExtension = requiredSdkExtension
+        this.associatedSdkExtensions = associatedSdkExtensions
     }
 
     isApplicable(manifest: Manifest): boolean {
-        return manifest.sdkExtensions().includes(this.requiredSdkExtension)
+        for (const sdkExtension of this.associatedSdkExtensions) {
+            if (manifest.sdkExtensions().includes(sdkExtension)) {
+                return true
+            }
+        }
+
+        return false
     }
 }

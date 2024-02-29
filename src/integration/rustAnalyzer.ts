@@ -3,16 +3,26 @@ import { SdkIntegration } from './base'
 
 export class RustAnalyzer extends SdkIntegration {
     constructor() {
-        super('rust-lang.rust-analyzer', 'rust')
+        super('rust-lang.rust-analyzer', ['rust-stable', 'rust-nightly'])
     }
 
     async load(manifest: Manifest): Promise<void> {
-        await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer', '/usr/lib/sdk/rust-stable/bin/')
+        let sdkFolder
+        if (manifest.sdkExtensions().includes('rust-nightly')) {
+            sdkFolder = 'rust-nightly'
+        } else if (manifest.sdkExtensions().includes('rust-stable')) {
+            sdkFolder = 'rust-stable'
+        } else {
+            throw new Error('unreachable code')
+        }
+        const binPath = `/usr/lib/sdk/${sdkFolder}/bin/`
+
+        await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'server.path', 'rust-analyzer', binPath)
 
         const buildSystemBuildDir = manifest.buildSystemBuildDir()
         if (buildSystemBuildDir !== null) {
             const envArgs = new Map([['CARGO_HOME', `${buildSystemBuildDir}/cargo-home`]])
-            await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'runnables.command', 'cargo', '/usr/lib/sdk/rust-stable/bin/', envArgs)
+            await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'runnables.command', 'cargo', binPath, envArgs)
         }
 
         await manifest.overrideWorkspaceConfig('rust-analyzer', 'files.excludeDirs', ['.flatpak', '.flatpak-builder', '_build', 'build', 'builddir'])

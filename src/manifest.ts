@@ -118,8 +118,10 @@ export class Manifest {
 
             switch (suffix) {
                 case 'rust-stable':
+                    sdkExtensions.push('rust-stable')
+                    break
                 case 'rust-nightly':
-                    sdkExtensions.push('rust')
+                    sdkExtensions.push('rust-nightly')
                     break
                 case 'vala':
                     sdkExtensions.push('vala')

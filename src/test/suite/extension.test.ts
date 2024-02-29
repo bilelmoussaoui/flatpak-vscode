@@ -20,7 +20,7 @@ suite('command', () => {
         const command = new Command('echo', ['Hello', 'world'], { forceSandbox: true })
         assert.equal(command.program, 'flatpak-spawn')
         assert.deepStrictEqual(command.args, ['--host', '--watch-bus', '--env=TERM=xterm-256color', 'echo', 'Hello', 'world'])
-        assert.equal(command.toString(), 'flatpak-spawn --host --watch-bus echo Hello world')
+        assert.equal(command.toString(), 'flatpak-spawn --host --watch-bus --env=TERM=xterm-256color echo Hello world')
     })
 
     test('notSandboxed', () => {

@@ -3,7 +3,7 @@ import { SdkIntegration } from './base'
 
 export class Vala extends SdkIntegration {
     constructor() {
-        super('prince781.vala', 'vala')
+        super('prince781.vala', ['vala'])
     }
 
     async load(manifest: Manifest): Promise<void> {

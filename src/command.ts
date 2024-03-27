@@ -135,10 +135,7 @@ export class Command {
     }
 
     toString(): string {
-        return [
-            this.program,
-            ...this.args.filter((arg) => arg !== '--env=TERM=xterm-256color')
-        ].join(' ')
+        return [this.program, ...this.args].join(' ')
     }
 
     /**
@@ -146,8 +143,14 @@ export class Command {
      * @param path save location
      */
     async saveAsScript(path: PathLike): Promise<void> {
-        const cmd = ['#!/bin/sh', '', `${this.toString()} "$@"`].join('\n')
-        await fs.writeFile(path, cmd)
+        const args = this.args.filter((arg) => arg !== '--env=TERM=xterm-256color')
+        if (this.program === 'host-spawn') {
+            args.unshift('-no-pty')
+        }
+        const commandStr = [this.program, ...args].join(' ')
+
+        const fileContents = ['#!/bin/sh', '', `${commandStr} "$@"`].join('\n')
+        await fs.writeFile(path, fileContents)
         await fs.chmod(path, 0o755)
     }
 

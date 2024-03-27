@@ -160,20 +160,27 @@ export class BuildPipeline implements vscode.Disposable {
 
         await this.outputTerminal.show(true)
 
+        this.outputTerminal.appendMessage('Clean up build directories')
+
+        this.outputTerminal.append('Deleting Flatpak repository directory...')
         await manifest.deleteRepoDir()
-        this.outputTerminal.appendMessage('Deleted Flatpak repository directory')
+        this.outputTerminal.appendLine('done')
 
         const buildSystemDir = manifest.buildSystemBuildDir()
         if (buildSystemDir) {
+            this.outputTerminal.append(`Deleting ${buildSystemDir} directory...`)
             await fs.rm(path.join(manifest.workspace, buildSystemDir), {
                 recursive: true,
                 force: true,
             })
-            this.outputTerminal.appendMessage(`Deleted ${buildSystemDir} directory`)
+            this.outputTerminal.appendLine('done')
         }
 
+        this.outputTerminal.append('Resetting pipeline state...')
         await this.resetState()
-        this.outputTerminal.appendMessage('Pipeline state reset')
+        this.outputTerminal.appendLine('done')
+
+        this.outputTerminal.appendLine('All done!')
     }
 
     /**

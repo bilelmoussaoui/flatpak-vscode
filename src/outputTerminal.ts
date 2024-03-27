@@ -50,14 +50,18 @@ export class OutputTerminal implements vscode.Disposable {
         this.writeEmitter.fire(content)
     }
 
+    appendLine(content: string): void {
+        this.append(`${content}\r\n`)
+    }
+
     appendError(message: string): void {
         const boldRed = '\x1b[1;31m'
-        this.append(`\r${boldRed}>>> ${message}${RESET_COLOR}\r\n`)
+        this.appendLine(`\r${boldRed}>>> ${message}${RESET_COLOR}`)
     }
 
     appendMessage(message: string): void {
         const boldWhite = '\x1b[1;37m'
-        this.append(`\r${boldWhite}>>> ${message}${RESET_COLOR}\r\n`)
+        this.appendLine(`\r${boldWhite}>>> ${message}${RESET_COLOR}`)
     }
 
     async show(preserveFocus?: boolean): Promise<void> {

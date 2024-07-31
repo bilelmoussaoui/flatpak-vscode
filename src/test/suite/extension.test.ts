@@ -104,6 +104,45 @@ suite('manifestMap', () => {
         })
         assert.equal(nIter, 2)
     })
+
+    test('update', () => {
+        const first_map = new ManifestMap()
+        assert(first_map.isEmpty())
+
+        const second_map = new ManifestMap()
+        assert(second_map.isEmpty())
+
+        const manifestAUri = Uri.file('/home/test/a.a.a.json')
+        const manifestA = createTestManifest(manifestAUri)
+
+        const manifestBUri = Uri.file('/home/test/b.b.b.json')
+        const manifestB = createTestManifest(manifestBUri)
+
+        first_map.add(manifestA)
+        assert.equal(first_map.size(), 1)
+        assert.deepStrictEqual(first_map.get(manifestAUri), manifestA)
+
+        second_map.add(manifestB)
+        assert.equal(second_map.size(), 1)
+        assert.deepStrictEqual(second_map.get(manifestBUri), manifestB)
+
+        first_map.update(second_map)
+        assert.equal(first_map.size(), 1)
+        assert.deepStrictEqual(first_map.get(manifestBUri), manifestB)
+
+        second_map.delete(manifestBUri)
+        assert(second_map.isEmpty())
+
+        first_map.update(second_map)
+        assert(first_map.isEmpty())
+
+        second_map.add(manifestA)
+        second_map.add(manifestB)
+        assert.equal(second_map.size(), 2)
+
+        first_map.update(second_map)
+        assert.equal(first_map.size(), 2)
+    })
 })
 
 suite('manifestUtils', () => {

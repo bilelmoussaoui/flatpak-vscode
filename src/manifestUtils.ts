@@ -18,9 +18,14 @@ export const MANIFEST_PATH_GLOB_PATTERN = '**/*.{json,yaml,yml}'
  * @returns List of Flatpak Manifest
  */
 export async function findManifests(): Promise<ManifestMap> {
+    // Always exclude the directories we generate.
+    const excludeBaseDirs = ['.flatpak', '_build']
+    const excludeConfigDirs = workspace.getConfiguration('flatpak-vscode').get<string[]>('excludeManifestDirs')
+    const excludeDirs = excludeBaseDirs.concat(excludeConfigDirs ?? []).join(',')
+
     const uris: Uri[] = await workspace.findFiles(
         MANIFEST_PATH_GLOB_PATTERN,
-        '**/{target,.vscode,.flatpak-builder,flatpak_app,.flatpak,_build,.github}/*',
+        `**/{${excludeDirs}}/*`,
         1000
     )
     const manifests = new ManifestMap()

@@ -43,12 +43,6 @@ export class ManifestManager implements vscode.Disposable {
 
                 const manifests = await this.getManifests()
                 manifests.add(newManifest)
-
-                // If that manifest is the first valid manifest, select it automatically.
-                if (manifests.size() === 1) {
-                    console.log(`Found the first valid manifest at ${newManifest.uri.fsPath}. Setting it as active.`)
-                    await this.setActiveManifest(newManifest, true)
-                }
             } catch (err) {
                 console.warn(`Failed to parse manifest at ${newUri.fsPath}`)
             }
@@ -62,18 +56,6 @@ export class ManifestManager implements vscode.Disposable {
 
             const manifests = await this.getManifests()
             manifests.delete(deletedUri)
-
-            if (deletedUri.fsPath === this.activeManifest?.uri.fsPath) {
-                // If current active manifest is deleted and there is only one manifest
-                // left, select that manifest automatically.
-                const firstManifest = manifests.getFirstItem()
-                if (manifests.size() === 1 && firstManifest) {
-                    console.log(`Found only one valid manifest. Setting active manifest to ${firstManifest.uri.fsPath}`)
-                    await this.setActiveManifest(firstManifest, false)
-                } else {
-                    await this.setActiveManifest(null, false)
-                }
-            }
         })
 
         this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
@@ -135,6 +117,26 @@ export class ManifestManager implements vscode.Disposable {
             this.tryShowStatusItem()
             this.manifests.onDidItemsChanged(() => {
                 this.tryShowStatusItem()
+            })
+            this.manifests.onDidItemAdded(async (manifest) => {
+                // If that manifest is the first valid manifest, select it automatically.
+                if (this.manifests!.size() === 1) {
+                    console.log(`Found the first valid manifest at ${manifest.uri.fsPath}. Setting it as active.`)
+                    await this.setActiveManifest(manifest, true)
+                }
+            })
+            this.manifests.onDidItemDeleted(async (deletedUri) => {
+                if (deletedUri.fsPath === this.activeManifest?.uri.fsPath) {
+                    // If current active manifest is deleted and there is only one manifest
+                    // left, select that manifest automatically.
+                    const firstManifest = this.manifests!.getFirstItem()
+                    if (this.manifests!.size() === 1 && firstManifest) {
+                        console.log(`Found only one valid manifest. Setting active manifest to ${firstManifest.uri.fsPath}`)
+                        await this.setActiveManifest(firstManifest, false)
+                    } else {
+                        await this.setActiveManifest(null, false)
+                    }
+                }
             })
         }
 
@@ -227,7 +229,8 @@ export class ManifestManager implements vscode.Disposable {
                 return
             }
 
-            manifests.delete(oldManifest.uri)
+            // The path has not changed so this will only update the content of
+            // the manifest.
             manifests.add(updatedManifest)
 
             if (uri.fsPath === this.activeManifest?.uri.fsPath) {

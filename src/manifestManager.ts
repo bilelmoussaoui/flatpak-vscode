@@ -58,6 +58,12 @@ export class ManifestManager implements vscode.Disposable {
             manifests.delete(deletedUri)
         })
 
+        vscode.workspace.onDidChangeConfiguration(async (event) => {
+            if (event.affectsConfiguration('flatpak-vscode')) {
+                await this.refreshManifests()
+            }
+        })
+
         this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
         this.updateStatusItem()
     }
@@ -141,6 +147,14 @@ export class ManifestManager implements vscode.Disposable {
         }
 
         return this.manifests
+    }
+
+    async refreshManifests(): Promise<void> {
+        if (this.manifests !== undefined) {
+            console.log('Refreshing Flatpak manifests')
+            const newManifests = await findManifests()
+            this.manifests.update(newManifests)
+        }
     }
 
     /**

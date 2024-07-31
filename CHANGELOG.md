@@ -1,5 +1,9 @@
 # Change Log
 
+## [Unreleased]
+
+- manifest: Allow to configure directories to ignore while searching for manifests
+
 ## [0.0.37]
 
 - manifest: Automatically set `development` flatpak manifests, suffixed with `Devel` / `.devel` by default

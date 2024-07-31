@@ -214,7 +214,20 @@
         ],
         "url": "https://raw.githubusercontent.com/flatpak/flatpak-builder/master/data/flatpak-manifest.schema.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Flatpak",
+      "properties": {
+        "flatpak-vscode.excludeManifestDirs": {
+          "markdownDescription": "These directories, with `.flatpak` and `_build`, will be ignored when searching for Flatpak manifests. You may also need to add these folders to Code's `files.watcherExclude` for performance.",
+          "default": ["target", ".vscode", ".flatpak-builder", "flatpak_app", ".github"],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile",

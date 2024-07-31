@@ -41,6 +41,18 @@ export class ManifestMap implements Iterable<Manifest> {
         return isDeleted
     }
 
+    update(other: ManifestMap): void {
+        for (const manifest of this) {
+            if (!other.inner.has(manifest.uri.fsPath)) {
+                this.delete(manifest.uri)
+            }
+        }
+
+        for (const manifest of other) {
+            this.add(manifest)
+        }
+    }
+
     get(uri: vscode.Uri): Manifest | undefined {
         return this.inner.get(uri.fsPath)
     }

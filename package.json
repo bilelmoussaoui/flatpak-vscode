@@ -220,7 +220,13 @@
       "properties": {
         "flatpak-vscode.excludeManifestDirs": {
           "markdownDescription": "These directories, with `.flatpak` and `_build`, will be ignored when searching for Flatpak manifests. You may also need to add these folders to Code's `files.watcherExclude` for performance.",
-          "default": ["target", ".vscode", ".flatpak-builder", "flatpak_app", ".github"],
+          "default": [
+            "target",
+            ".vscode",
+            ".flatpak-builder",
+            "flatpak_app",
+            ".github"
+          ],
           "type": "array",
           "items": {
             "type": "string"

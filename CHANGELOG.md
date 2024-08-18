@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.0.38]
 
 - manifest: Allow to configure directories to ignore while searching for manifests
 

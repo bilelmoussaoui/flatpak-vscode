@@ -8,7 +8,7 @@ import { Manifest } from '../../manifest'
 import { ManifestMap } from '../../manifestMap'
 import { isValidDbusName, parseManifest } from '../../manifestUtils'
 import { versionCompare } from '../../flatpakUtils'
-import { exists, generatePathOverride } from '../../utils'
+import { exists, generatePathOverride, findFileParent } from '../../utils'
 import { Command } from '../../command'
 
 function intoUri(path: string): Uri {
@@ -302,14 +302,14 @@ suite('manifest', () => {
     })
 
     test('post-install', async () => {
-        const manifest = await parseManifest(intoUri('../assets/org.gnome.Screenshot.json'))
-        assert.deepEqual(manifest?.module()['post-install'], ['echo \'hello\''])
+        const manifest = await parseManifest(intoUri('../assets/org.gnome.Screenshot.json')) as Manifest
+        assert.deepEqual(manifest.module()['post-install'], ['echo \'hello\''])
 
-        const postInstallCommand = manifest?.build(false).slice(-1)[0]
-        assert(postInstallCommand?.toString().endsWith('echo \'hello\''))
+        const postInstallCommand = (await manifest.build(false)).slice(-1)[0]
+        assert(postInstallCommand.toString().endsWith('echo \'hello\''))
 
-        const postInstallCommand2 = manifest?.build(true).slice(-1)[0]
-        assert(postInstallCommand2?.toString().endsWith('echo \'hello\''))
+        const postInstallCommand2 = (await manifest.build(true)).slice(-1)[0]
+        assert(postInstallCommand2.toString().endsWith('echo \'hello\''))
     })
 })
 
@@ -331,5 +331,9 @@ suite('utils', () => {
     test('exists', async () => {
         assert(await exists(intoUri('../assets/org.valid.Manifest.json').fsPath))
         assert(!await exists(intoUri('../assets/sOmE.nOnExistenT.FilE.abc').fsPath))
+    })
+
+    test('findFile', async () => {
+        assert.equal(await findFileParent(intoUri('../assets').fsPath, 'meson.build'), intoUri('../assets/src').fsPath)
     })
 })

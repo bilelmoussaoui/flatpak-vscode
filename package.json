@@ -267,7 +267,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@jellybrick/dbus-next": "^0.10.3",
     "js-yaml": "^4.1.0",
     "jsonc-parser": "^3.0.0"
   }

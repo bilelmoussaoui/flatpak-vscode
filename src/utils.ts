@@ -6,8 +6,7 @@ import { env } from 'process'
 import { IS_SANDBOXED } from './extension'
 import { Command } from './command'
 import { Lazy } from './lazy'
-
-let dbus = require('@jellybrick/dbus-next');
+import { promisify } from 'node:util'
 
 const HOME_DIR = new Lazy(() => {
     return homedir()
@@ -47,10 +46,14 @@ const USER_FONTS_CACHE_DIR = new Lazy(() => {
  */
 export async function ensureDocumentsPortal(): Promise<void> {
     try {
-        const bus = dbus.sessionBus()
-        const obj = await bus.getProxyObject('org.freedesktop.portal.Documents', '/org/freedesktop/portal/documents')
-        const portal = obj.getInterface('org.freedesktop.portal.Documents')
-        await portal.GetMountPoint()
+        const cmd = new Command('gdbus', [
+            'call',
+            '--session',
+            '--dest=org.freedesktop.portal.Documents',
+            '--object-path=/org/freedesktop/portal/documents',
+            '--method=org.freedesktop.portal.Documents.GetMountPoint'
+        ])
+        await promisify(() => cmd.exec())()
     } catch (err) {
         console.warn(`Failed to ensure documents portal: ${err as string}`)
     }

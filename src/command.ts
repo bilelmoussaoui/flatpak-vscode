@@ -70,7 +70,7 @@ const VSCODE_INSIDE_CONTAINER = new AsyncLazy(async () => {
         } else {
             return false
         }
-    } catch (error) {
+    } catch {
         console.log('Failed to check if running inside a container')
         return false
     }

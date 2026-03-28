@@ -17,6 +17,8 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([{
+    files: ["src/**/*.ts"],
+
     extends: compat.extends(
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
@@ -38,14 +40,14 @@ export default defineConfig([{
         sourceType: "commonjs",
 
         parserOptions: {
-            tsconfigRootDir: __dirname,
-            project: ["./tsconfig.json"],
+            project: true,
         },
     },
 
     rules: {
         "@typescript-eslint/naming-convention": "warn",
         "@typescript-eslint/no-unnecessary-condition": "warn",
+        "@typescript-eslint/prefer-promise-reject-errors": "warn",
         "@stylistic/semi": ["warn", "never"],
         "@stylistic/quotes": ["warn", "single"],
         curly: "warn",

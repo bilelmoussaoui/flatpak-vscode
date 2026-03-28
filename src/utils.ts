@@ -1,4 +1,3 @@
-import * as dbus from 'dbus-next'
 import { promises as fs, constants as fsc, PathLike } from 'fs'
 import * as vscode from 'vscode'
 import * as path from 'path'
@@ -7,6 +6,8 @@ import { env } from 'process'
 import { IS_SANDBOXED } from './extension'
 import { Command } from './command'
 import { Lazy } from './lazy'
+
+let dbus = require('@jellybrick/dbus-next');
 
 const HOME_DIR = new Lazy(() => {
     return homedir()

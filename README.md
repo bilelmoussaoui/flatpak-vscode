@@ -46,7 +46,7 @@ the host. If you want to contribute on adding an integration, see [CONTRIBUTING]
 ### [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer)
 
 - Overrides `rust-analyzer.server.path` and `rust-analyzer.runnables.command` to use the SDK's rust-analyzer and cargo binaries respectively. This is to avoid requiring build dependencies to be installed in the host.
-- Overrides `rust-analyzer.files.excludeDirs` to set rust-analyzer to ignore `.flatpak` folder.
+- Overrides `rust-analyzer.files.exclude` to set rust-analyzer to ignore `.flatpak` folder.
 
 ### [Vala](https://marketplace.visualstudio.com/items?itemName=prince781.vala)
 

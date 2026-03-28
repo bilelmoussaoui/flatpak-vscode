@@ -43,7 +43,7 @@ export class ManifestManager implements vscode.Disposable {
 
                 const manifests = await this.getManifests()
                 manifests.add(newManifest)
-            } catch (err) {
+            } catch {
                 console.warn(`Failed to parse manifest at ${newUri.fsPath}`)
             }
         })
@@ -258,7 +258,7 @@ export class ManifestManager implements vscode.Disposable {
                 console.log('Updated manifest has modified modules or build-options. Requesting a rebuild')
                 this._onDidRequestRebuild.fire(updatedManifest)
             }
-        } catch (err) {
+        } catch {
             console.warn(`Failed to parse manifest at ${uri.fsPath}`)
         }
     }

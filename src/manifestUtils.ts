@@ -35,7 +35,7 @@ export async function findManifests(): Promise<ManifestMap> {
             if (manifest) {
                 manifests.add(manifest)
             }
-        } catch (err) {
+        } catch {
             console.warn(`Failed to parse the manifest at ${uri.fsPath}`)
         }
     }

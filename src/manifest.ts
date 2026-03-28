@@ -311,7 +311,7 @@ export class Manifest {
             )
         )
 
-        let commands = []
+        let commands
         switch (module.buildsystem) {
             default:
             case 'autotools':

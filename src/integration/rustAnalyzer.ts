@@ -25,12 +25,12 @@ export class RustAnalyzer extends SdkIntegration {
             await manifest.overrideWorkspaceCommandConfig('rust-analyzer', 'runnables.command', 'cargo', binPath, envArgs)
         }
 
-        await manifest.overrideWorkspaceConfig('rust-analyzer', 'files.excludeDirs', ['.flatpak', '.flatpak-builder', '_build', 'build', 'builddir'])
+        await manifest.overrideWorkspaceConfig('rust-analyzer', 'files.exclude', ['.flatpak', '.flatpak-builder', '_build', 'build', 'builddir'])
     }
 
     async unload(manifest: Manifest): Promise<void> {
         await manifest.restoreWorkspaceConfig('rust-analyzer', 'server.path')
         await manifest.restoreWorkspaceConfig('rust-analyzer', 'runnables.command')
-        await manifest.restoreWorkspaceConfig('rust-analyzer', 'files.excludeDirs')
+        await manifest.restoreWorkspaceConfig('rust-analyzer', 'files.exclude')
     }
 }

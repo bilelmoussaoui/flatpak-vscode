@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.x, 18.x]
+        node-version: [20.x,22.x]
     steps:
       - uses: actions/checkout@v4
       - name: Tests with Node.js ${{ matrix.node-version }}
@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 24.x
       - name: Publish
         run: |
           yarn install --dev

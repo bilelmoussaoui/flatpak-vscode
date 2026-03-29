@@ -597,6 +597,8 @@ export class Manifest {
             '--with-appdir',
             '--allow=devel',
             `--bind-mount=/run/user/${uid}/doc=/run/user/${uid}/doc/by-app/${appId}`,
+            `--filesystem=${this.workspace}`,
+            `--filesystem=${this.repoDir}`,
             ...this.finishArgs(),
             '--talk-name=org.freedesktop.portal.*',
             '--talk-name=org.a11y.Bus',

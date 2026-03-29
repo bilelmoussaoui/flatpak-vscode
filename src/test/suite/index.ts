@@ -27,7 +27,11 @@ export function run(): Promise<void> {
                 }
             })
         } catch (err) {
-            e(err)
+            if (err instanceof Error) {
+                e(err)
+            } else {
+                e(new Error(err as string))
+            }
         }
     })
 }
